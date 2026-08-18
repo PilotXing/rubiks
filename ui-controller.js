@@ -512,6 +512,32 @@ document.addEventListener('DOMContentLoaded', () => {
         return html;
     }
 
+    const CAROUSEL_GAP = 14;
+
+    function getCarouselMetrics() {
+        const viewport = carouselElements.viewport || document.getElementById('scramble-box');
+        const cardCurrent = carouselElements.cardCurrent || document.getElementById('scramble-text');
+        const width = (cardCurrent && cardCurrent.offsetWidth) ? cardCurrent.offsetWidth : ((viewport ? viewport.clientWidth : 0) || 340);
+        const step = width + CAROUSEL_GAP;
+        return {
+            width,
+            gap: CAROUSEL_GAP,
+            step,
+            baseOffset: -step
+        };
+    }
+
+    function setTrackPosition(offsetPx, animate = false, durationSec = 0.20, curve = 'cubic-bezier(0.2, 0.9, 0.3, 1)') {
+        const track = carouselElements.track || document.getElementById('scramble-carousel-track');
+        if (!track) return;
+        if (animate) {
+            track.style.transition = `transform ${durationSec}s ${curve}`;
+        } else {
+            track.style.transition = 'none';
+        }
+        track.style.transform = `translate3d(${offsetPx}px, 0, 0)`;
+    }
+
     function updateCarouselCards(activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null) {
         if (!carouselElements.cardCurrent) {
             carouselElements.cardCurrent = document.getElementById('scramble-text');
@@ -557,11 +583,9 @@ document.addEventListener('DOMContentLoaded', () => {
             carouselElements.cardNext.classList.remove('scramble-empty-hint');
         }
 
-        // Reset track position to center
-        if (carouselElements.track) {
-            carouselElements.track.style.transition = 'none';
-            carouselElements.track.style.transform = 'translate3d(calc(-100% - 14px), 0, 0)';
-        }
+        // Instantly reset track position to baseOffset without animation
+        const { baseOffset } = getCarouselMetrics();
+        setTrackPosition(baseOffset, false);
     }
 
     function setNewScramble(scrambleStr, isHistorical = false) {
@@ -649,7 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
         triggerHaptic('medium');
     }
 
-    // Continuous Photo-Album Gesture Track with Direct 1:1 Finger Tracking
+    // Continuous Photo-Album Gesture Track with Direct 1:1 Finger Tracking & Apple Damping (No Overshoot)
     function initScrambleGesture() {
         const viewport = document.getElementById('scramble-box');
         const track = document.getElementById('scramble-carousel-track');
@@ -659,22 +683,26 @@ document.addEventListener('DOMContentLoaded', () => {
         let startY = null;
         let startTime = 0;
         let isDragging = false;
-        let cardWidth = 0;
-        const GAP = 14;
-        let baseOffset = 0;
         let currentOffset = 0;
         let isAnimating = false;
 
+        // Ensure track is positioned to center on window resize
+        window.addEventListener('resize', () => {
+            if (!isDragging && !isAnimating) {
+                const { baseOffset } = getCarouselMetrics();
+                setTrackPosition(baseOffset, false);
+            }
+        });
+
         viewport.addEventListener('pointerdown', (e) => {
             if (isAnimating) return;
-            cardWidth = viewport.offsetWidth || 340;
-            baseOffset = -(cardWidth + GAP);
+            const metrics = getCarouselMetrics();
             startX = e.clientX;
             startY = e.clientY;
-            currentOffset = baseOffset;
+            currentOffset = metrics.baseOffset;
             startTime = performance.now();
             isDragging = false;
-            track.style.transition = 'none';
+            setTrackPosition(metrics.baseOffset, false);
         });
 
         viewport.addEventListener('pointermove', (e) => {
@@ -689,34 +717,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (isDragging) {
                 e.preventDefault();
+                const metrics = getCarouselMetrics();
                 let moveX = deltaX;
                 // If dragging right (swiping back to previous) but at the first scramble, apply Apple rubber-band resistance
                 if (moveX > 0 && scrambleHistoryIndex <= 0) {
-                    moveX = (deltaX * 160 * 0.45) / (160 + 0.45 * deltaX);
+                    moveX = (deltaX * 140 * 0.4) / (140 + 0.4 * deltaX);
                 }
-                currentOffset = baseOffset + moveX;
-                track.style.transform = `translate3d(${currentOffset}px, 0, 0)`;
+                currentOffset = metrics.baseOffset + moveX;
+                setTrackPosition(currentOffset, false);
             }
         });
 
         const handlePointerEnd = (e) => {
             if (startX === null || isAnimating) return;
+            const metrics = getCarouselMetrics();
             const elapsed = Math.max(1, performance.now() - startTime);
-            const deltaX = currentOffset - baseOffset;
+            const deltaX = currentOffset - metrics.baseOffset;
             const velocity = deltaX / elapsed; // px/ms
 
             if (isDragging) {
                 isDragging = false;
                 try { viewport.releasePointerCapture(e.pointerId); } catch (_) {}
 
-                const threshold = Math.min(cardWidth * 0.2, 70);
+                const threshold = Math.min(metrics.width * 0.18, 60);
 
-                // 1. 从右往左滑 (Swipe from Right to Left / deltaX < -threshold 或 velocity < -0.3) -> 切换到下一个
-                if (deltaX < -threshold || velocity < -0.3) {
+                // 1. 从右往左滑 (Swipe from Right to Left / deltaX < -threshold 或 velocity < -0.28) -> 切换到下一个
+                if (deltaX < -threshold || velocity < -0.28) {
                     isAnimating = true;
-                    const targetOffset = -2 * (cardWidth + GAP);
-                    track.style.transition = 'transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)';
-                    track.style.transform = `translate3d(${targetOffset}px, 0, 0)`;
+                    // Exact target offset for Next Card
+                    const targetOffset = -2 * metrics.step;
+                    setTrackPosition(targetOffset, true, 0.20, 'cubic-bezier(0.2, 0.9, 0.3, 1)');
 
                     setTimeout(() => {
                         if (scrambleHistoryIndex < scrambleHistory.length - 1) {
@@ -735,15 +765,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         updateCarouselCards(0);
                         isAnimating = false;
                         triggerHaptic('light');
-                    }, 220);
+                    }, 200);
                 }
-                // 2. 从左往右滑 (Swipe from Left to Right / deltaX > threshold 或 velocity > 0.3) -> 返回上一个
-                else if (deltaX > threshold || velocity > 0.3) {
+                // 2. 从左往右滑 (Swipe from Left to Right / deltaX > threshold 或 velocity > 0.28) -> 返回上一个
+                else if (deltaX > threshold || velocity > 0.28) {
                     if (scrambleHistoryIndex > 0) {
                         isAnimating = true;
+                        // Exact target offset for Prev Card
                         const targetOffset = 0;
-                        track.style.transition = 'transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)';
-                        track.style.transform = `translate3d(0px, 0, 0)`;
+                        setTrackPosition(targetOffset, true, 0.20, 'cubic-bezier(0.2, 0.9, 0.3, 1)');
 
                         setTimeout(() => {
                             scrambleHistoryIndex--;
@@ -754,19 +784,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             updateCarouselCards(0);
                             isAnimating = false;
                             triggerHaptic('light');
-                        }, 220);
+                        }, 200);
                     } else {
-                        // 已经是第一个打乱，回弹并提示
-                        track.style.transition = 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1)';
-                        track.style.transform = `translate3d(${baseOffset}px, 0, 0)`;
+                        // 已经是第一个打乱，平滑弹簧回位并提示
+                        setTrackPosition(metrics.baseOffset, true, 0.22, 'cubic-bezier(0.2, 0.9, 0.3, 1)');
                         showToast('已经是第一个打乱了');
                         triggerHaptic('light');
                     }
                 }
-                // 未达到滑动阈值：平滑弹簧复位
+                // 未达到滑动阈值：平滑弹簧复位回中心
                 else {
-                    track.style.transition = 'transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)';
-                    track.style.transform = `translate3d(${baseOffset}px, 0, 0)`;
+                    setTrackPosition(metrics.baseOffset, true, 0.18, 'cubic-bezier(0.2, 0.9, 0.3, 1)');
                 }
             } else {
                 // 3. 点击卡片 (Tap without dragging) -> 复制当前公式

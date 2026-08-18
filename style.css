@@ -1073,7 +1073,6 @@ body {
     user-select: none;
     -webkit-user-select: none;
     will-change: transform;
-    transform: translate3d(calc(-100% - 14px), 0, 0);
 }
 
 .scramble-card {

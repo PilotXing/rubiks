@@ -246,3 +246,12 @@
     - iOS-inspired momentum, spring snap settle, and rubber-band edge physics.
 - [x] **Version Upgrade**:
     - Bumped to `v14.1` (sw.js cache `rubiks-timer-v14.1`).
+
+## Critically Damped Apple Motion & Zero Overshoot (精准对齐零回弹 - v14.2)
+- [x] **Eliminated CSS Percentage Offset Mismatch (消除 3 倍超调问题)**:
+    - Fixed track translation from percentage (`calc(-100%)` on full 3-card track) to exact pixel-based metrics (`-(width + gap)px`).
+    - Handled seamless buffer reset on settled transition with zero-flash position swap.
+- [x] **Critically Damped Apple Spring Curve (`cubic-bezier(0.2, 0.9, 0.3, 1)`)**:
+    - Implemented Damping Ratio `1.0` (critically damped): cards slide directly into target position without overshoot, bounce-back, or oscillation.
+- [x] **Version Upgrade**:
+    - Bumped to `v14.2` (sw.js cache `rubiks-timer-v14.2`).
