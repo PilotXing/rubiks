@@ -281,3 +281,12 @@
     - Upgraded `.timer-digits` font-size to `clamp(4.8rem, 18vw, 8.5rem)` with `font-weight: 800`, filling `#arena-container` with clean, modern presence.
 - [x] **Version Upgrade**:
     - Bumped to `v14.5` (sw.js cache `rubiks-timer-v14.5`).
+
+## Responsive Width-Aware Row Calculation (设备宽度自适应公式均分布局 - v14.6)
+- [x] **Dynamic Width Calculation (`getOptimalRowCount`)**:
+    - Dynamically evaluates container width and calculates the optimal row count (1 row for desktop/wide landscape, 2 rows for phone landscape, 3 rows for phone portrait, 4 rows for narrow cover screens).
+    - Guarantees all formulas on the active screen share that identical, optimal row count and are mathematically balanced across rows.
+- [x] **Real-time Orientation & Resize Adaptation**:
+    - Bound to `resize` and `orientationchange` events to seamlessly re-render cards and update track offsets with zero visual jumping.
+- [x] **Version Upgrade**:
+    - Bumped to `v14.6` (sw.js cache `rubiks-timer-v14.6`).

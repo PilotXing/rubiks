@@ -495,10 +495,30 @@ document.addEventListener('DOMContentLoaded', () => {
         return rows;
     }
 
-    function formatScrambleHTML(scrambleStr, activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, targetRows = 3) {
+    function getOptimalRowCount(totalMoves = 21) {
+        const viewport = carouselElements.viewport || document.getElementById('scramble-box');
+        const width = (viewport && viewport.clientWidth > 0) ? viewport.clientWidth : (window.innerWidth || 360);
+        
+        // Approximate horizontal width occupied per move token (2.2ch min-width + 0.45rem gap ≈ 46px)
+        const approxTokenWidth = 46;
+        const availableWidth = Math.max(120, width - 24);
+        const maxMovesPerLine = Math.max(3, Math.floor(availableWidth / approxTokenWidth));
+
+        // If entire scramble fits easily in 1 line (e.g. desktop / wide landscape > 1000px):
+        if (maxMovesPerLine >= totalMoves) {
+            return 1;
+        }
+        // Calculate optimal balanced row count
+        const rows = Math.ceil(totalMoves / maxMovesPerLine);
+        return Math.max(1, Math.min(rows, 5));
+    }
+
+    function formatScrambleHTML(scrambleStr, activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, targetRows = null) {
         if (!scrambleStr) return '<span class="scramble-empty-hint">Loading scramble...</span>';
         const moves = scrambleStr.trim().split(/\s+/).filter(Boolean);
         if (moves.length === 0) return '<span class="scramble-empty-hint">Loading scramble...</span>';
+
+        const optimalRows = (targetRows !== null && targetRows !== undefined) ? targetRows : getOptimalRowCount(moves.length);
 
         let correctionHtml = '';
         if (correctionMoves && correctionMoves.length > 0) {
@@ -533,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return `<span class="scramble-move ${cls} ${colorCls}">${label}</span>`;
         });
 
-        const rows = splitMovesIntoBalancedRows(moveSpans, targetRows);
+        const rows = splitMovesIntoBalancedRows(moveSpans, optimalRows);
         const rowsHtml = rows.map(rowSpans => `<div class="scramble-row">${rowSpans.join('')}</div>`).join('');
 
         return correctionHtml ? `${correctionHtml}${rowsHtml}` : rowsHtml;
@@ -713,12 +733,22 @@ document.addEventListener('DOMContentLoaded', () => {
         let currentOffset = 0;
         let isAnimating = false;
 
-        // Ensure track is positioned to center on window resize
+        // Ensure cards & track adapt dynamically on window resize & orientation change
         window.addEventListener('resize', () => {
             if (!isDragging && !isAnimating) {
+                updateCarouselCards();
                 const { baseOffset } = getCarouselMetrics();
                 setTrackPosition(baseOffset, false);
             }
+        });
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                if (!isDragging && !isAnimating) {
+                    updateCarouselCards();
+                    const { baseOffset } = getCarouselMetrics();
+                    setTrackPosition(baseOffset, false);
+                }
+            }, 120);
         });
 
         viewport.addEventListener('pointerdown', (e) => {
