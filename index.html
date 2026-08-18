@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- PWA & Mobile Meta -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <meta name="theme-color" content="#0D0E12">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="style.css?v=13.9">
+</head>
+<body class="style-dark color-emerald theme-dark">
+
+    <!-- Application Header -->
+    <header class="app-header">
+        <div class="header-top-row">
+            <div class="brand-group">
+                <span class="brand-icon">
+                    <svg class="svg-icon brand-svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                </span>
+                <span class="brand-title">Rubik Vision</span>
+                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v13.9</span>
+            </div>
+
+            <div class="header-status">
+                <span id="cube-status-badge" class="badge badge-disconnected"><span class="status-dot"></span> Disconnected</span>
+                <span id="cube-battery-badge" class="badge badge-battery" style="display: none;">
+                    <svg class="svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect><line x1="23" y1="13" x2="23" y2="11"></line></svg>
+                    <span id="cube-battery-val">--%</span>
+                </span>
+            </div>
+
+            <div class="header-actions">
+                <button id="btn-connect" class="btn btn-primary btn-sm">Connect</button>
+                <button id="btn-disconnect" class="btn btn-danger btn-sm" style="display: none;">Disconnect</button>
+                <button id="btn-install-pwa" class="btn btn-secondary btn-sm" style="display: none;" title="Install App">
+                    <svg class="svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line><polyline points="9 10 12 13 15 10"></polyline><line x1="12" y1="6" x2="12" y2="13"></line></svg>
+                </button>
+                <button id="btn-settings" class="btn btn-secondary btn-sm" title="Settings">
+                    <svg class="svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </button>
+                <button id="btn-help" class="btn btn-secondary btn-sm" title="Help">
+                    <svg class="svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                </button>
+            </div>
+        </div>
+
+        <nav class="app-nav-tabs">
+            <button id="tab-timer" class="nav-tab-btn active" data-view="view-timer">
+                <svg class="svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"></circle><polyline points="12 9 12 13 15 13"></polyline><path d="M12 2v3M9 2h6"></path></svg>
+                <span>计时</span>
+            </button>
+            <button id="tab-analytics" class="nav-tab-btn" data-view="view-analytics">
+                <svg class="svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                <span>趋势</span>
+            </button>
+            <button id="tab-practice" class="nav-tab-btn" data-view="view-practice">
+                <svg class="svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                <span>练习</span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Main Application Container -->
+    <main class="app-main">
+
+        <!-- VIEW 1: Main Timer & Stage (Default) -->
+        <div id="view-timer" class="view-section active" style="width: 100%; display: contents;">
+            <!-- Stage Area: Scramble / Timer Arena, Inline Breakdown, Cube Renderers -->
+            <section class="stage-section">
+
+                <!-- Top Module Visibility Toggle Bar (Full-Width Icon + Label Dock Bar) -->
+                <div class="module-toggle-toolbar">
+                    <button class="module-chip-btn active" data-target="main-solve-breakdown-card" title="本次复原分析 & 曲线 (Latest Solve Breakdown)" aria-label="本次分析">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                        <span class="module-chip-text">本次分析</span>
+                    </button>
+                    <button class="module-chip-btn active" data-target="card-cube-views" title="3D/2D 魔方视图 (3D & 2D Cube Views)" aria-label="3D魔方">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                        <span class="module-chip-text">3D魔方</span>
+                    </button>
+                    <button class="module-chip-btn active" data-target="card-stats-summary" title="成绩统计数据 (Session Statistics)" aria-label="成绩统计">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                        <span class="module-chip-text">统计</span>
+                    </button>
+                    <button class="module-chip-btn active" data-target="card-history-table" title="成绩历史列表 (Session History Table)" aria-label="成绩历史">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <span class="module-chip-text">历史</span>
+                    </button>
+                    <button class="module-chip-btn" id="btn-toggle-arena-view" title="切换到大字计时器 (Switch to Timer)" aria-label="切计时">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"></circle><polyline points="12 9 12 13 15 13"></polyline><path d="M12 2v3M9 2h6"></path></svg>
+                        <span class="module-chip-text">切计时</span>
+                    </button>
+                </div>
+
+                <!-- 1. Central Arena: In-Place Scramble / Timer Swap (Single Unified Container) -->
+                <div id="arena-container" class="arena-card" style="width: 100%; display: block;">
+                    
+                    <!-- Scramble Panel (Gesture & Tap Driven Arena) -->
+                    <div id="scramble-box" class="arena-view scramble-view" style="width: 100%; display: flex; flex-direction: column; gap: 0.75rem; padding: 1.15rem 1rem; box-sizing: border-box;">
+                        <div class="scramble-header" style="width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
+                            <div style="display: flex; align-items: center; gap: 0.45rem;">
+                                <span class="scramble-title">WCA 3x3 Scramble</span>
+                                <span id="scramble-history-badge" class="badge" style="font-size: 0.7rem; background: var(--bg-surface-elevated); border: 1px solid var(--border-color); color: var(--text-muted); display: none;">1/1</span>
+                            </div>
+                            <span id="scramble-step-badge" class="badge badge-scrambling" style="font-size: 0.72rem;">0 / 21</span>
+                        </div>
+
+                        <!-- Gesture & Tap Interactive Scramble Sequence Area -->
+                        <div id="scramble-text" class="scramble-text" style="width: 100%; box-sizing: border-box; text-align: center; font-size: 1.3rem; line-height: 1.7; padding: 0.85rem 0.6rem; border-radius: var(--radius-sm); background: var(--bg-surface-elevated); border: 1px solid var(--border-color); cursor: pointer;" title="点击复制公式 | ← 左滑上一个 | 右滑刷新 →">
+                            Loading scramble...
+                        </div>
+
+                        <!-- Clean Gesture Hint Bar -->
+                        <div class="scramble-gesture-hint">
+                            <span class="gesture-hint-item">
+                                <svg class="svg-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                <span>左滑上一个</span>
+                            </span>
+                            <span class="gesture-hint-item">
+                                <svg class="svg-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                <span>点击复制</span>
+                            </span>
+                            <span class="gesture-hint-item">
+                                <span>右滑刷新</span>
+                                <svg class="svg-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </span>
+                        </div>
+
+                        <div id="scramble-banner" class="scramble-banner status-pending" style="width: 100%; box-sizing: border-box; text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <span>Follow the scramble sequence above on your cube</span>
+                        </div>
+                    </div>
+
+                    <!-- Timer Panel (Visible when scramble complete / inspecting / running / finished) -->
+                    <div id="main-timer-container" class="arena-view timer-view" style="display: none; width: 100%; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 2rem 1rem; box-sizing: border-box;">
+                        <div class="timer-header-badge" style="width: 100%; display: flex; align-items: center; justify-content: center;">
+                            <span id="timer-state-badge" class="badge badge-idle">IDLE</span>
+                        </div>
+
+                        <div id="timer-display" class="timer-digits">
+                            0.00
+                        </div>
+
+                        <div id="timer-sub-display" class="timer-sub-display">
+                            Connect cube or turn cube to start
+                        </div>
+
+                        <div class="live-stats-bar" style="display: none;">
+                            <span id="live-moves-badge" class="badge badge-move">0 moves</span>
+                            <span id="live-tps-badge" class="badge badge-move">0.00 TPS</span>
+                            <span class="badge badge-move">Last: <strong id="live-last-move-badge">--</strong></span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 2. Inline Latest Solve Summary Breakdown & Performance Curve (Directly Below Timer) -->
+                <div id="main-solve-breakdown-card" class="card-collapsible" style="display: none;">
+                    <div class="collapsible-header">
+                        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                            <span class="collapsible-title">
+                                <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                                Latest Solve Breakdown & Curve
+                            </span>
+                            <span id="main-solve-time-badge" class="badge badge-ready" style="font-size: 0.8rem; font-weight: 700;">--</span>
+                            <span id="main-solve-recon-badge" class="badge badge-ready" style="font-size: 0.75rem;">Cross: --</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                            <select id="select-main-recon-method" style="padding: 0.2rem 0.45rem; font-size: 0.75rem; border-radius: var(--radius-sm); background: var(--bg-surface-elevated); color: var(--text-primary); border: 1px solid var(--border-color);">
+                                <option value="CFOP" selected>CFOP</option>
+                                <option value="CFOP_PAIRS">CFOP Detailed (Pairs 1-4)</option>
+                                <option value="Roux">Roux</option>
+                                <option value="LBL">LBL</option>
+                            </select>
+                            <button class="btn-panel-toggle" data-target="main-solve-breakdown-card" title="折叠/展开">
+                                <svg class="svg-icon svg-chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                <span class="toggle-text">收起</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="collapsible-body">
+                        <!-- Stage Breakdown Cards (Cross, F2L Pairs 1-4, OLL, PLL) -->
+                        <div id="main-stage-cards" class="stage-summary-cards"></div>
+
+                        <!-- Live Performance & TPS Velocity Chart -->
+                        <div style="position: relative; margin-top: 0.75rem; background: var(--bg-surface-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.75rem;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.4rem;">
+                                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Performance Curve & Stage Velocity</span>
+                                <div style="display: flex; gap: 0.6rem; font-size: 0.72rem;">
+                                    <label class="form-check"><input type="checkbox" id="toggle-main-cumulative" checked> <span>Time</span></label>
+                                    <label class="form-check"><input type="checkbox" id="toggle-main-tps" checked> <span>TPS</span></label>
+                                    <label class="form-check"><input type="checkbox" id="toggle-main-derivative" checked> <span>Pauses</span></label>
+                                </div>
+                            </div>
+                            <div style="height: 180px; width: 100%;">
+                                <canvas id="canvas-main-solve-graph" style="width: 100%; height: 100%; display: block;"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Move Flow Tokens -->
+                        <div id="main-proportional-flow" style="margin-top: 0.75rem;"></div>
+                    </div>
+                </div>
+
+                <!-- 3. 3D & 2D Cube Views (Collapsible) -->
+                <div id="card-cube-views" class="card-collapsible">
+                    <div class="collapsible-header">
+                        <span class="collapsible-title">
+                            <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                            Live Cube Views (3D & 2D)
+                        </span>
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                            <button id="btn-reset-3d-cam" class="btn btn-secondary btn-sm" title="Reset 3D Camera">
+                                <svg class="svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                                视角复位
+                            </button>
+                            <button class="btn-panel-toggle" data-target="card-cube-views" title="折叠/展开">
+                                <svg class="svg-icon svg-chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                <span class="toggle-text">收起</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="collapsible-body">
+                        <div class="cube-views-container">
+                            <!-- 3D Interactive WebGL Cube -->
+                            <div class="cube-view-card">
+                                <div class="cube-view-header">
+                                    <span class="cube-view-title">3D Live Cube</span>
+                                </div>
+                                <div id="cube-3d-container" class="cube-3d-stage"></div>
+                            </div>
+
+                            <!-- 2D Unfolded Net View -->
+                            <div class="cube-view-card">
+                                <div class="cube-view-header">
+                                    <span class="cube-view-title">2D Net View</span>
+                                </div>
+                                <canvas id="canvas-2d" class="canvas-2d-net"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- Sidebar Section: Statistics & Solve History (Minimizable) -->
+            <aside class="sidebar-section">
+
+                <!-- Stats Summary Card (Minimizable) -->
+                <div id="card-stats-summary" class="card-collapsible">
+                    <div class="collapsible-header">
+                        <span class="collapsible-title">
+                            <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                            Session Statistics
+                        </span>
+                        <button class="btn-panel-toggle" data-target="card-stats-summary" title="折叠/展开">
+                            <svg class="svg-icon svg-chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            <span class="toggle-text">收起</span>
+                        </button>
+                    </div>
+                    <div class="collapsible-body">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <span class="stat-label">Solves</span>
+                                <span id="stat-count" class="stat-val">0</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Best</span>
+                                <span id="stat-best" class="stat-val">--</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Current ao5</span>
+                                <span id="stat-ao5" class="stat-val">--</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Best ao5</span>
+                                <span id="stat-best-ao5" class="stat-val">--</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Current ao12</span>
+                                <span id="stat-ao12" class="stat-val">--</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Best ao12</span>
+                                <span id="stat-best-ao12" class="stat-val">--</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Mean</span>
+                                <span id="stat-mean" class="stat-val">--</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Std Dev</span>
+                                <span id="stat-stddev" class="stat-val">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Solve History Card (Minimizable) -->
+                <div id="card-history-table" class="card-collapsible">
+                    <div class="collapsible-header">
+                        <span class="collapsible-title">
+                            <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            Session History
+                        </span>
+                        <div style="display: flex; align-items: center; gap: 0.35rem;">
+                            <button id="btn-clear-session" class="btn btn-secondary btn-sm" title="Clear all solves">Clear</button>
+                            <button class="btn-panel-toggle" data-target="card-history-table" title="折叠/展开">
+                                <svg class="svg-icon svg-chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                <span class="toggle-text">收起</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="collapsible-body collapsible-body-flush">
+                        <div class="history-table-wrapper">
+                            <table class="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Time</th>
+                                        <th>Moves</th>
+                                        <th>Scramble</th>
+                                        <th>Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-tbody">
+                                    <!-- Dynamic solve rows -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="history-footer">
+                            <button id="btn-export-json" class="btn btn-secondary btn-sm">Export JSON</button>
+                            <button id="btn-export-csv" class="btn btn-secondary btn-sm">Export CSV</button>
+                            <button id="btn-export-cstimer" class="btn btn-secondary btn-sm">csTimer Export</button>
+                        </div>
+                    </div>
+                </div>
+
+            </aside>
+            </div> <!-- End of view-timer -->
+
+        <!-- VIEW 2: Data Analysis & Multi-AoX Trends (Phase 4) -->
+        <div id="view-analytics" class="view-section" style="width: 100%; max-width: 1200px; margin: 0 auto;">
+            <div class="trend-card-main">
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; display: flex; align-items: center; gap: 0.4rem;">
+                            <svg class="svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                            Trend Curve & Progress Analytics
+                        </h3>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Historical time trend with customizable multi-AoX rolling averages and editable Y-range</span>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button id="btn-toggle-curve-styles" class="btn btn-secondary btn-sm" title="Customize Curve Colors and Widths">
+                            <svg class="svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path></svg>
+                            Curve Styles
+                        </button>
+                        <button id="btn-refresh-trend" class="btn btn-secondary btn-sm">
+                            <svg class="svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                            Refresh Chart
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Trend Series & Y-Range Controls Toolbar -->
+                <div class="chart-controls-row">
+                    <div class="chart-toggle-group">
+                        <label class="form-check" style="color: #9CA3AF;">
+                            <input type="checkbox" id="toggle-series-raw" checked>
+                            <span>Raw Solves</span>
+                        </label>
+                        <label class="form-check" style="color: #10B981;">
+                            <input type="checkbox" id="toggle-series-ao5" checked>
+                            <span>Ao5</span>
+                        </label>
+                        <label class="form-check" style="color: #3B82F6;">
+                            <input type="checkbox" id="toggle-series-ao12" checked>
+                            <span>Ao12</span>
+                        </label>
+                        <label class="form-check" style="color: #F59E0B;">
+                            <input type="checkbox" id="toggle-series-aox" checked>
+                            <span>AoX (Custom)</span>
+                        </label>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                        <!-- Y-Range Selector (Requirement: Editable Y Range & Auto Zoom 90% Data View) -->
+                        <div style="display: flex; align-items: center; gap: 0.35rem;">
+                            <label for="select-trend-yrange" style="font-size: 0.8rem; color: var(--text-muted);">Y-Range:</label>
+                            <select id="select-trend-yrange" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; border-radius: var(--radius-sm); background-color: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--border-color);">
+                                <option value="auto90" selected>Auto-Zoom (90% in View)</option>
+                                <option value="auto">Full Range</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
+                        </div>
+
+                        <!-- Custom Min/Max Y Inputs -->
+                        <div id="trend-custom-y-group" style="display: none; align-items: center; gap: 0.35rem;">
+                            <label for="input-trend-min-y" style="font-size: 0.8rem; color: var(--text-muted);">Min (s):</label>
+                            <input type="number" id="input-trend-min-y" value="0" min="0" step="0.5" style="width: 55px; padding: 0.2rem 0.35rem; font-size: 0.8rem;">
+                            <label for="input-trend-max-y" style="font-size: 0.8rem; color: var(--text-muted);">Max (s):</label>
+                            <input type="number" id="input-trend-max-y" value="20" min="1" step="0.5" style="width: 55px; padding: 0.2rem 0.35rem; font-size: 0.8rem;">
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 0.35rem;">
+                            <label for="input-custom-x" style="font-size: 0.8rem; color: var(--text-muted);">X param:</label>
+                            <input type="number" id="input-custom-x" value="25" min="3" max="1000" style="width: 55px; padding: 0.2rem 0.35rem; font-size: 0.8rem;">
+                        </div>
+
+                        <label class="form-check">
+                            <input type="checkbox" id="toggle-trend-smooth" checked>
+                            <span>Smooth</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Collapsible Curve Styles Editor Panel -->
+                <div id="trend-styles-panel" class="trend-styles-panel" style="display: none;">
+                    <div style="font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.35rem;">
+                        <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"></circle><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"></circle><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"></circle><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path></svg>
+                        Customize Curve Appearance
+                    </div>
+                    <div class="trend-styles-grid">
+                        <div class="curve-style-item">
+                            <span style="font-size: 0.8rem; font-weight: 600; color: #9CA3AF;">Raw Solves</span>
+                            <input type="color" id="color-series-raw" value="#6B7280">
+                            <label style="font-size: 0.75rem; color: var(--text-muted);">Width:</label>
+                            <input type="range" id="width-series-raw" min="1" max="5" value="1.5" step="0.5" style="width: 60px;">
+                        </div>
+                        <div class="curve-style-item">
+                            <span style="font-size: 0.8rem; font-weight: 600; color: #10B981;">Ao5 Curve</span>
+                            <input type="color" id="color-series-ao5" value="#10B981">
+                            <label style="font-size: 0.75rem; color: var(--text-muted);">Width:</label>
+                            <input type="range" id="width-series-ao5" min="1" max="6" value="2.2" step="0.5" style="width: 60px;">
+                        </div>
+                        <div class="curve-style-item">
+                            <span style="font-size: 0.8rem; font-weight: 600; color: #3B82F6;">Ao12 Curve</span>
+                            <input type="color" id="color-series-ao12" value="#3B82F6">
+                            <label style="font-size: 0.75rem; color: var(--text-muted);">Width:</label>
+                            <input type="range" id="width-series-ao12" min="1" max="6" value="2.2" step="0.5" style="width: 60px;">
+                        </div>
+                        <div class="curve-style-item">
+                            <span style="font-size: 0.8rem; font-weight: 600; color: #F59E0B;">AoX Curve</span>
+                            <input type="color" id="color-series-aox" value="#F59E0B">
+                            <label style="font-size: 0.75rem; color: var(--text-muted);">Width:</label>
+                            <input type="range" id="width-series-aox" min="1" max="6" value="2.8" step="0.5" style="width: 60px;">
+                        </div>
+                    </div>
+                </div>
+
+                <canvas id="canvas-trend-main" class="canvas-trend-full"></canvas>
+            </div>
+        </div>
+
+        <!-- VIEW 3: Dedicated Algorithm Practice Mode (Phase 5) -->
+        <div id="view-practice" class="view-section" style="width: 100%; max-width: 1200px; margin: 0 auto;">
+            <div class="practice-grid">
+                
+                <!-- Left: Category & Case Selector -->
+                <div class="case-list-card">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700;">Case Library</h4>
+                        <button id="btn-add-custom-alg" class="btn btn-primary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">+ Add Alg</button>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0.5rem;">
+                        <select id="select-alg-category" class="form-control" style="font-size: 0.85rem; padding: 0.35rem 0.6rem;">
+                            <option value="ALL">All Categories</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0.5rem;">
+                        <input type="text" id="input-search-alg" placeholder="Search case name or alg..." style="font-size: 0.85rem; padding: 0.35rem 0.6rem;">
+                    </div>
+
+                    <div id="case-list-container" class="case-list-wrapper">
+                        <!-- Dynamic case cards -->
+                    </div>
+                </div>
+
+                <!-- Right: Interactive Practice & Real-Time Match Stage -->
+                <div class="practice-stage-card">
+                    <div style="width: 100%; display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <h3 id="practice-case-name" style="margin: 0; font-size: 1.3rem; font-weight: 700;">Select an algorithm</h3>
+                            <span id="practice-case-group" class="badge badge-idle" style="margin-top: 0.25rem;">Triggers</span>
+                        </div>
+                        <span id="practice-case-moves" style="font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted);">0 moves</span>
+                    </div>
+
+                    <div id="practice-alg-box" class="practice-alg-display">
+                        Ready to practice
+                    </div>
+
+                    <div id="practice-status-banner" class="practice-status-banner status-idle">
+                        <span>Turn the cube to begin practicing! Sequence matching is state-agnostic.</span>
+                    </div>
+
+                    <div id="practice-timer-digits" class="practice-timer-digits">
+                        0.00
+                    </div>
+
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span id="practice-live-tps" class="badge badge-move">0.00 TPS</span>
+                        <span id="practice-live-step" class="badge badge-move">Step 0 / 0</span>
+                       <!-- Modal: Settings & Bluetooth Config -->
+    <div id="modal-settings" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg class="svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    Timer & Bluetooth Settings
+                </h3>
+                <button id="btn-close-settings" class="btn-icon">
+                    <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="input-mac-override">Bluetooth MAC Override (for GAN v4 Key Derivation):</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="input-mac-override" placeholder="0c:3d:5e:be:8e:95" value="0c:3d:5e:be:8e:95">
+                        <button id="btn-save-mac" class="btn btn-primary btn-sm">Save</button>
+                    </div>
+                    <small style="color: var(--text-muted);">Default: <code>0c:3d:5e:be:8e:95</code> for GANic4 devices.</small>
+                </div>
+
+                <!-- Move Counting Metric Setting (Requirement: Does X2 count as 1 or 2) -->
+                <div class="form-group">
+                    <label for="select-move-metric">Move Counting Metric:</label>
+                    <select id="select-move-metric" class="form-control">
+                        <option value="OBTM" selected>OBTM / HTM: Outer Block / Half Turn (U2 = 1 move, WCA Default)</option>
+                        <option value="QTM">QTM: Quarter Turn Metric (U2 = 2 moves)</option>
+                        <option value="ETM">ETM: Execution Turn Metric (each turn / rotation = 1 move)</option>
+                    </select>
+                    <small style="color: var(--text-muted);">In standard WCA / OBTM, 180° turns count as 1 move. In QTM, 180° turns count as 2 moves.</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-check">
+                        <input type="checkbox" id="toggle-inspection">
+                        <span>Enable WCA 15-second Inspection</span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-check">
+                        <input type="checkbox" id="toggle-scramble-alerts" checked>
+                        <span>Enable Scramble Correction Alerts (Sound & Visual)</span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-check">
+                        <input type="checkbox" id="toggle-sound" checked>
+                        <span>Enable Sound Effects (Ticks, Chimes, Fanfare)</span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-check">
+                        <input type="checkbox" id="toggle-voice" checked>
+                        <span>Enable Inspection Voice Alerts (8s / 12s)</span>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label for="select-bt-timeout">Auto-Disconnect Inactivity Timeout (Battery Saver):</label>
+                    <select id="select-bt-timeout" class="form-control">
+                        <option value="60">1 minute</option>
+                        <option value="120" selected>2 minutes (Default)</option>
+                        <option value="300">5 minutes</option>
+                        <option value="600">10 minutes</option>
+                        <option value="0">Never (Keep Connected)</option>
+                    </select>
+                    <small style="color: var(--text-muted);">Automatically disconnects Bluetooth after inactivity to preserve cube battery.</small>
+                </div>
+
+                <!-- Multi-Theme: Visual Design Style (主体框架) -->
+                <div class="form-group">
+                    <label for="select-ui-style" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                        <span>视觉主体风格 (Design Style):</span>
+                    </label>
+                    <select id="select-ui-style">
+                        <option value="dark">Precision Dark (极简暗黑 - 默认)</option>
+                        <option value="apple">Apple Liquid Glass (苹果流体玻璃 iOS / visionOS)</option>
+                        <option value="material">Material Design 3 (谷歌 Material You)</option>
+                        <option value="cyber">Cyber Neon (赛博霓虹科幻)</option>
+                        <option value="light">Clean Light (明亮极简日间)</option>
+                    </select>
+                </div>
+
+                <!-- Multi-Color: Accent Color Theme (强调主题色 - 多对多解耦) -->
+                <div class="form-group">
+                    <label for="select-accent-color" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a7 7 0 0 0 0 14 3.5 3.5 0 0 1 0 7 10 10 0 0 0 0-21z"></path></svg>
+                        <span>强调主题色 (Accent Color):</span>
+                    </label>
+                    <select id="select-accent-color">
+                        <option value="emerald">🟢 翡翠绿 (Emerald Green - 默认)</option>
+                        <option value="blue">🔵 苹果蓝 (Apple / System Blue)</option>
+                        <option value="purple">🟣 罗兰紫 (Electric Violet)</option>
+                        <option value="cyan">🔷 霓虹青 (Cyber Cyan)</option>
+                        <option value="amber">🟠 暖阳橙 (Sunset Amber)</option>
+                        <option value="crimson">🔴 极速红 (Crimson Red)</option>
+                        <option value="rose">🌸 樱花粉 (Sakura Rose)</option>
+                    </select>
+                    <!-- Quick Swatch Buttons -->
+                    <div class="color-palette-swatches" id="color-palette-swatches">
+                        <button type="button" class="swatch-btn color-swatch-emerald active" data-color="emerald" title="翡翠绿 (Emerald)"></button>
+                        <button type="button" class="swatch-btn color-swatch-blue" data-color="blue" title="苹果蓝 (Apple Blue)"></button>
+                        <button type="button" class="swatch-btn color-swatch-purple" data-color="purple" title="罗兰紫 (Violet)"></button>
+                        <button type="button" class="swatch-btn color-swatch-cyan" data-color="cyan" title="霓虹青 (Cyan)"></button>
+                        <button type="button" class="swatch-btn color-swatch-amber" data-color="amber" title="暖阳橙 (Amber)"></button>
+                        <button type="button" class="swatch-btn color-swatch-crimson" data-color="crimson" title="极速红 (Crimson)"></button>
+                        <button type="button" class="swatch-btn color-swatch-rose" data-color="rose" title="樱花粉 (Sakura)"></button>
+                    </div>
+                </div>
+                <select id="select-theme" style="display: none;"></select>
+
+                <!-- Calibration Info Card (Requirement: What is calibrate time and why) -->
+                <div class="form-group" style="padding: 0.75rem; background: var(--bg-surface-elevated); border-radius: var(--radius-sm); border: 1px solid var(--border-color); margin-top: 0.5rem;">
+                    <div style="font-size: 0.8rem; font-weight: 700; color: var(--accent-primary); display: flex; align-items: center; gap: 0.35rem;">
+                        <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+                        <span>What is "Calibrated Time"?</span>
+                    </div>
+                    <p style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 0.35rem; line-height: 1.45;">
+                        Smart cubes log turns using internal hardware crystal timestamps. Because Bluetooth wireless packet transmissions encounter latency and jitter (10-50ms), we perform a <strong>Linear Regression Calibration</strong> fitting hardware timestamps with browser monotonic time. This removes transmission lag and reconstructs millisecond-accurate physical turn timing.
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="document.getElementById('modal-settings').classList.remove('active')">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Help & Speedcubing Instructions -->
+    <div id="modal-help" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg class="svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    Help & Speedcubing Guide
+                </h3>
+                <button id="btn-close-help" class="btn-icon">
+                    <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <h4>How it Works:</h4>
+                <ol style="padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.9rem;">
+                    <li><strong>Connect Cube:</strong> Click "Connect Cube" and select your GAN/MonsterGo smart cube in the Bluetooth dialog.</li>
+                    <li><strong>Scramble:</strong> Follow the WCA scramble sequence. The active move is highlighted in real time as you turn the physical cube.</li>
+                    <li><strong>Smart Scramble Correction:</strong> If you make a wrong move, the app immediately computes the shortest corrective moves so you don't need to restart!</li>
+                    <li><strong>Signal on Finished Scramble:</strong> When the cube reaches the target scrambled state, a visual green pulse and an audio chime will play.</li>
+                    <li><strong>Auto Start:</strong> The timer starts the instant you make your first turn on the cube.</li>
+                    <li><strong>Auto Stop:</strong> The timer automatically stops the instant the cube is solved.</li>
+                    <li><strong>Recalibrate / Set Solved:</strong> Click "Set Solved" (or press 'R') if your cube state ever needs manual synchronization.</li>
+                </ol>
+
+                <h4 style="margin-top: 0.75rem;">Frequently Asked Questions:</h4>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+                    <div style="background: var(--bg-surface-elevated); padding: 0.6rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <strong style="color: var(--text-primary); display: block;">1. How do you count movements? Does X2 count as 1 or 2?</strong>
+                        <span style="display: block; margin-top: 0.25rem;">
+                            • In <strong>OBTM / HTM</strong> (Outer Block / Half Turn Metric, the standard WCA competition default), any single face rotation of 90° or 180° (e.g. <code>U</code>, <code>U2</code>, <code>R2</code>) counts as <strong>1 move</strong>.<br>
+                            • In <strong>QTM</strong> (Quarter Turn Metric), 180° double turns (<code>U2</code>, <code>R2</code>) count as <strong>2 moves</strong>, while 90° turns count as 1 move.<br>
+                            • You can toggle your preferred metric in Settings!
+                        </span>
+                    </div>
+                    <div style="background: var(--bg-surface-elevated); padding: 0.6rem 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                        <strong style="color: var(--text-primary); display: block;">2. What is Calibrate Time and why is it needed?</strong>
+                        <span style="display: block; margin-top: 0.25rem;">
+                            Bluetooth wireless packets suffer from transmission jitter, OS queue delays, and GATT connection intervals (10-50ms variance). The smart cube's internal microcontroller hardware clock records the exact physical moment each layer turned. Our <strong>Linear Regression Calibration</strong> aligns hardware timestamps with the timer to eliminate Bluetooth radio lag, giving true physical solve time and instant TPS.
+                        </span>
+                    </div>
+                </div>
+
+                <h4 style="margin-top: 0.75rem;">Keyboard Shortcuts:</h4>
+                <ul style="padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.9rem;">
+                    <li><code>Space</code>: Manual Start / Stop (if not using Bluetooth turns)</li>
+                    <li><code>N</code>: Generate New Scramble</li>
+                    <li><code>R</code>: Recalibrate / Set Solved</li>
+                    <li><code>Esc</code>: Reset Timer / Close Modals</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="document.getElementById('modal-help').classList.remove('active')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Solve Reconstruction & Move Breakdown -->
+    <div id="modal-reconstruct" class="modal-backdrop">
+        <div class="modal-card modal-card-lg">
+            <div class="modal-header">
+                <h3 class="modal-title" style="display: flex; align-items: center; gap: 0.4rem;">
+                    <svg class="svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    Solve Stage Breakdown & 3D Replay
+                </h3>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button id="btn-copy-recon-data" class="btn btn-sm btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;" title="Copy Scramble & Moves to Clipboard">
+                        <svg class="svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        复制复原数据
+                    </button>
+                    <button id="btn-close-reconstruct" class="btn-icon">
+                        <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="recon-summary">
+                    <div class="recon-stat">
+                        <span class="recon-stat-label">Solve Time</span>
+                        <span id="recon-solve-time" class="recon-stat-val">--</span>
+                    </div>
+                    <div class="recon-stat">
+                        <span class="recon-stat-label">Total Moves</span>
+                        <span id="recon-move-count" class="recon-stat-val">0</span>
+                    </div>
+                    <div class="recon-stat">
+                        <span class="recon-stat-label">Overall TPS</span>
+                        <span id="recon-tps" class="recon-stat-val">0.00</span>
+                    </div>
+                    <div class="recon-stat">
+                        <span class="recon-stat-label">Scramble</span>
+                        <span id="recon-scramble" style="font-family: var(--font-mono); font-size: 0.75rem; word-break: break-all;">--</span>
+                    </div>
+                </div>
+
+                <!-- Stage Analysis & Method Selector -->
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <span style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted);">Method Stage Breakdown:</span>
+                        <span id="recon-detected-face-badge" class="badge badge-surface" style="font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.5rem; border: 1px solid var(--border-color);" title="Detected Cross Face">Cross: White (D)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 0.3rem;">
+                            <label for="select-recon-method" style="font-size: 0.75rem; color: var(--text-muted);">Method:</label>
+                            <select id="select-recon-method" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; border-radius: var(--radius-sm); background-color: var(--bg-surface-elevated); color: var(--text-primary); border: 1px solid var(--border-color);">
+                                <option value="CFOP" selected>CFOP (Cross / F2L / OLL / PLL)</option>
+                                <option value="CFOP_PAIRS">CFOP Detailed (Cross / Pairs 1-4 / OLL / PLL)</option>
+                                <option value="Roux">Roux (FB / SB / CMLL / LSE)</option>
+                                <option value="LBL">LBL (Layer By Layer)</option>
+                            </select>
+                        </div>
+                        <div id="recon-cross-face-group" style="display: flex; align-items: center; gap: 0.3rem;">
+                            <label for="select-recon-cross-face" style="font-size: 0.75rem; color: var(--text-muted);">Cross Face:</label>
+                            <select id="select-recon-cross-face" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; border-radius: var(--radius-sm); background-color: var(--bg-surface-elevated); color: var(--text-primary); border: 1px solid var(--border-color);">
+                                <option value="auto" selected>Auto-Detect (Any Face)</option>
+                                <option value="U">White (U / Top)</option>
+                                <option value="D">Yellow (D / Bottom)</option>
+                                <option value="F">Green (F / Front)</option>
+                                <option value="B">Blue (B / Back)</option>
+                                <option value="L">Orange (L / Left)</option>
+                                <option value="R">Red (R / Right)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="recon-stage-cards" class="stage-summary-cards">
+                    <!-- Dynamic stage breakdown cards -->
+                </div>
+
+                <div style="margin-top: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Time-Proportional Move Flow (Click to jump state):</span>
+                    </div>
+                    <div id="recon-proportional-flow">
+                        <!-- Dynamic proportional moves -->
+                    </div>
+                </div>
+
+                <!-- Interactive Curve Toolbar (Requirement: Each curve editable & split into steps) -->
+                <div class="recon-curve-toolbar">
+                    <div class="recon-curve-toggles">
+                        <label class="form-check" style="font-size: 0.78rem; color: #10B981;">
+                            <input type="checkbox" id="toggle-recon-cumulative" checked>
+                            <span>Cumulative Curve</span>
+                        </label>
+                        <label class="form-check" style="font-size: 0.78rem; color: #60A5FA;">
+                            <input type="checkbox" id="toggle-recon-derivative" checked>
+                            <span>Derivative Delta Bars</span>
+                        </label>
+                        <label class="form-check" style="font-size: 0.78rem; color: #06B6D4;">
+                            <input type="checkbox" id="toggle-recon-tps">
+                            <span>TPS Velocity</span>
+                        </label>
+                        <label class="form-check" style="font-size: 0.78rem; color: #F59E0B;">
+                            <input type="checkbox" id="toggle-recon-stage-bands" checked>
+                            <span>Stage Bands</span>
+                        </label>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 0.35rem;">
+                        <label for="select-recon-overlay" style="font-size: 0.75rem; color: var(--text-muted);">Overlay:</label>
+                        <select id="select-recon-overlay" style="padding: 0.2rem 0.4rem; font-size: 0.78rem; border-radius: var(--radius-sm); background-color: var(--bg-surface-elevated); color: var(--text-primary); border: 1px solid var(--border-color);">
+                            <option value="none">None</option>
+                            <option value="best">Best Session Solve</option>
+                            <option value="prev">Previous Solve</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="recon-interactive-grid" style="margin-top: 0.75rem;">
+                    <!-- Left: 3D Replay Cube & Controls -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: center;">
+                        <div id="recon-cube-container" style="width: 220px; height: 220px; cursor: grab;"></div>
+                        
+                        <div class="recon-playback-controls" style="width: 100%;">
+                            <div class="recon-btn-row">
+                                <button id="btn-recon-prev" class="btn btn-secondary btn-sm">
+                                    <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></svg>
+                                    Prev
+                                </button>
+                                <button id="btn-recon-play" class="btn btn-primary btn-sm">
+                                    <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                    Play
+                                </button>
+                                <button id="btn-recon-next" class="btn btn-secondary btn-sm">
+                                    Next
+                                    <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+                                </button>
+                            </div>
+                            <input type="range" id="recon-slider" class="recon-slider" min="0" max="1" value="0">
+                            <span id="recon-step-label" style="font-family: var(--font-mono); font-size: 0.8rem;">Step: 0 / 0</span>
+                        </div>
+                    </div>
+
+                    <!-- Right: Move Log Table & TPS Graph -->
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Movement Velocity & Stage Steps Timeline</span>
+                            <span style="font-size: 0.72rem; color: var(--text-muted);">Click anywhere on curve to jump step</span>
+                        </div>
+                        <canvas id="canvas-tps-graph" class="canvas-tps-graph" style="cursor: pointer;"></canvas>
+
+                        <div class="recon-table-wrapper">
+                            <table class="history-table" style="font-size: 0.8rem;">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Move</th>
+                                        <th>Timestamp</th>
+                                        <th>Delta</th>
+                                        <th>TPS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recon-tbody">
+                                    <!-- Populated on open -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="document.getElementById('modal-reconstruct').classList.remove('active')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add Custom Algorithm -->
+    <div id="modal-custom-alg" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <svg class="svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Add Custom Algorithm
+                </h3>
+                <button id="btn-close-custom-alg" class="btn-icon">
+                    <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="input-custom-alg-name">Algorithm / Case Name:</label>
+                    <input type="text" id="input-custom-alg-name" placeholder="e.g. My Favorite OLL, T-Perm variant">
+                </div>
+                <div class="form-group">
+                    <label for="input-custom-alg-group">Category / Group:</label>
+                    <input type="text" id="input-custom-alg-group" placeholder="e.g. OLL, PLL, Triggers, Custom" value="Custom Cases">
+                </div>
+                <div class="form-group">
+                    <label for="input-custom-alg-moves">Moves Sequence:</label>
+                    <input type="text" id="input-custom-alg-moves" placeholder="e.g. R U R' U' R' F R F'">
+                </div>
+                <div class="form-group">
+                    <label for="input-custom-alg-desc">Description / Notes (optional):</label>
+                    <input type="text" id="input-custom-alg-desc" placeholder="Execution tips, fingertricks...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btn-save-custom-alg" class="btn btn-primary">Save Algorithm</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('modal-custom-alg').classList.remove('active')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="aes.js?v=13.9"></script>
+    <script src="min2phase.js?v=13.9"></script>
+    <script src="three.min.js?v=13.9"></script>
+    <script src="cube-engine.js?v=13.9"></script>
+    <script src="alg-database.js?v=13.9"></script>
+    <script src="method-analyzer.js?v=13.9"></script>
+    <script src="chart-engine.js?v=13.9"></script>
+    <script src="gan-bluetooth.js?v=13.9"></script>
+    <script src="audio-synth.js?v=13.9"></script>
+    <script src="renderer-3d.js?v=13.9"></script>
+    <script src="renderer-2d.js?v=13.9"></script>
+    <script src="timer-engine.js?v=13.9"></script>
+    <script src="ui-controller.js?v=13.9"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration error:', err));
+            });
+        }
+    </script>
+</body>
+</html>

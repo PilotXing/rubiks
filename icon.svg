@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#16181F"/>
+      <stop offset="100%" stop-color="#0D0E12"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <!-- App Icon Background -->
+  <rect width="512" height="512" rx="110" fill="url(#bgGrad)"/>
+  <rect width="504" height="504" x="4" y="4" rx="106" fill="none" stroke="#2D3240" stroke-width="4"/>
+
+  <!-- Cube Group -->
+  <g transform="translate(256, 260) scale(1.15)">
+    <!-- Top Face (Green / Emerald) -->
+    <!-- (Isometric projection) -->
+    <!-- Top Facelet 1 -->
+    <polygon points="0,-140 50,-115 0,-90 -50,-115" fill="#10B981" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="55,-112 105,-87 55,-62 5,-87" fill="#10B981" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="-55,-112 -5,-87 -55,-62 -105,-87" fill="#10B981" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+
+    <polygon points="0,-84 50,-59 0,-34 -50,-59" fill="#34D399" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="55,-56 105,-31 55,-6 5,-31" fill="#10B981" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="-55,-56 -5,-31 -55,-6 -105,-31" fill="#10B981" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+
+    <polygon points="0,-28 50,-3 0,22 -50,-3" fill="#10B981" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="55,0 105,25 55,50 5,25" fill="#059669" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="-55,0 -5,25 -55,50 -105,25" fill="#059669" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+
+    <!-- Left Face (Blue / Cyan) -->
+    <polygon points="-110,-82 -60,-57 -60,2 -110,-23" fill="#3B82F6" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="-55,-54 -5,-29 -5,30 -55,5" fill="#2563EB" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="-110,-20 -60,5 -60,64 -110,39" fill="#1D4ED8" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="-55,8 -5,33 -5,92 -55,67" fill="#3B82F6" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="-110,42 -60,67 -60,126 -110,101" fill="#2563EB" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="-55,70 -5,95 -5,154 -55,129" fill="#1D4ED8" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+
+    <!-- Right Face (Orange / Amber / Red) -->
+    <polygon points="5,-29 55,-54 110,-26 60,-1" fill="#F59E0B" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="60,2 110,-23 110,36 60,61" fill="#EF4444" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="5,33 55,8 110,36 60,61" fill="#F97316" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="5,33 55,8 55,67 5,92" fill="#F59E0B" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="60,64 110,39 110,98 60,123" fill="#F97316" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+    <polygon points="5,95 55,70 55,129 5,154" fill="#EF4444" stroke="#0D0E12" stroke-width="5" stroke-linejoin="round"/>
+  </g>
+</svg>
