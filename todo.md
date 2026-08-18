@@ -255,3 +255,10 @@
     - Implemented Damping Ratio `1.0` (critically damped): cards slide directly into target position without overshoot, bounce-back, or oscillation.
 - [x] **Version Upgrade**:
     - Bumped to `v14.2` (sw.js cache `rubiks-timer-v14.2`).
+
+## Full-Bleed 100% Container Scramble Display (100% 充满容器无冗余边框 - v14.3)
+- [x] **Eliminated Nested Margins, Gaps & Double Borders**:
+    - Removed nested borders, inner box-shadows, and outer container padding on `#scramble-box`.
+    - Cards and carousel track now occupy 100% of `#arena-container` edge-to-edge with zero surrounding gaps or redundant borders.
+- [x] **Version Upgrade**:
+    - Bumped to `v14.3` (sw.js cache `rubiks-timer-v14.3`).

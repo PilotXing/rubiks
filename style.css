@@ -864,11 +864,13 @@ body {
 
 #scramble-box,
 .scramble-view {
-    padding: 1.25rem 1.5rem;
+    padding: 0 !important;
+    margin: 0 !important;
     display: flex !important;
     flex-direction: column !important;
-    gap: 1rem !important;
+    gap: 0 !important;
     width: 100% !important;
+    min-height: unset !important;
     box-sizing: border-box !important;
 }
 
@@ -1053,10 +1055,11 @@ body {
 
 /* Continuous Photo-Album Scramble Carousel */
 .scramble-carousel-viewport {
-    width: 100%;
+    width: 100% !important;
     position: relative;
     overflow: hidden;
-    padding: 0.2rem 0;
+    padding: 0 !important;
+    margin: 0 !important;
     box-sizing: border-box;
     touch-action: pan-y;
     user-select: none;
@@ -1067,7 +1070,9 @@ body {
     display: flex;
     align-items: stretch;
     width: 100%;
-    gap: 14px;
+    gap: 0px;
+    margin: 0;
+    padding: 0;
     position: relative;
     touch-action: pan-y;
     user-select: none;
@@ -1078,6 +1083,7 @@ body {
 .scramble-card {
     min-width: 100%;
     max-width: 100%;
+    width: 100%;
     flex: 0 0 100%;
     box-sizing: border-box;
     font-family: var(--font-mono);
@@ -1088,25 +1094,24 @@ body {
     text-align: center;
     word-break: normal;
     overflow-wrap: break-word;
-    padding: 1.15rem 1rem;
-    background-color: var(--bg-surface-elevated);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
+    padding: 1.5rem 1.25rem;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
     cursor: pointer;
     user-select: none;
     -webkit-user-select: none;
     position: relative;
-    transition: background-color 0.15s ease, border-color 0.15s ease;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    transition: background-color 0.15s ease;
 }
 
 .scramble-card:hover {
     background-color: var(--bg-surface-hover);
-    border-color: var(--accent-primary);
 }
 
 .scramble-card:active {
-    transform: scale(0.99);
+    opacity: 0.85;
 }
 
 .scramble-card.scramble-empty-hint {

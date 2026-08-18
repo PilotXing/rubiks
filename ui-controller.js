@@ -512,7 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return html;
     }
 
-    const CAROUSEL_GAP = 14;
+    const CAROUSEL_GAP = 0;
 
     function getCarouselMetrics() {
         const viewport = carouselElements.viewport || document.getElementById('scramble-box');
