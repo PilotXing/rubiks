@@ -235,3 +235,14 @@
     3. **从左往右滑 (Swipe from Left to Right / Drag Right 👉)**: 返回上一个打乱（`goToPreviousScramble()`），历史栈回退；若已是第一个打乱则触发阻尼回弹提示。
 - [x] **Version Upgrade**:
     - Bumped to `v14.0` (sw.js cache `rubiks-timer-v14.0`).
+
+## Continuous Photo-Album Scramble Carousel (相册画廊式连贯跟手滑动 - v14.1)
+- [x] **Pre-computed Multi-Card Infinite Carousel Track**:
+    - Real-time pre-generation of adjacent formula cards (Left: Previous Scramble in history; Right: Pre-calculated Next/New Scramble).
+    - 3-panel continuous viewport track (`#scramble-carousel-track`) with unified card gap (`14px`).
+- [x] **Real-time 1:1 Seamless Tracking (跟手无缝接续)**:
+    - As the user drags left, the next scramble slides in synchronously from the right edge with zero delay.
+    - As the user drags right, the previous scramble slides in synchronously from the left edge.
+    - iOS-inspired momentum, spring snap settle, and rubber-band edge physics.
+- [x] **Version Upgrade**:
+    - Bumped to `v14.1` (sw.js cache `rubiks-timer-v14.1`).

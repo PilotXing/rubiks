@@ -433,10 +433,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // -------------------------------------------------------------
-    // 3. Scramble History, Gestures & Arena Controller
+    // 3. Continuous Photo-Album Scramble Carousel & Gesture System
     // -------------------------------------------------------------
     let scrambleHistory = [];
     let scrambleHistoryIndex = -1;
+    let pendingNextScramble = null;
+
+    const carouselElements = {
+        viewport: document.getElementById('scramble-box'),
+        track: document.getElementById('scramble-carousel-track'),
+        cardPrev: document.getElementById('scramble-card-prev'),
+        cardCurrent: document.getElementById('scramble-text'),
+        cardNext: document.getElementById('scramble-card-next'),
+    };
 
     function showToast(message, duration = 1600) {
         let container = document.getElementById('toast-container');
@@ -464,21 +473,105 @@ document.addEventListener('DOMContentLoaded', () => {
         }, duration);
     }
 
-    function updateScrambleHistoryBadge() {
-        const badge = document.getElementById('scramble-history-badge');
-        if (badge) {
-            if (scrambleHistory.length > 1) {
-                badge.style.display = 'inline-flex';
-                badge.textContent = `${scrambleHistoryIndex + 1} / ${scrambleHistory.length}`;
-            } else {
-                badge.style.display = 'none';
+    function formatScrambleHTML(scrambleStr, activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null) {
+        if (!scrambleStr) return '<span class="scramble-empty-hint">Loading scramble...</span>';
+        const moves = scrambleStr.trim().split(/\s+/);
+        let html = '';
+
+        if (correctionMoves && correctionMoves.length > 0) {
+            const nextCorrection = correctionMoves[0];
+            const colorCls = getMoveColorClass(nextCorrection);
+            html += `<span class="scramble-correction-prefix">Correction:</span> `;
+            html += `<span class="scramble-move move-correction-active ${colorCls}">${nextCorrection}</span> `;
+            if (correctionMoves.length > 1) {
+                html += `<span class="scramble-move move-correction">${correctionMoves.slice(1).join(' ')}</span> `;
             }
+            html += `<span class="scramble-divider">| Target:</span> `;
+        }
+
+        moves.forEach((move, idx) => {
+            let cls = 'move-pending';
+            let label = move;
+            const colorCls = getMoveColorClass(move);
+
+            if (!correctionMoves || correctionMoves.length === 0) {
+                if (idx < activeIdx) {
+                    cls = 'move-done';
+                } else if (idx === activeIdx) {
+                    if (isHalfTurn) {
+                        cls = 'move-half-active';
+                        label = remainingOnFace ? `${remainingOnFace} (½)` : `${move} (½)`;
+                    } else {
+                        cls = 'move-active';
+                    }
+                }
+            }
+            html += `<span class="scramble-move ${cls} ${colorCls}">${label}</span> `;
+        });
+
+        return html;
+    }
+
+    function updateCarouselCards(activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null) {
+        if (!carouselElements.cardCurrent) {
+            carouselElements.cardCurrent = document.getElementById('scramble-text');
+            carouselElements.cardPrev = document.getElementById('scramble-card-prev');
+            carouselElements.cardNext = document.getElementById('scramble-card-next');
+            carouselElements.track = document.getElementById('scramble-carousel-track');
+            carouselElements.viewport = document.getElementById('scramble-box');
+        }
+
+        const currentStr = currentScramble || (scrambleHistoryIndex >= 0 ? scrambleHistory[scrambleHistoryIndex] : '');
+        const prevStr = scrambleHistoryIndex > 0 ? scrambleHistory[scrambleHistoryIndex - 1] : null;
+        
+        let nextStr = null;
+        if (scrambleHistoryIndex < scrambleHistory.length - 1) {
+            nextStr = scrambleHistory[scrambleHistoryIndex + 1];
+        } else {
+            if (!pendingNextScramble) {
+                pendingNextScramble = generateWcaScramble(21);
+            }
+            nextStr = pendingNextScramble;
+        }
+
+        // Center Active Card
+        if (carouselElements.cardCurrent) {
+            carouselElements.cardCurrent.innerHTML = formatScrambleHTML(currentStr, activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace);
+            carouselElements.cardCurrent.classList.remove('scramble-empty-hint');
+        }
+
+        // Left Previous Card
+        if (carouselElements.cardPrev) {
+            if (prevStr) {
+                carouselElements.cardPrev.innerHTML = formatScrambleHTML(prevStr);
+                carouselElements.cardPrev.classList.remove('scramble-empty-hint');
+            } else {
+                carouselElements.cardPrev.innerHTML = '<span>已经是首个打乱</span>';
+                carouselElements.cardPrev.classList.add('scramble-empty-hint');
+            }
+        }
+
+        // Right Next Card (Pre-computed in real-time)
+        if (carouselElements.cardNext) {
+            carouselElements.cardNext.innerHTML = formatScrambleHTML(nextStr);
+            carouselElements.cardNext.classList.remove('scramble-empty-hint');
+        }
+
+        // Reset track position to center
+        if (carouselElements.track) {
+            carouselElements.track.style.transition = 'none';
+            carouselElements.track.style.transform = 'translate3d(calc(-100% - 14px), 0, 0)';
         }
     }
 
     function setNewScramble(scrambleStr, isHistorical = false) {
         if (!scrambleStr) {
-            scrambleStr = generateWcaScramble(21);
+            if (pendingNextScramble) {
+                scrambleStr = pendingNextScramble;
+                pendingNextScramble = null;
+            } else {
+                scrambleStr = generateWcaScramble(21);
+            }
             if (scrambleHistoryIndex < scrambleHistory.length - 1) {
                 scrambleHistory = scrambleHistory.slice(0, scrambleHistoryIndex + 1);
             }
@@ -492,6 +585,9 @@ document.addEventListener('DOMContentLoaded', () => {
             scrambleHistoryIndex = scrambleHistory.length - 1;
         }
 
+        // Pre-calculate next preview for continuous slide-in
+        pendingNextScramble = generateWcaScramble(21);
+
         currentScramble = scrambleStr;
         timer.setScramble(currentScramble);
         tracker.setScramble(currentScramble);
@@ -502,41 +598,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const evalResult = tracker.setCurrentCubeState(physicalCube.cp, physicalCube.co, physicalCube.ep, physicalCube.eo);
 
-        if (elements.scrambleText) {
-            elements.scrambleText.classList.remove('scramble-text-hidden');
-        }
         if (elements.mainTimerContainer) {
             elements.mainTimerContainer.classList.remove('timer-ready-pulse');
         }
         setArenaMode('SCRAMBLE');
         updateScrambleStatus(evalResult);
-        updateScrambleHistoryBadge();
-    }
-
-    function goToPreviousScramble() {
-        if (scrambleHistoryIndex > 0) {
-            scrambleHistoryIndex--;
-            const prevScramble = scrambleHistory[scrambleHistoryIndex];
-            setNewScramble(prevScramble, true);
-            showToast(`← 上一个打乱 (${scrambleHistoryIndex + 1}/${scrambleHistory.length})`);
-            triggerHaptic('light');
-        } else {
-            showToast('已经是第一个打乱了');
-            triggerHaptic('light');
-        }
-    }
-
-    function goToNextOrNewScramble() {
-        if (scrambleHistoryIndex < scrambleHistory.length - 1) {
-            scrambleHistoryIndex++;
-            const nextScramble = scrambleHistory[scrambleHistoryIndex];
-            setNewScramble(nextScramble, true);
-            showToast(`→ 下一个打乱 (${scrambleHistoryIndex + 1}/${scrambleHistory.length})`);
-        } else {
-            setNewScramble();
-            showToast(`✓ 已刷新生成新打乱 (${scrambleHistory.length})`);
-        }
-        triggerHaptic('light');
     }
 
     function copyCurrentScramble() {
@@ -583,168 +649,142 @@ document.addEventListener('DOMContentLoaded', () => {
         triggerHaptic('medium');
     }
 
-    // Touch & Pointer Direct Manipulation + Apple Spring Physics
+    // Continuous Photo-Album Gesture Track with Direct 1:1 Finger Tracking
     function initScrambleGesture() {
-        const el = elements.scrambleText;
-        if (!el) return;
+        const viewport = document.getElementById('scramble-box');
+        const track = document.getElementById('scramble-carousel-track');
+        if (!track || !viewport) return;
 
         let startX = null;
         let startY = null;
         let startTime = 0;
         let isDragging = false;
-        let currentX = 0;
+        let cardWidth = 0;
+        const GAP = 14;
+        let baseOffset = 0;
+        let currentOffset = 0;
+        let isAnimating = false;
 
-        el.addEventListener('pointerdown', (e) => {
-            if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+        viewport.addEventListener('pointerdown', (e) => {
+            if (isAnimating) return;
+            cardWidth = viewport.offsetWidth || 340;
+            baseOffset = -(cardWidth + GAP);
             startX = e.clientX;
             startY = e.clientY;
-            currentX = 0;
+            currentOffset = baseOffset;
             startTime = performance.now();
             isDragging = false;
-            el.style.transition = 'none';
+            track.style.transition = 'none';
         });
 
-        el.addEventListener('pointermove', (e) => {
-            if (startX === null) return;
+        viewport.addEventListener('pointermove', (e) => {
+            if (startX === null || isAnimating) return;
             const deltaX = e.clientX - startX;
             const deltaY = e.clientY - startY;
 
-            // Recognize horizontal swipe threshold (hysteresis > 8px)
-            if (!isDragging && Math.abs(deltaX) > 8 && Math.abs(deltaX) > Math.abs(deltaY)) {
+            if (!isDragging && Math.abs(deltaX) > 6 && Math.abs(deltaX) > Math.abs(deltaY)) {
                 isDragging = true;
-                try { el.setPointerCapture(e.pointerId); } catch (_) {}
+                try { viewport.setPointerCapture(e.pointerId); } catch (_) {}
             }
 
             if (isDragging) {
                 e.preventDefault();
-                currentX = deltaX;
-                // Rubber-band resistance when swiping right (back to previous) at index 0
-                if (currentX > 0 && scrambleHistoryIndex <= 0) {
-                    currentX = (Math.abs(deltaX) * 180 * 0.55) / (180 + 0.55 * Math.abs(deltaX));
+                let moveX = deltaX;
+                // If dragging right (swiping back to previous) but at the first scramble, apply Apple rubber-band resistance
+                if (moveX > 0 && scrambleHistoryIndex <= 0) {
+                    moveX = (deltaX * 160 * 0.45) / (160 + 0.45 * deltaX);
                 }
-                const rot = currentX * 0.015;
-                const op = Math.max(0.4, 1 - Math.abs(currentX) / 320);
-                el.style.transform = `translateX(${currentX}px) rotate(${rot}deg)`;
-                el.style.opacity = String(op);
+                currentOffset = baseOffset + moveX;
+                track.style.transform = `translate3d(${currentOffset}px, 0, 0)`;
             }
         });
 
         const handlePointerEnd = (e) => {
-            if (startX === null) return;
+            if (startX === null || isAnimating) return;
             const elapsed = Math.max(1, performance.now() - startTime);
-            const velocity = currentX / elapsed;
+            const deltaX = currentOffset - baseOffset;
+            const velocity = deltaX / elapsed; // px/ms
 
             if (isDragging) {
                 isDragging = false;
-                try { el.releasePointerCapture(e.pointerId); } catch (_) {}
+                try { viewport.releasePointerCapture(e.pointerId); } catch (_) {}
 
-                // 1. 从右往左滑 (Swipe from Right to Left: currentX < -40 或 velocity < -0.3) -> 生成下一个 / 新打乱
-                if (currentX < -40 || velocity < -0.3) {
-                    el.style.transition = 'transform 0.16s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.16s ease';
-                    el.style.transform = 'translateX(-100%)';
-                    el.style.opacity = '0';
+                const threshold = Math.min(cardWidth * 0.2, 70);
+
+                // 1. 从右往左滑 (Swipe from Right to Left / deltaX < -threshold 或 velocity < -0.3) -> 切换到下一个
+                if (deltaX < -threshold || velocity < -0.3) {
+                    isAnimating = true;
+                    const targetOffset = -2 * (cardWidth + GAP);
+                    track.style.transition = 'transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)';
+                    track.style.transform = `translate3d(${targetOffset}px, 0, 0)`;
+
                     setTimeout(() => {
-                        goToNextOrNewScramble();
-                        el.style.transition = 'none';
-                        el.style.transform = 'translateX(50px)';
-                        el.style.opacity = '0';
-                        requestAnimationFrame(() => {
-                            el.style.transition = 'transform 0.26s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.26s ease';
-                            el.style.transform = 'translateX(0)';
-                            el.style.opacity = '1';
-                        });
-                    }, 160);
+                        if (scrambleHistoryIndex < scrambleHistory.length - 1) {
+                            scrambleHistoryIndex++;
+                            currentScramble = scrambleHistory[scrambleHistoryIndex];
+                        } else {
+                            if (!pendingNextScramble) pendingNextScramble = generateWcaScramble(21);
+                            scrambleHistory.push(pendingNextScramble);
+                            scrambleHistoryIndex = scrambleHistory.length - 1;
+                            currentScramble = pendingNextScramble;
+                            pendingNextScramble = generateWcaScramble(21);
+                        }
+                        timer.setScramble(currentScramble);
+                        tracker.setScramble(currentScramble);
+                        if (physicalCube.isSolved()) physicalCube.reset();
+                        updateCarouselCards(0);
+                        isAnimating = false;
+                        triggerHaptic('light');
+                    }, 220);
                 }
-                // 2. 从左往右滑 (Swipe from Left to Right: currentX > 40 或 velocity > 0.3) -> 返回上一个打乱
-                else if (currentX > 40 || velocity > 0.3) {
+                // 2. 从左往右滑 (Swipe from Left to Right / deltaX > threshold 或 velocity > 0.3) -> 返回上一个
+                else if (deltaX > threshold || velocity > 0.3) {
                     if (scrambleHistoryIndex > 0) {
-                        el.style.transition = 'transform 0.16s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.16s ease';
-                        el.style.transform = 'translateX(100%)';
-                        el.style.opacity = '0';
+                        isAnimating = true;
+                        const targetOffset = 0;
+                        track.style.transition = 'transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)';
+                        track.style.transform = `translate3d(0px, 0, 0)`;
+
                         setTimeout(() => {
-                            goToPreviousScramble();
-                            el.style.transition = 'none';
-                            el.style.transform = 'translateX(-50px)';
-                            el.style.opacity = '0';
-                            requestAnimationFrame(() => {
-                                el.style.transition = 'transform 0.26s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.26s ease';
-                                el.style.transform = 'translateX(0)';
-                                el.style.opacity = '1';
-                            });
-                        }, 160);
+                            scrambleHistoryIndex--;
+                            currentScramble = scrambleHistory[scrambleHistoryIndex];
+                            timer.setScramble(currentScramble);
+                            tracker.setScramble(currentScramble);
+                            if (physicalCube.isSolved()) physicalCube.reset();
+                            updateCarouselCards(0);
+                            isAnimating = false;
+                            triggerHaptic('light');
+                        }, 220);
                     } else {
                         // 已经是第一个打乱，回弹并提示
-                        el.style.transition = 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.25s ease';
-                        el.style.transform = 'translateX(0)';
-                        el.style.opacity = '1';
-                        goToPreviousScramble();
+                        track.style.transition = 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1)';
+                        track.style.transform = `translate3d(${baseOffset}px, 0, 0)`;
+                        showToast('已经是第一个打乱了');
+                        triggerHaptic('light');
                     }
                 }
-                // 未达到阈值：平滑弹簧复位
+                // 未达到滑动阈值：平滑弹簧复位
                 else {
-                    el.style.transition = 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.25s ease';
-                    el.style.transform = 'translateX(0)';
-                    el.style.opacity = '1';
+                    track.style.transition = 'transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)';
+                    track.style.transform = `translate3d(${baseOffset}px, 0, 0)`;
                 }
             } else {
-                // 3. 点击公式 (Tap without drag) -> 复制该公式
+                // 3. 点击卡片 (Tap without dragging) -> 复制当前公式
                 copyCurrentScramble();
-                el.style.transition = 'transform 0.15s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.15s ease';
-                el.style.transform = 'translateX(0)';
-                el.style.opacity = '1';
             }
 
             startX = null;
             startY = null;
-            currentX = 0;
         };
 
-        el.addEventListener('pointerup', handlePointerEnd);
-        el.addEventListener('pointercancel', handlePointerEnd);
+        viewport.addEventListener('pointerup', handlePointerEnd);
+        viewport.addEventListener('pointercancel', handlePointerEnd);
     }
 
     initScrambleGesture();
 
     function renderScrambleDisplay(activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null) {
-        const moves = currentScramble.split(/\s+/);
-        let html = '';
-
-        if (elements.scrambleStepBadge) {
-            elements.scrambleStepBadge.textContent = `${activeIdx} / ${moves.length}`;
-        }
-
-        if (correctionMoves && correctionMoves.length > 0) {
-            const nextCorrection = correctionMoves[0];
-            const colorCls = getMoveColorClass(nextCorrection);
-            html += `<span class="scramble-correction-prefix">Correction:</span> `;
-            html += `<span class="scramble-move move-correction-active ${colorCls}">${nextCorrection}</span> `;
-            if (correctionMoves.length > 1) {
-                html += `<span class="scramble-move move-correction">${correctionMoves.slice(1).join(' ')}</span> `;
-            }
-            html += `<span class="scramble-divider">| Target:</span> `;
-        }
-
-        moves.forEach((move, idx) => {
-            let cls = 'move-pending';
-            let label = move;
-            const colorCls = getMoveColorClass(move);
-
-            if (!correctionMoves || correctionMoves.length === 0) {
-                if (idx < activeIdx) {
-                    cls = 'move-done';
-                } else if (idx === activeIdx) {
-                    if (isHalfTurn) {
-                        cls = 'move-half-active';
-                        label = remainingOnFace ? `${remainingOnFace} (½)` : `${move} (½)`;
-                    } else {
-                        cls = 'move-active';
-                    }
-                }
-            }
-            html += `<span class="scramble-move ${cls} ${colorCls}">${label}</span> `;
-        });
-
-        elements.scrambleText.innerHTML = html;
+        updateCarouselCards(activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace);
     }
 
     function updateScrambleStatus(evalResult) {
