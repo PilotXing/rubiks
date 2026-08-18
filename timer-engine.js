@@ -22,7 +22,7 @@
      * Format milliseconds into standard speedcubing time display (e.g. 9.42, 1:12.35)
      */
     function formatTime(ms, includeHundredths = true) {
-        if (ms == null || isNaN(ms)) return '0.00';
+        if (ms == null || isNaN(ms)) return '00.00';
         if (ms < 0) return 'DNF';
 
         const totalSecs = ms / 1000;
@@ -37,13 +37,13 @@
             if (mins > 0) {
                 return `${mins}:${pad(secs)}.${pad(centis)}`;
             } else {
-                return `${secs}.${pad(centis)}`;
+                return `${pad(secs, 2)}.${pad(centis)}`;
             }
         } else {
             if (mins > 0) {
                 return `${mins}:${pad(secs)}.${pad(milliss, 3)}`;
             } else {
-                return `${secs}.${pad(milliss, 3)}`;
+                return `${pad(secs, 2)}.${pad(milliss, 3)}`;
             }
         }
     }

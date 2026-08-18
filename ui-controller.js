@@ -1098,8 +1098,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    function updateTimerDigitsText(text) {
+        if (!elements.timerDisplay) return;
+        elements.timerDisplay.textContent = text;
+        if (text.length > 5) {
+            elements.timerDisplay.classList.add('timer-digits-long');
+        } else {
+            elements.timerDisplay.classList.remove('timer-digits-long');
+        }
+    }
+
     timer.on('tick', ({ elapsedMs, moveCount, tps }) => {
-        elements.timerDisplay.textContent = formatTime(elapsedMs);
+        updateTimerDigitsText(formatTime(elapsedMs));
         elements.liveMovesBadge.textContent = `${moveCount} moves`;
         elements.liveTpsBadge.textContent = `${tps} TPS`;
     });
@@ -1110,7 +1120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     timer.on('inspectionTick', ({ secondsLeft, callout }) => {
-        elements.timerDisplay.textContent = String(secondsLeft);
+        updateTimerDigitsText(String(secondsLeft));
         if (callout) {
             sound.playInspectionWarning(callout === 8 ? 8 : 12);
         }
@@ -1124,7 +1134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleSolveFinishedUI(solve) {
         if (!solve) return;
         setArenaMode('TIMER');
-        elements.timerDisplay.textContent = solve.formattedTime;
+        updateTimerDigitsText(solve.formattedTime);
         if (elements.timerSubDisplay) {
             if (solve.calibratedTimeMs && solve.calibratedTimeMs !== solve.rawTimeMs) {
                 elements.timerSubDisplay.textContent = `Calibrated: ${formatTime(solve.calibratedTimeMs)} | ${solve.moveCount} moves @ ${solve.tps} TPS`;

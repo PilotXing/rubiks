@@ -854,6 +854,7 @@ body {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     overflow: hidden;
+    container-type: inline-size;
 }
 
 .arena-view {
@@ -1324,20 +1325,25 @@ body {
 
 .timer-digits {
     font-family: var(--font-mono);
-    font-size: clamp(4.8rem, 18vw, 8.5rem);
+    font-size: min(25.5cqw, 25.5vw, 36vh, 175px);
     font-weight: 800;
-    letter-spacing: -0.04em;
-    line-height: 1.1;
+    letter-spacing: -0.02em;
+    line-height: 1;
     color: var(--text-primary);
     user-select: none;
     text-align: center;
     width: 100%;
-    padding: 0.8rem 0.2rem;
+    padding: 1rem 0;
     box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: center;
+    white-space: nowrap;
     transition: transform 0.12s ease, color 0.12s ease;
+}
+
+.timer-digits.timer-digits-long {
+    font-size: min(18cqw, 18vw, 28vh, 125px);
 }
 
 .live-stats-bar {

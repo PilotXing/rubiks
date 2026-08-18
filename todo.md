@@ -290,3 +290,12 @@
     - Bound to `resize` and `orientationchange` events to seamlessly re-render cards and update track offsets with zero visual jumping.
 - [x] **Version Upgrade**:
     - Bumped to `v14.6` (sw.js cache `rubiks-timer-v14.6`).
+
+## Proportional Container-Width Timer Scaling (`00.00` 填满页面宽度与高度等比 - v14.7)
+- [x] **Standard 4-Digit Central-Decimal Format (`00.00`)**:
+    - Formatted time output in `timer-engine.js` as `${pad(secs, 2)}.${pad(centis, 2)}` for uniform 4-digit display (`00.00`, `09.42`, `12.34`).
+- [x] **Proportional Container-Query Sizing (`min(25.5cqw, 25.5vw, 36vh, 175px)`)**:
+    - Fitted `.timer-digits` to 100% of the arena width in portrait mode, while maintaining proportional aspect ratio constrained by viewport height in landscape.
+    - Dynamic `.timer-digits-long` support for long format solves (> 1 min).
+- [x] **Version Upgrade**:
+    - Bumped to `v14.7` (sw.js cache `rubiks-timer-v14.7`).
