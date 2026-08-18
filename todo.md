@@ -211,20 +211,27 @@
     - Tapping/clicking `#scramble-text` directly copies the current scramble formula to clipboard.
     - Displays an Apple-style floating pill toast (`#toast-container`) with `"✓ 已复制当前打乱公式"`.
     - Triggers light haptic feedback vibration.
-## Pure Minimalist Scramble & Refined Gestures (纯粹大字打乱与手势修正 - v14.0)
-- [x] **Pure Minimalist Arena Layout**:
-    - Removed all headers, step count badges (`0/21`), gesture hint bars, and progress status banners from the scramble card.
-    - Scramble text expands to fill the entire container (`font-size: clamp(1.5rem, 4.6vw, 2.2rem); font-weight: 700;`).
-- [x] **Correct Natural Swipe Gesture Mapping**:
-    - **从右向左滑 (Swipe Left 👈, Drag Left)**: **生成下一个 / 刷新新打乱** (`goToNextOrNewScramble()`)，带有向左滑出与右侧平滑弹簧滑入动画。
-    - **从左向右滑 (Swipe Right 👉, Drag Right)**: **返回上一个打乱** (`goToPreviousScramble()`)，带有向右滑出与左侧平滑弹簧滑入动画，并在起点带有橡皮筋阻尼回弹。
-- [x] **Click Tap Animation (`tap-pop`)**:
-    - 点击公式触发轻快流畅的微缩放（`scale(0.95) -> 1.03 -> 1.0`）与主题色发光脉冲动画，复制公式至剪贴板并弹出 Toast。
-- [x] **Upgraded to `v14.0`**:
-    - Updated version badge, CSS / JS cache busters, and Service Worker cache.
+- [x] **Fluid Horizontal Swipe Gesture Support**:
+    - **Swipe Left (往左滑)**: Go to **Previous Scramble** (`goToPreviousScramble()`) in the history stack, displaying progress e.g. `(1/3)`.
+    - **Swipe Right (往右滑)**: **Refresh / Generate New Scramble** (`goToNextOrNewScramble()`), pushing to history.
+    - Built with direct 1:1 pointer tracking, rubber-band resistance when at history start, velocity projection, and fluid spring animations (`cubic-bezier(0.25, 1, 0.5, 1)`).
+- [x] **Scramble History & Version Upgrade**:
+    - Maintained `scrambleHistory` stack with subtle `#scramble-history-badge`.
+    - Bumped app version to **`v13.9`**.
 
-## Git Repository Initialization (Initial Release)
+## Git Repository Initialization (v13.9 Initial Release)
 - [x] **Initialized Git Repository & Initial Commit**:
     - Created `.gitignore` (filtering logs, caches, OS files).
     - Created comprehensive [`README.md`](file:///data/data/com.termux/files/home/rubiks/README.md) with full architecture, feature highlights, and shortcuts guide.
     - Completed initial release commit on branch `main`.
+
+## Pure Scramble Formula View & Direct Gestures (v14.0)
+- [x] **Minimalist Pure Scramble Display (打乱页面仅显示公式)**:
+    - Removed all extra headers, sublines, banners, and badges from `#scramble-box`.
+    - Centered formula display `#scramble-text` with generous breathing room and clear monospace typography.
+- [x] **Exact 3-Function Gesture Mapping (打乱公式三大核心功能)**:
+    1. **点击复制 (Tap to Copy)**: 复制当前公式到剪贴板，弹出 Apple 胶囊 Toast 并触发微震动反馈。
+    2. **从右往左滑 (Swipe from Right to Left / Drag Left 👈)**: 生成下一个 / 新打乱（`goToNextOrNewScramble()`），平滑滑出与弹簧滑入。
+    3. **从左往右滑 (Swipe from Left to Right / Drag Right 👉)**: 返回上一个打乱（`goToPreviousScramble()`），历史栈回退；若已是第一个打乱则触发阻尼回弹提示。
+- [x] **Version Upgrade**:
+    - Bumped to `v14.0` (sw.js cache `rubiks-timer-v14.0`).

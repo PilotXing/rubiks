@@ -618,7 +618,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isDragging) {
                 e.preventDefault();
                 currentX = deltaX;
-                // Rubber-band resistance when swiping right (back) at index 0
+                // Rubber-band resistance when swiping right (back to previous) at index 0
                 if (currentX > 0 && scrambleHistoryIndex <= 0) {
                     currentX = (Math.abs(deltaX) * 180 * 0.55) / (180 + 0.55 * Math.abs(deltaX));
                 }
@@ -638,7 +638,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 isDragging = false;
                 try { el.releasePointerCapture(e.pointerId); } catch (_) {}
 
-                // 从右边往左滑 (Swipe Left: deltaX < -40 -> 生成下一个 / 新打乱)
+                // 1. 从右往左滑 (Swipe from Right to Left: currentX < -40 或 velocity < -0.3) -> 生成下一个 / 新打乱
                 if (currentX < -40 || velocity < -0.3) {
                     el.style.transition = 'transform 0.16s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.16s ease';
                     el.style.transform = 'translateX(-100%)';
@@ -655,38 +655,40 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     }, 160);
                 }
-                // 从左往右滑 (Swipe Right: deltaX > 40 -> 返回上一个打乱)
+                // 2. 从左往右滑 (Swipe from Left to Right: currentX > 40 或 velocity > 0.3) -> 返回上一个打乱
                 else if (currentX > 40 || velocity > 0.3) {
-                    el.style.transition = 'transform 0.16s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.16s ease';
-                    el.style.transform = 'translateX(100%)';
-                    el.style.opacity = '0';
-                    setTimeout(() => {
-                        goToPreviousScramble();
-                        el.style.transition = 'none';
-                        el.style.transform = 'translateX(-50px)';
+                    if (scrambleHistoryIndex > 0) {
+                        el.style.transition = 'transform 0.16s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.16s ease';
+                        el.style.transform = 'translateX(100%)';
                         el.style.opacity = '0';
-                        requestAnimationFrame(() => {
-                            el.style.transition = 'transform 0.26s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.26s ease';
-                            el.style.transform = 'translateX(0)';
-                            el.style.opacity = '1';
-                        });
-                    }, 160);
+                        setTimeout(() => {
+                            goToPreviousScramble();
+                            el.style.transition = 'none';
+                            el.style.transform = 'translateX(-50px)';
+                            el.style.opacity = '0';
+                            requestAnimationFrame(() => {
+                                el.style.transition = 'transform 0.26s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.26s ease';
+                                el.style.transform = 'translateX(0)';
+                                el.style.opacity = '1';
+                            });
+                        }, 160);
+                    } else {
+                        // 已经是第一个打乱，回弹并提示
+                        el.style.transition = 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.25s ease';
+                        el.style.transform = 'translateX(0)';
+                        el.style.opacity = '1';
+                        goToPreviousScramble();
+                    }
                 }
-                // 未达阈值: 弹簧回中
+                // 未达到阈值：平滑弹簧复位
                 else {
                     el.style.transition = 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.25s ease';
                     el.style.transform = 'translateX(0)';
                     el.style.opacity = '1';
                 }
             } else {
-                // 点击打乱 (Click / Tap): 复制公式 + 弹跳发光动画
+                // 3. 点击公式 (Tap without drag) -> 复制该公式
                 copyCurrentScramble();
-                el.classList.remove('tap-pop');
-                void el.offsetWidth;
-                el.classList.add('tap-pop');
-                setTimeout(() => {
-                    el.classList.remove('tap-pop');
-                }, 400);
                 el.style.transition = 'transform 0.15s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.15s ease';
                 el.style.transform = 'translateX(0)';
                 el.style.opacity = '1';
@@ -754,7 +756,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 banner.innerHTML = `<span>Follow the scramble sequence above on your cube</span>`;
                 banner.classList.add('status-pending');
             }
-            elements.scrambleText.classList.remove('scramble-text-hidden');
+            if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
             renderScrambleDisplay(0);
             wasDeviated = false;
             setArenaMode('SCRAMBLE');
@@ -768,14 +770,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 banner.innerHTML = `<span>SCRAMBLE COMPLETE — Ready to Solve!</span>`;
                 banner.classList.add('status-ready');
             }
-            elements.mainTimerContainer.classList.add('timer-ready-pulse');
-            elements.timerStateBadge.textContent = 'READY';
-            elements.timerStateBadge.className = 'badge badge-ready';
+            if (elements.mainTimerContainer) elements.mainTimerContainer.classList.add('timer-ready-pulse');
+            if (elements.timerStateBadge) {
+                elements.timerStateBadge.textContent = 'READY';
+                elements.timerStateBadge.className = 'badge badge-ready';
+            }
             timer.setState('READY');
             sound.playScrambleComplete();
         } else if (evalResult.isDeviated) {
             setArenaMode('SCRAMBLE');
-            elements.scrambleText.classList.remove('scramble-text-hidden');
+            if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
             const nextCorrection = (evalResult.correctionMoves && evalResult.correctionMoves.length > 0)
                 ? evalResult.correctionMoves[0]
                 : 'Undo move';
@@ -784,8 +788,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 banner.innerHTML = `<span>Wrong move detected! Turn <strong>${nextCorrection}</strong> to correct</span>`;
                 banner.classList.add('status-warning');
             }
-            elements.timerStateBadge.textContent = 'CORRECTION';
-            elements.timerStateBadge.className = 'badge badge-warning';
+            if (elements.timerStateBadge) {
+                elements.timerStateBadge.textContent = 'CORRECTION';
+                elements.timerStateBadge.className = 'badge badge-warning';
+            }
             timer.setState('CORRECTION');
 
             if (scrambleAlertsEnabled && !wasDeviated) {
@@ -804,23 +810,31 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (evalResult.isHalfTurn) {
             setArenaMode('SCRAMBLE');
             wasDeviated = false;
-            elements.scrambleText.classList.remove('scramble-text-hidden');
+            if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
             const turnHelp = evalResult.remainingOnFace ? `Turn <strong>${evalResult.remainingOnFace}</strong> to complete step` : `Complete <strong>${evalResult.halfFace || ''}</strong> turn`;
-            banner.innerHTML = `<span>Move in progress: ${turnHelp}...</span>`;
-            banner.classList.add('status-half-turn');
-            elements.timerStateBadge.textContent = 'SCRAMBLING';
-            elements.timerStateBadge.className = 'badge badge-scrambling';
+            if (banner) {
+                banner.innerHTML = `<span>Move in progress: ${turnHelp}...</span>`;
+                banner.classList.add('status-half-turn');
+            }
+            if (elements.timerStateBadge) {
+                elements.timerStateBadge.textContent = 'SCRAMBLING';
+                elements.timerStateBadge.className = 'badge badge-scrambling';
+            }
             timer.setState('SCRAMBLING');
             renderScrambleDisplay(evalResult.currentStep, [], true, evalResult.halfFace, evalResult.remainingOnFace);
         } else {
             setArenaMode('SCRAMBLE');
             wasDeviated = false;
-            elements.scrambleText.classList.remove('scramble-text-hidden');
+            if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
             const pct = Math.round((evalResult.currentStep / evalResult.totalSteps) * 100);
-            banner.innerHTML = `<span>Scrambling: ${evalResult.currentStep} / ${evalResult.totalSteps} moves (${pct}%)</span>`;
-            banner.classList.add('status-pending');
-            elements.timerStateBadge.textContent = 'SCRAMBLING';
-            elements.timerStateBadge.className = 'badge badge-scrambling';
+            if (banner) {
+                banner.innerHTML = `<span>Scrambling: ${evalResult.currentStep} / ${evalResult.totalSteps} moves (${pct}%)</span>`;
+                banner.classList.add('status-pending');
+            }
+            if (elements.timerStateBadge) {
+                elements.timerStateBadge.textContent = 'SCRAMBLING';
+                elements.timerStateBadge.className = 'badge badge-scrambling';
+            }
             timer.setState('SCRAMBLING');
             renderScrambleDisplay(evalResult.currentStep);
         }
