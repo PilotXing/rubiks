@@ -1087,14 +1087,12 @@ body {
     flex: 0 0 100%;
     box-sizing: border-box;
     font-family: var(--font-mono);
-    font-size: 1.35rem;
+    font-size: clamp(1.15rem, 4vw, 1.4rem);
     font-weight: 600;
-    line-height: 1.7;
-    letter-spacing: 0.04em;
+    line-height: 1.45;
+    letter-spacing: 0.03em;
     text-align: center;
-    word-break: normal;
-    overflow-wrap: break-word;
-    padding: 1.5rem 1.25rem;
+    padding: 1.35rem 0.6rem;
     background: transparent;
     border: none;
     border-radius: 0;
@@ -1103,7 +1101,30 @@ body {
     user-select: none;
     -webkit-user-select: none;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.6rem;
     transition: background-color 0.15s ease;
+}
+
+.scramble-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    gap: 0.45rem;
+    flex-wrap: nowrap;
+}
+
+.scramble-correction-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    gap: 0.45rem;
+    margin-bottom: 0.2rem;
 }
 
 .scramble-card:hover {
@@ -1173,11 +1194,15 @@ body {
 }
 
 .scramble-move {
-    display: inline-block;
-    padding: 0.15rem 0.35rem;
-    margin: 0.15rem 0.15rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.2ch;
+    padding: 0.12rem 0.22rem;
+    margin: 0;
     border-radius: 4px;
     white-space: nowrap;
+    text-align: center;
     transition: all 0.15s ease;
 }
 

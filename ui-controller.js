@@ -473,23 +473,43 @@ document.addEventListener('DOMContentLoaded', () => {
         }, duration);
     }
 
-    function formatScrambleHTML(scrambleStr, activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null) {
-        if (!scrambleStr) return '<span class="scramble-empty-hint">Loading scramble...</span>';
-        const moves = scrambleStr.trim().split(/\s+/);
-        let html = '';
+    function splitMovesIntoBalancedRows(items, numRows = 3) {
+        const total = items.length;
+        if (total === 0) return [];
+        if (total <= numRows) return items.map(x => [x]);
 
+        const baseCount = Math.floor(total / numRows);
+        const remainder = total % numRows;
+
+        const rows = [];
+        let start = 0;
+        for (let r = 0; r < numRows; r++) {
+            const count = baseCount + (r < remainder ? 1 : 0);
+            rows.push(items.slice(start, start + count));
+            start += count;
+        }
+        return rows;
+    }
+
+    function formatScrambleHTML(scrambleStr, activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, targetRows = 3) {
+        if (!scrambleStr) return '<span class="scramble-empty-hint">Loading scramble...</span>';
+        const moves = scrambleStr.trim().split(/\s+/).filter(Boolean);
+        if (moves.length === 0) return '<span class="scramble-empty-hint">Loading scramble...</span>';
+
+        let correctionHtml = '';
         if (correctionMoves && correctionMoves.length > 0) {
             const nextCorrection = correctionMoves[0];
             const colorCls = getMoveColorClass(nextCorrection);
-            html += `<span class="scramble-correction-prefix">Correction:</span> `;
-            html += `<span class="scramble-move move-correction-active ${colorCls}">${nextCorrection}</span> `;
+            correctionHtml += `<div class="scramble-correction-row">`;
+            correctionHtml += `<span class="scramble-correction-prefix">Correction:</span> `;
+            correctionHtml += `<span class="scramble-move move-correction-active ${colorCls}">${nextCorrection}</span> `;
             if (correctionMoves.length > 1) {
-                html += `<span class="scramble-move move-correction">${correctionMoves.slice(1).join(' ')}</span> `;
+                correctionHtml += `<span class="scramble-move move-correction">${correctionMoves.slice(1).join(' ')}</span> `;
             }
-            html += `<span class="scramble-divider">| Target:</span> `;
+            correctionHtml += `</div>`;
         }
 
-        moves.forEach((move, idx) => {
+        const moveSpans = moves.map((move, idx) => {
             let cls = 'move-pending';
             let label = move;
             const colorCls = getMoveColorClass(move);
@@ -506,10 +526,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
-            html += `<span class="scramble-move ${cls} ${colorCls}">${label}</span> `;
+            return `<span class="scramble-move ${cls} ${colorCls}">${label}</span>`;
         });
 
-        return html;
+        const rows = splitMovesIntoBalancedRows(moveSpans, targetRows);
+        const rowsHtml = rows.map(rowSpans => `<div class="scramble-row">${rowSpans.join('')}</div>`).join('');
+
+        return correctionHtml ? `${correctionHtml}${rowsHtml}` : rowsHtml;
     }
 
     const CAROUSEL_GAP = 0;

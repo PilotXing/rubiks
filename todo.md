@@ -262,3 +262,12 @@
     - Cards and carousel track now occupy 100% of `#arena-container` edge-to-edge with zero surrounding gaps or redundant borders.
 - [x] **Version Upgrade**:
     - Bumped to `v14.3` (sw.js cache `rubiks-timer-v14.3`).
+
+## Balanced 3-Row Formula Layout (步数均布定长 3 行公式 - v14.4)
+- [x] **Dynamic Mathematical Move Partitioning (`splitMovesIntoBalancedRows`)**:
+    - Calculated row distribution for all formulas: 21 moves are distributed evenly into exactly 3 rows of 7 moves each (`[7, 7, 7]`).
+    - Every formula has an identical, fixed 3-row height and geometry, eliminating height jumps during swipe.
+- [x] **Monospace Column Uniformity**:
+    - Move tokens styled with `display: inline-flex; min-width: 2.2ch; justify-content: center;` for balanced, visually aligned formula blocks.
+- [x] **Version Upgrade**:
+    - Bumped to `v14.4` (sw.js cache `rubiks-timer-v14.4`).
