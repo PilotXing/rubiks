@@ -419,16 +419,20 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.btnSwitchToTimer.addEventListener('click', () => {
             setArenaMode('TIMER');
             timer.setState('READY');
-            elements.timerStateBadge.textContent = 'READY';
-            elements.timerStateBadge.className = 'badge badge-ready';
+            if (elements.timerStateBadge) {
+                elements.timerStateBadge.textContent = 'READY';
+                elements.timerStateBadge.className = 'badge badge-ready';
+            }
         });
     }
     if (elements.btnSwitchToScramble) {
         elements.btnSwitchToScramble.addEventListener('click', () => {
             setArenaMode('SCRAMBLE');
             timer.setState('SCRAMBLING');
-            elements.timerStateBadge.textContent = 'SCRAMBLING';
-            elements.timerStateBadge.className = 'badge badge-scrambling';
+            if (elements.timerStateBadge) {
+                elements.timerStateBadge.textContent = 'SCRAMBLING';
+                elements.timerStateBadge.className = 'badge badge-scrambling';
+            }
         });
     }
 
@@ -1044,8 +1048,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. Timer Events & Real-Time Clock
     // -------------------------------------------------------------
     timer.on('stateChange', ({ state }) => {
-        elements.timerStateBadge.textContent = state;
-        elements.timerStateBadge.className = `badge badge-${state.toLowerCase()}`;
+        if (elements.timerStateBadge) {
+            elements.timerStateBadge.textContent = state;
+            elements.timerStateBadge.className = `badge badge-${state.toLowerCase()}`;
+        }
 
         if (state === 'RUNNING') {
             elements.mainTimerContainer.classList.remove('timer-ready-pulse');
@@ -1089,10 +1095,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!solve) return;
         setArenaMode('TIMER');
         elements.timerDisplay.textContent = solve.formattedTime;
-        if (solve.calibratedTimeMs && solve.calibratedTimeMs !== solve.rawTimeMs) {
-            elements.timerSubDisplay.textContent = `Calibrated: ${formatTime(solve.calibratedTimeMs)} | ${solve.moveCount} moves @ ${solve.tps} TPS`;
-        } else {
-            elements.timerSubDisplay.textContent = `${solve.moveCount} moves @ ${solve.tps} TPS`;
+        if (elements.timerSubDisplay) {
+            if (solve.calibratedTimeMs && solve.calibratedTimeMs !== solve.rawTimeMs) {
+                elements.timerSubDisplay.textContent = `Calibrated: ${formatTime(solve.calibratedTimeMs)} | ${solve.moveCount} moves @ ${solve.tps} TPS`;
+            } else {
+                elements.timerSubDisplay.textContent = `${solve.moveCount} moves @ ${solve.tps} TPS`;
+            }
         }
 
         renderMainSolveBreakdown(solve);
@@ -1611,13 +1619,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (elements.scrambleBox && elements.scrambleBox.style.display !== 'none') {
                     setArenaMode('TIMER');
                     timer.setState('READY');
-                    elements.timerStateBadge.textContent = 'READY';
-                    elements.timerStateBadge.className = 'badge badge-ready';
+                    if (elements.timerStateBadge) {
+                        elements.timerStateBadge.textContent = 'READY';
+                        elements.timerStateBadge.className = 'badge badge-ready';
+                    }
                 } else {
                     setArenaMode('SCRAMBLE');
                     timer.setState('SCRAMBLING');
-                    elements.timerStateBadge.textContent = 'SCRAMBLING';
-                    elements.timerStateBadge.className = 'badge badge-scrambling';
+                    if (elements.timerStateBadge) {
+                        elements.timerStateBadge.textContent = 'SCRAMBLING';
+                        elements.timerStateBadge.className = 'badge badge-scrambling';
+                    }
                 }
             });
         }

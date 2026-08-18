@@ -271,3 +271,13 @@
     - Move tokens styled with `display: inline-flex; min-width: 2.2ch; justify-content: center;` for balanced, visually aligned formula blocks.
 - [x] **Version Upgrade**:
     - Bumped to `v14.4` (sw.js cache `rubiks-timer-v14.4`).
+
+## Auto-Timer Switch & Giant High-Impact Digits (打乱完成自动切计时与巨幕计时器 - v14.5)
+- [x] **Automatic Timer Transition on Scramble Complete**:
+    - Bluetooth cube state tracker automatically invokes `setArenaMode('TIMER')` and sets state to `READY` when all scramble moves are matched.
+- [x] **Removed Extraneous Header Badges & Sub-Tips**:
+    - Removed `READY` / `IDLE` header badge and deleted `"Connect cube or turn cube to start"` sub-line.
+- [x] **Giant Container-Filling Timer Digits**:
+    - Upgraded `.timer-digits` font-size to `clamp(4.8rem, 18vw, 8.5rem)` with `font-weight: 800`, filling `#arena-container` with clean, modern presence.
+- [x] **Version Upgrade**:
+    - Bumped to `v14.5` (sw.js cache `rubiks-timer-v14.5`).
