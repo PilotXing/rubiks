@@ -618,9 +618,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isDragging) {
                 e.preventDefault();
                 currentX = deltaX;
-                // Rubber-band resistance when swiping left at index 0
-                if (currentX < 0 && scrambleHistoryIndex <= 0) {
-                    currentX = -(Math.abs(deltaX) * 180 * 0.55) / (180 + 0.55 * Math.abs(deltaX));
+                // Rubber-band resistance when swiping right (back) at index 0
+                if (currentX > 0 && scrambleHistoryIndex <= 0) {
+                    currentX = (Math.abs(deltaX) * 180 * 0.55) / (180 + 0.55 * Math.abs(deltaX));
                 }
                 const rot = currentX * 0.015;
                 const op = Math.max(0.4, 1 - Math.abs(currentX) / 320);
@@ -638,32 +638,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 isDragging = false;
                 try { el.releasePointerCapture(e.pointerId); } catch (_) {}
 
-                // Swipe Right (向右滑: 刷新 / 生成新打乱)
-                if (currentX > 40 || velocity > 0.3) {
-                    el.style.transition = 'transform 0.16s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.16s ease';
-                    el.style.transform = 'translateX(100%)';
-                    el.style.opacity = '0';
-                    setTimeout(() => {
-                        goToNextOrNewScramble();
-                        el.style.transition = 'none';
-                        el.style.transform = 'translateX(-40px)';
-                        el.style.opacity = '0';
-                        requestAnimationFrame(() => {
-                            el.style.transition = 'transform 0.26s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.26s ease';
-                            el.style.transform = 'translateX(0)';
-                            el.style.opacity = '1';
-                        });
-                    }, 160);
-                }
-                // Swipe Left (向左滑: 上一个打乱)
-                else if (currentX < -40 || velocity < -0.3) {
+                // 从右边往左滑 (Swipe Left: deltaX < -40 -> 生成下一个 / 新打乱)
+                if (currentX < -40 || velocity < -0.3) {
                     el.style.transition = 'transform 0.16s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.16s ease';
                     el.style.transform = 'translateX(-100%)';
                     el.style.opacity = '0';
                     setTimeout(() => {
-                        goToPreviousScramble();
+                        goToNextOrNewScramble();
                         el.style.transition = 'none';
-                        el.style.transform = 'translateX(40px)';
+                        el.style.transform = 'translateX(50px)';
                         el.style.opacity = '0';
                         requestAnimationFrame(() => {
                             el.style.transition = 'transform 0.26s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.26s ease';
@@ -672,15 +655,38 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     }, 160);
                 }
-                // Did not exceed threshold: spring back to center
+                // 从左往右滑 (Swipe Right: deltaX > 40 -> 返回上一个打乱)
+                else if (currentX > 40 || velocity > 0.3) {
+                    el.style.transition = 'transform 0.16s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.16s ease';
+                    el.style.transform = 'translateX(100%)';
+                    el.style.opacity = '0';
+                    setTimeout(() => {
+                        goToPreviousScramble();
+                        el.style.transition = 'none';
+                        el.style.transform = 'translateX(-50px)';
+                        el.style.opacity = '0';
+                        requestAnimationFrame(() => {
+                            el.style.transition = 'transform 0.26s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.26s ease';
+                            el.style.transform = 'translateX(0)';
+                            el.style.opacity = '1';
+                        });
+                    }, 160);
+                }
+                // 未达阈值: 弹簧回中
                 else {
                     el.style.transition = 'transform 0.25s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.25s ease';
                     el.style.transform = 'translateX(0)';
                     el.style.opacity = '1';
                 }
             } else {
-                // Pure Tap/Click: Copy Scramble
+                // 点击打乱 (Click / Tap): 复制公式 + 弹跳发光动画
                 copyCurrentScramble();
+                el.classList.remove('tap-pop');
+                void el.offsetWidth;
+                el.classList.add('tap-pop');
+                setTimeout(() => {
+                    el.classList.remove('tap-pop');
+                }, 400);
                 el.style.transition = 'transform 0.15s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.15s ease';
                 el.style.transform = 'translateX(0)';
                 el.style.opacity = '1';
@@ -741,11 +747,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateScrambleStatus(evalResult) {
         const banner = elements.scrambleBanner;
-        banner.className = 'scramble-banner';
+        if (banner) banner.className = 'scramble-banner';
 
         if (!evalResult) {
-            banner.innerHTML = `<span>Follow the scramble sequence above on your cube</span>`;
-            banner.classList.add('status-pending');
+            if (banner) {
+                banner.innerHTML = `<span>Follow the scramble sequence above on your cube</span>`;
+                banner.classList.add('status-pending');
+            }
             elements.scrambleText.classList.remove('scramble-text-hidden');
             renderScrambleDisplay(0);
             wasDeviated = false;
@@ -756,8 +764,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (evalResult.isComplete) {
             wasDeviated = false;
             setArenaMode('TIMER');
-            banner.innerHTML = `<span>SCRAMBLE COMPLETE — Ready to Solve!</span>`;
-            banner.classList.add('status-ready');
+            if (banner) {
+                banner.innerHTML = `<span>SCRAMBLE COMPLETE — Ready to Solve!</span>`;
+                banner.classList.add('status-ready');
+            }
             elements.mainTimerContainer.classList.add('timer-ready-pulse');
             elements.timerStateBadge.textContent = 'READY';
             elements.timerStateBadge.className = 'badge badge-ready';
@@ -770,8 +780,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? evalResult.correctionMoves[0]
                 : 'Undo move';
 
-            banner.innerHTML = `<span>Wrong move detected! Turn <strong>${nextCorrection}</strong> to correct</span>`;
-            banner.classList.add('status-warning');
+            if (banner) {
+                banner.innerHTML = `<span>Wrong move detected! Turn <strong>${nextCorrection}</strong> to correct</span>`;
+                banner.classList.add('status-warning');
+            }
             elements.timerStateBadge.textContent = 'CORRECTION';
             elements.timerStateBadge.className = 'badge badge-warning';
             timer.setState('CORRECTION');

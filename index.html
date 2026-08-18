@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css?v=13.9">
+    <link rel="stylesheet" href="style.css?v=14.0">
 </head>
 <body class="style-dark color-emerald theme-dark">
 
@@ -34,7 +34,7 @@
                     </svg>
                 </span>
                 <span class="brand-title">Rubik Vision</span>
-                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v13.9</span>
+                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v14.0</span>
             </div>
 
             <div class="header-status">
@@ -111,39 +111,11 @@
                 <!-- 1. Central Arena: In-Place Scramble / Timer Swap (Single Unified Container) -->
                 <div id="arena-container" class="arena-card" style="width: 100%; display: block;">
                     
-                    <!-- Scramble Panel (Gesture & Tap Driven Arena) -->
-                    <div id="scramble-box" class="arena-view scramble-view" style="width: 100%; display: flex; flex-direction: column; gap: 0.75rem; padding: 1.15rem 1rem; box-sizing: border-box;">
-                        <div class="scramble-header" style="width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
-                            <div style="display: flex; align-items: center; gap: 0.45rem;">
-                                <span class="scramble-title">WCA 3x3 Scramble</span>
-                                <span id="scramble-history-badge" class="badge" style="font-size: 0.7rem; background: var(--bg-surface-elevated); border: 1px solid var(--border-color); color: var(--text-muted); display: none;">1/1</span>
-                            </div>
-                            <span id="scramble-step-badge" class="badge badge-scrambling" style="font-size: 0.72rem;">0 / 21</span>
-                        </div>
-
-                        <!-- Gesture & Tap Interactive Scramble Sequence Area -->
-                        <div id="scramble-text" class="scramble-text" style="width: 100%; box-sizing: border-box; text-align: center; font-size: 1.3rem; line-height: 1.7; padding: 0.85rem 0.6rem; border-radius: var(--radius-sm); background: var(--bg-surface-elevated); border: 1px solid var(--border-color); cursor: pointer;" title="点击复制公式 | ← 左滑上一个 | 右滑刷新 →">
+                    <!-- Scramble Panel (Pure Scramble Arena, Gesture & Tap Driven) -->
+                    <div id="scramble-box" class="arena-view scramble-view" style="width: 100%; box-sizing: border-box;">
+                        <!-- Pure Scramble Sequence Area -->
+                        <div id="scramble-text" class="scramble-text" style="width: 100%; box-sizing: border-box; text-align: center; cursor: pointer;" title="点击复制公式 | ← 从右向左滑：生成下一个 | 从左向右滑：返回上一个 →">
                             Loading scramble...
-                        </div>
-
-                        <!-- Clean Gesture Hint Bar -->
-                        <div class="scramble-gesture-hint">
-                            <span class="gesture-hint-item">
-                                <svg class="svg-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                                <span>左滑上一个</span>
-                            </span>
-                            <span class="gesture-hint-item">
-                                <svg class="svg-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                <span>点击复制</span>
-                            </span>
-                            <span class="gesture-hint-item">
-                                <span>右滑刷新</span>
-                                <svg class="svg-icon" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </span>
-                        </div>
-
-                        <div id="scramble-banner" class="scramble-banner status-pending" style="width: 100%; box-sizing: border-box; text-align: center; display: flex; align-items: center; justify-content: center;">
-                            <span>Follow the scramble sequence above on your cube</span>
                         </div>
                     </div>
 
@@ -920,19 +892,19 @@
     </div>
 
     <!-- Scripts -->
-    <script src="aes.js?v=13.9"></script>
-    <script src="min2phase.js?v=13.9"></script>
-    <script src="three.min.js?v=13.9"></script>
-    <script src="cube-engine.js?v=13.9"></script>
-    <script src="alg-database.js?v=13.9"></script>
-    <script src="method-analyzer.js?v=13.9"></script>
-    <script src="chart-engine.js?v=13.9"></script>
-    <script src="gan-bluetooth.js?v=13.9"></script>
-    <script src="audio-synth.js?v=13.9"></script>
-    <script src="renderer-3d.js?v=13.9"></script>
-    <script src="renderer-2d.js?v=13.9"></script>
-    <script src="timer-engine.js?v=13.9"></script>
-    <script src="ui-controller.js?v=13.9"></script>
+    <script src="aes.js?v=14.0"></script>
+    <script src="min2phase.js?v=14.0"></script>
+    <script src="three.min.js?v=14.0"></script>
+    <script src="cube-engine.js?v=14.0"></script>
+    <script src="alg-database.js?v=14.0"></script>
+    <script src="method-analyzer.js?v=14.0"></script>
+    <script src="chart-engine.js?v=14.0"></script>
+    <script src="gan-bluetooth.js?v=14.0"></script>
+    <script src="audio-synth.js?v=14.0"></script>
+    <script src="renderer-3d.js?v=14.0"></script>
+    <script src="renderer-2d.js?v=14.0"></script>
+    <script src="timer-engine.js?v=14.0"></script>
+    <script src="ui-controller.js?v=14.0"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
