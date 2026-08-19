@@ -369,18 +369,30 @@
     }
 
     /**
-     * Per-Solve Movement Curve & Derivative (TPS & Pause Breakdown, Stage Segmentation, Editable Series)
+     * Per-Solve Movement Curve & Derivative using Apache ECharts
+     * (TPS & Pause Breakdown, Stage Segmentation, Dual Y-Axes, Magnetic Tooltip)
      */
     class SolveMovementChart {
-        constructor(canvasElement, options = {}) {
-            this.canvas = canvasElement;
-            this.ctx = canvasElement.getContext('2d');
+        constructor(domElement, options = {}) {
+            // Handle canvas or div seamlessly
+            if (domElement && domElement.tagName === 'CANVAS') {
+                const parent = domElement.parentElement;
+                const div = document.createElement('div');
+                div.id = domElement.id;
+                div.className = domElement.className;
+                div.style.width = '100%';
+                div.style.height = (domElement.clientHeight || 250) + 'px';
+                div.style.position = 'relative';
+                parent.replaceChild(div, domElement);
+                this.dom = div;
+            } else {
+                this.dom = domElement;
+            }
+
             this.options = Object.assign({
-                padding: { top: 46, right: 14, bottom: 24, left: 32 },
-                highlightStep: -1,
-                cumulativeCurve: { enabled: true, color: '#10B981', width: 2.5, opacity: 1.0 },
-                derivativeBars: { enabled: true, color: 'rgba(59, 130, 246, 0.35)', activeColor: '#F59E0B' },
-                tpsCurve: { enabled: true, color: '#06B6D4', width: 2.0, opacity: 0.85 },
+                cumulativeCurve: { enabled: true, color: '#10B981', width: 2.8 },
+                derivativeBars: { enabled: true, color: 'rgba(59, 130, 246, 0.4)' },
+                tpsCurve: { enabled: true, color: '#06B6D4', width: 2.2 },
                 showStageBands: true,
                 showStageDividers: true,
                 showStageLabels: true,
@@ -391,44 +403,33 @@
 
             this.solve = null;
             this.stages = [];
-            this.initResize();
-            this.bindEvents();
+            this.chart = null;
+
+            this.initChart();
+            this.bindResize();
         }
 
-        initResize() {
-            const dpr = Math.min(window.devicePixelRatio || 1, 2);
-            const rect = this.canvas.getBoundingClientRect();
-            const w = rect.width || this.canvas.clientWidth || 500;
-            const h = rect.height || this.canvas.clientHeight || 240;
-            this.canvas.width = Math.round(w * dpr);
-            this.canvas.height = Math.round(h * dpr);
-            this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-            this.ctx.scale(dpr, dpr);
-            this.width = w;
-            this.height = h;
-        }
-
-        bindEvents() {
-            const handleClick = (e) => {
-                if (!this.solve || !this.solve.moves || this.solve.moves.length === 0) return;
-                const rect = this.canvas.getBoundingClientRect();
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const x = clientX - rect.left;
-                const pad = this.options.padding;
-                const plotW = this.width - pad.left - pad.right;
-                const n = this.solve.moves.length;
-
-                if (x >= pad.left - 10 && x <= this.width - pad.right + 10) {
-                    const stepIdx = Math.round(((x - pad.left) / plotW) * (n - 1));
-                    const clamped = Math.max(0, Math.min(n - 1, stepIdx));
-                    if (typeof this.options.onStepClick === 'function') {
-                        this.options.onStepClick(clamped + 1);
+        initChart() {
+            if (!this.dom || typeof echarts === 'undefined') return;
+            if (this.chart) {
+                try { this.chart.dispose(); } catch (e) {}
+            }
+            this.chart = echarts.init(this.dom, null, { renderer: 'canvas' });
+            if (typeof this.options.onStepClick === 'function') {
+                this.chart.on('click', (params) => {
+                    if (params && params.dataIndex !== undefined) {
+                        this.options.onStepClick(params.dataIndex + 1);
                     }
-                }
-            };
+                });
+            }
+        }
 
-            this.canvas.addEventListener('click', handleClick);
-            this.canvas.addEventListener('touchstart', handleClick, { passive: true });
+        bindResize() {
+            window.addEventListener('resize', () => {
+                if (this.chart) {
+                    this.chart.resize();
+                }
+            });
         }
 
         setSolve(solve, highlightStep = -1, overlaySolves = []) {
@@ -458,304 +459,253 @@
         }
 
         render() {
-            this.initResize();
-            const ctx = this.ctx;
-            const w = this.width;
-            const h = this.height;
-            const pad = this.options.padding;
-
-            ctx.clearRect(0, 0, w, h);
+            if (!this.chart) {
+                this.initChart();
+            }
+            if (!this.chart) return;
 
             if (!this.solve || !this.solve.moves || this.solve.moves.length === 0) {
-                ctx.fillStyle = '#6B7280';
-                ctx.font = '12px Inter, sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('No move telemetry logged for this solve.', w / 2, h / 2);
+                this.chart.clear();
                 return;
             }
 
             const moves = this.solve.moves;
             const n = moves.length;
-            const plotW = w - pad.left - pad.right;
-            const plotH = h - pad.top - pad.bottom;
 
-            const maxTime = moves[n - 1].calibratedElapsedMs || moves[n - 1].elapsedMs || 1000;
-            const maxDelta = Math.max(...moves.map(m => m.deltaMs || 300), 800);
+            const xData = moves.map((m, i) => `#${i + 1} ${m.move || ''}`);
+            const cumulativeSecData = moves.map(m => Number(((m.calibratedElapsedMs || m.elapsedMs || 0) / 1000).toFixed(3)));
+            const stepDeltaSecData = moves.map(m => Number(((m.deltaMs || 0) / 1000).toFixed(3)));
+            const instantTpsData = moves.map(m => {
+                const sec = (m.deltaMs || 0) / 1000;
+                return sec > 0 ? Number((1 / sec).toFixed(2)) : 0;
+            });
 
-            const getX = (idx) => pad.left + (n === 1 ? plotW / 2 : (idx / Math.max(1, n - 1)) * plotW);
-            const getY = (timeMs) => pad.top + plotH - (timeMs / maxTime) * (plotH * 0.75);
-
-            // 1. Stage Segmentation Background Bands, Dividers, and Staggered Anti-Collision Embedded Metrics
+            // Stage markArea data
             const stages = (this.stages && this.stages.length > 0) ? this.stages : (this.options.stages || []);
+            const markAreaData = [];
+
             if (this.options.showStageBands && stages.length > 0) {
-                // Pre-calculate band dimensions and layout coordinates
-                const stageLayout = stages.map((stg, sIdx) => {
-                    const startX = getX(stg.startIdx);
-                    const endX = stg.endIdx >= n - 1 ? (w - pad.right) : getX(stg.endIdx + 0.5);
-                    const bandW = Math.max(4, endX - startX);
-                    const anchorX = startX + bandW / 2;
+                stages.forEach((stg, sIdx) => {
+                    const timeVal = stg.durationMs ? (stg.durationMs / 1000).toFixed(2) : '0.00';
+                    const tpsVal = stg.tps !== undefined ? Number(stg.tps).toFixed(1) : '0.0';
                     const stgColor = stg.color || '#3B82F6';
-                    const moveCount = stg.moveCount !== undefined ? stg.moveCount : (stg.endIdx - stg.startIdx + 1);
-                    const timeVal = stg.durationMs ? (stg.durationMs / 1000).toFixed(2) : (stg.durationFormatted ? stg.durationFormatted.replace('s', '') : '0.00');
-                    const tpsVal = stg.tps !== undefined ? Number(stg.tps).toFixed(1) : (stg.durationMs > 0 ? (moveCount / (stg.durationMs / 1000)).toFixed(1) : '0.0');
-                    return {
-                        stg,
-                        sIdx,
-                        startX,
-                        endX,
-                        bandW,
-                        anchorX,
-                        stgColor,
-                        timeVal,
-                        tpsVal,
-                        tier: 0,
-                        pillX: 0,
-                        pillW: 0
-                    };
-                });
 
-                // A. Background fills and vertical dividers
-                stageLayout.forEach((item, sIdx) => {
-                    ctx.save();
-                    ctx.fillStyle = item.stgColor;
-                    ctx.globalAlpha = 0.12;
-                    ctx.fillRect(item.startX, pad.top, item.bandW, plotH);
-                    ctx.restore();
-
-                    if (this.options.showStageDividers && sIdx > 0) {
-                        ctx.save();
-                        ctx.strokeStyle = item.stgColor;
-                        ctx.lineWidth = 1.2;
-                        ctx.setLineDash([4, 4]);
-                        ctx.globalAlpha = 0.55;
-                        ctx.beginPath();
-                        ctx.moveTo(item.startX, pad.top);
-                        ctx.lineTo(item.startX, pad.top + plotH);
-                        ctx.stroke();
-                        ctx.restore();
-                    }
-                });
-
-                // B. Smart Staggered Multi-Tier Anti-Collision Badge Placement (Exact auto-measured dynamic pills, zero overflow)
-                if (this.options.showStageLabels) {
-                    const badgeH = 18;
-                    const tierY = [
-                        pad.top - badgeH * 2 - 4, // Tier 0 (Top): pad.top - 40
-                        pad.top - badgeH - 2      // Tier 1 (Bottom): pad.top - 20
-                    ];
-
-                    ctx.font = 'bold 8px JetBrains Mono, monospace';
-
-                    // Compute exact text string and dynamic box width for each stage
-                    stageLayout.forEach(item => {
-                        item.labelText = `${item.timeVal} · ${item.tpsVal}`;
-                        const textW = ctx.measureText(item.labelText).width;
-                        item.pillW = Math.ceil(textW + 10); // Guaranteed 5px padding on both sides
-                    });
-
-                    // Check for narrow or crowded stages and assign alternating tiers
-                    let needsStagger = stageLayout.some(item => item.bandW < 48);
-                    if (stageLayout.length > 4) needsStagger = true;
-
-                    stageLayout.forEach((item, i) => {
-                        item.tier = needsStagger ? (i % 2) : 0;
-                        item.pillX = item.anchorX - item.pillW / 2;
-
-                        // Clamp pillX within chart horizontal viewport bounds
-                        if (item.pillX < pad.left) item.pillX = pad.left;
-                        if (item.pillX + item.pillW > w - pad.right) item.pillX = w - pad.right - item.pillW;
-                    });
-
-                    // Resolve horizontal overlap within the same tier
-                    [0, 1].forEach(t => {
-                        const tierItems = stageLayout.filter(item => item.tier === t);
-                        for (let i = 1; i < tierItems.length; i++) {
-                            const prev = tierItems[i - 1];
-                            const curr = tierItems[i];
-                            const overlap = (prev.pillX + prev.pillW + 3) - curr.pillX;
-                            if (overlap > 0) {
-                                curr.pillX += overlap;
-                                if (curr.pillX + curr.pillW > w - pad.right) {
-                                    curr.pillX = w - pad.right - curr.pillW;
-                                    prev.pillX = Math.max(pad.left, curr.pillX - prev.pillW - 3);
-                                }
+                    markAreaData.push([
+                        {
+                            name: `${timeVal} · ${tpsVal}`,
+                            xAxis: Math.max(0, stg.startIdx),
+                            itemStyle: {
+                                color: stgColor,
+                                opacity: 0.12
+                            },
+                            label: {
+                                show: this.options.showStageLabels !== false,
+                                position: (sIdx % 2 === 0) ? 'insideTop' : ['50%', '22px'],
+                                distance: 4,
+                                color: '#FFFFFF',
+                                backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                                borderColor: stgColor,
+                                borderWidth: 1.2,
+                                borderRadius: 4,
+                                padding: [2, 6],
+                                fontFamily: 'JetBrains Mono, monospace',
+                                fontWeight: 'bold',
+                                fontSize: 9,
+                                shadowColor: 'rgba(0, 0, 0, 0.4)',
+                                shadowBlur: 4,
+                                formatter: `${timeVal} · ${tpsVal}`
                             }
+                        },
+                        {
+                            xAxis: Math.min(n - 1, stg.endIdx)
                         }
-                    });
-
-                    // Render badges with guide lines for displaced/fast stages
-                    stageLayout.forEach(item => {
-                        const y = tierY[item.tier];
-                        const pillCenterX = item.pillX + item.pillW / 2;
-
-                        // Draw leader connector line from badge to actual stage band if displaced or narrow
-                        const isDisplaced = Math.abs(pillCenterX - item.anchorX) > 4 || item.bandW < 32 || item.tier === 0;
-                        if (isDisplaced) {
-                            ctx.save();
-                            ctx.strokeStyle = item.stgColor;
-                            ctx.fillStyle = item.stgColor;
-                            ctx.lineWidth = 1;
-                            ctx.globalAlpha = 0.55;
-                            ctx.beginPath();
-                            ctx.moveTo(pillCenterX, y + badgeH);
-                            ctx.lineTo(item.anchorX, pad.top);
-                            ctx.stroke();
-
-                            // Small anchor point dot at stage start
-                            ctx.beginPath();
-                            ctx.arc(item.anchorX, pad.top, 2, 0, Math.PI * 2);
-                            ctx.fill();
-                            ctx.restore();
-                        }
-
-                        // High-Contrast Dark Glass Pill Background (Fixes light background contrast)
-                        ctx.save();
-                        ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
-                        if (typeof ctx.roundRect === 'function') {
-                            ctx.beginPath();
-                            ctx.roundRect(item.pillX, y, item.pillW, badgeH, 4);
-                            ctx.fill();
-                        } else {
-                            ctx.fillRect(item.pillX, y, item.pillW, badgeH);
-                        }
-
-                        ctx.strokeStyle = item.stgColor;
-                        ctx.globalAlpha = 0.85;
-                        ctx.lineWidth = 1.2;
-                        if (typeof ctx.roundRect === 'function') {
-                            ctx.beginPath();
-                            ctx.roundRect(item.pillX, y, item.pillW, badgeH, 4);
-                            ctx.stroke();
-                        } else {
-                            ctx.strokeRect(item.pillX, y, item.pillW, badgeH);
-                        }
-                        ctx.restore();
-
-                        // Pure High-Contrast Numeric Text: [Time] · [TPS] (Exact measured fit, zero overflow)
-                        ctx.save();
-                        ctx.textAlign = 'center';
-                        ctx.font = 'bold 8px JetBrains Mono, monospace';
-                        ctx.fillStyle = '#FFFFFF';
-                        ctx.fillText(item.labelText, pillCenterX, y + 12.5);
-                        ctx.restore();
-                    });
-                }
+                    ]);
+                });
             }
 
-            // 2. Axes & Grid
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(pad.left, pad.top + plotH);
-            ctx.lineTo(w - pad.right, pad.top + plotH);
-            ctx.stroke();
+            const series = [];
 
-            // 3. Step Derivative Bars (Delta duration / pause time per move)
+            // 1. Single Step Pause Bars
             if (this.options.derivativeBars && this.options.derivativeBars.enabled) {
-                moves.forEach((m, idx) => {
-                    const delta = m.deltaMs || 250;
-                    const barH = (delta / maxDelta) * (plotH * 0.45);
-                    const x = getX(idx);
-                    const barW = Math.max(2, (plotW / n) * 0.7);
-
-                    const isActive = (idx === this.options.highlightStep);
-                    ctx.fillStyle = isActive
-                        ? (this.options.derivativeBars.activeColor || '#F59E0B')
-                        : (this.options.derivativeBars.color || 'rgba(59, 130, 246, 0.35)');
-                    ctx.fillRect(x - barW / 2, pad.top + plotH - barH, barW, barH);
+                series.push({
+                    name: '单步耗时',
+                    type: 'bar',
+                    yAxisIndex: 0,
+                    barMaxWidth: 14,
+                    itemStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(59, 130, 246, 0.65)' },
+                            { offset: 1, color: 'rgba(59, 130, 246, 0.15)' }
+                        ]),
+                        borderRadius: [3, 3, 0, 0]
+                    },
+                    data: stepDeltaSecData
                 });
             }
 
-            // 4. Overlay Comparison Solves (Requirement: Editable & Multi-Overlay)
-            if (this.options.overlaySolves && this.options.overlaySolves.length > 0) {
-                this.options.overlaySolves.forEach((otherSolve, sIdx) => {
-                    if (!otherSolve || !otherSolve.moves || otherSolve.moves.length === 0) return;
-                    const oMoves = otherSolve.moves;
-                    const oMaxTime = oMoves[oMoves.length - 1].elapsedMs || 1;
-                    const colors = ['#EC4899', '#8B5CF6', '#F59E0B'];
-
-                    ctx.save();
-                    ctx.strokeStyle = colors[sIdx % colors.length];
-                    ctx.lineWidth = 1.8;
-                    ctx.globalAlpha = 0.55;
-                    ctx.beginPath();
-                    oMoves.forEach((om, oIdx) => {
-                        const ox = pad.left + (oIdx / Math.max(1, oMoves.length - 1)) * plotW;
-                        const oy = pad.top + plotH - (om.elapsedMs / oMaxTime) * (plotH * 0.75);
-                        if (oIdx === 0) ctx.moveTo(ox, oy);
-                        else ctx.lineTo(ox, oy);
-                    });
-                    ctx.stroke();
-                    ctx.restore();
-                });
-            }
-
-            // 5. TPS Velocity Trend Curve (Optional editable layer)
-            if (this.options.tpsCurve && this.options.tpsCurve.enabled) {
-                ctx.save();
-                ctx.strokeStyle = this.options.tpsCurve.color || '#06B6D4';
-                ctx.lineWidth = this.options.tpsCurve.width || 2.0;
-                ctx.globalAlpha = this.options.tpsCurve.opacity || 0.85;
-                ctx.beginPath();
-                moves.forEach((m, idx) => {
-                    const instantTps = m.deltaMs > 0 ? Math.min(12, 1000 / m.deltaMs) : 0;
-                    const tx = getX(idx);
-                    const ty = pad.top + plotH - (instantTps / 12) * (plotH * 0.75);
-                    if (idx === 0) ctx.moveTo(tx, ty);
-                    else ctx.lineTo(tx, ty);
-                });
-                ctx.stroke();
-                ctx.restore();
-            }
-
-            // 6. Main Cumulative Solve Curve
+            // 2. Cumulative Solve Time Spline Curve
             if (this.options.cumulativeCurve && this.options.cumulativeCurve.enabled) {
-                ctx.save();
-                ctx.strokeStyle = this.options.cumulativeCurve.color || '#10B981';
-                ctx.lineWidth = this.options.cumulativeCurve.width || 2.5;
-                ctx.globalAlpha = this.options.cumulativeCurve.opacity || 1.0;
-                ctx.beginPath();
-                moves.forEach((m, idx) => {
-                    const t = m.calibratedElapsedMs || m.elapsedMs || 0;
-                    const x = getX(idx);
-                    const y = getY(t);
-                    if (idx === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
+                series.push({
+                    name: '累计时间',
+                    type: 'line',
+                    yAxisIndex: 0,
+                    smooth: 0.35,
+                    symbol: 'circle',
+                    symbolSize: 4,
+                    itemStyle: {
+                        color: '#10B981'
+                    },
+                    lineStyle: {
+                        color: '#10B981',
+                        width: 2.8,
+                        shadowColor: 'rgba(16, 185, 129, 0.6)',
+                        shadowBlur: 10
+                    },
+                    areaStyle: {
+                        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                            { offset: 0, color: 'rgba(16, 185, 129, 0.28)' },
+                            { offset: 1, color: 'rgba(16, 185, 129, 0.0)' }
+                        ])
+                    },
+                    markArea: markAreaData.length > 0 ? {
+                        silent: true,
+                        data: markAreaData
+                    } : undefined,
+                    data: cumulativeSecData
                 });
-                ctx.stroke();
-                ctx.restore();
             }
 
-            // 7. Highlight Marker Line & Step Dot
-            if (this.options.highlightStep >= 0 && this.options.highlightStep < n) {
-                const hx = getX(this.options.highlightStep);
-                ctx.save();
-                ctx.setLineDash([4, 4]);
-                ctx.strokeStyle = '#F59E0B';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(hx, pad.top);
-                ctx.lineTo(hx, pad.top + plotH);
-                ctx.stroke();
-
-                // Step Dot
-                const ht = moves[this.options.highlightStep].calibratedElapsedMs || moves[this.options.highlightStep].elapsedMs || 0;
-                const hy = getY(ht);
-                ctx.fillStyle = '#F59E0B';
-                ctx.beginPath();
-                ctx.arc(hx, hy, 5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
+            // 3. Instant TPS Velocity Spline
+            if (this.options.tpsCurve && this.options.tpsCurve.enabled) {
+                series.push({
+                    name: '实时 TPS',
+                    type: 'line',
+                    yAxisIndex: 1,
+                    smooth: 0.3,
+                    symbol: 'diamond',
+                    symbolSize: 4,
+                    itemStyle: {
+                        color: '#06B6D4'
+                    },
+                    lineStyle: {
+                        color: '#06B6D4',
+                        width: 2.2,
+                        shadowColor: 'rgba(6, 182, 212, 0.45)',
+                        shadowBlur: 8
+                    },
+                    data: instantTpsData
+                });
             }
 
-            // 8. Axis & Legend Text
-            ctx.fillStyle = '#9CA3AF';
-            ctx.font = '9px JetBrains Mono, monospace';
-            ctx.textAlign = 'left';
-            ctx.fillText('1', pad.left, pad.top + plotH + 14);
-            ctx.textAlign = 'right';
-            ctx.fillText(`${n} moves`, w - pad.right, pad.top + plotH + 14);
-            ctx.fillText((maxTime / 1000).toFixed(1) + 's', pad.left - 4, pad.top + 10);
+            const option = {
+                backgroundColor: 'transparent',
+                animationDuration: 400,
+                animationEasing: 'cubicOut',
+                grid: {
+                    top: 48,
+                    right: 36,
+                    bottom: 22,
+                    left: 36,
+                    containLabel: false
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross',
+                        lineStyle: { color: 'rgba(255, 255, 255, 0.4)', type: 'dashed' },
+                        crossStyle: { color: 'rgba(255, 255, 255, 0.3)' }
+                    },
+                    backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                    borderColor: 'rgba(255, 255, 255, 0.15)',
+                    borderWidth: 1,
+                    padding: [8, 12],
+                    textStyle: {
+                        color: '#F3F4F6',
+                        fontFamily: 'JetBrains Mono, monospace',
+                        fontSize: 11
+                    },
+                    formatter: (params) => {
+                        if (!params || params.length === 0) return '';
+                        const stepIdx = params[0].dataIndex;
+                        const moveObj = moves[stepIdx] || {};
+                        const moveName = moveObj.move || '';
+                        const timeSec = (moveObj.calibratedElapsedMs || moveObj.elapsedMs || 0) / 1000;
+                        const deltaSec = (moveObj.deltaMs || 0) / 1000;
+                        const tps = deltaSec > 0 ? (1 / deltaSec).toFixed(1) : '0.0';
+
+                        return `
+                            <div style="font-weight: 800; color: #38BDF8; font-size: 12px; margin-bottom: 4px;">Step #${stepIdx + 1}: ${moveName}</div>
+                            <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 11px; margin: 2px 0;">
+                                <span style="color: #9CA3AF;">累计用时:</span>
+                                <b style="color: #10B981;">${timeSec.toFixed(2)}s</b>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 11px; margin: 2px 0;">
+                                <span style="color: #9CA3AF;">单步耗时:</span>
+                                <b style="color: #60A5FA;">+${deltaSec.toFixed(2)}s</b>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 11px; margin: 2px 0;">
+                                <span style="color: #9CA3AF;">瞬时 TPS:</span>
+                                <b style="color: #F59E0B;">${tps}</b>
+                            </div>
+                        `;
+                    }
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: xData,
+                    axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.15)' } },
+                    axisTick: { show: false },
+                    axisLabel: {
+                        show: false
+                    }
+                },
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: '时间 (s)',
+                        nameTextStyle: {
+                            color: '#10B981',
+                            fontFamily: 'JetBrains Mono',
+                            fontSize: 10,
+                            fontWeight: 'bold',
+                            padding: [0, 0, 2, 0]
+                        },
+                        position: 'left',
+                        splitLine: {
+                            lineStyle: { color: 'rgba(255, 255, 255, 0.06)' }
+                        },
+                        axisLabel: {
+                            color: '#10B981',
+                            fontFamily: 'JetBrains Mono',
+                            fontSize: 9.5,
+                            formatter: '{value}s'
+                        }
+                    },
+                    {
+                        type: 'value',
+                        name: 'TPS',
+                        nameTextStyle: {
+                            color: '#06B6D4',
+                            fontFamily: 'JetBrains Mono',
+                            fontSize: 10,
+                            fontWeight: 'bold',
+                            padding: [0, 0, 2, 0]
+                        },
+                        position: 'right',
+                        splitLine: { show: false },
+                        axisLabel: {
+                            color: '#06B6D4',
+                            fontFamily: 'JetBrains Mono',
+                            fontSize: 9.5,
+                            formatter: '{value}'
+                        }
+                    }
+                ],
+                series: series
+            };
+
+            this.chart.setOption(option, true);
         }
     }
 

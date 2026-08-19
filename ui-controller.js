@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mainStatAo5: document.getElementById('main-stat-ao5'),
         mainStatAo12: document.getElementById('main-stat-ao12'),
         selectSettingsReconMethod: document.getElementById('select-settings-recon-method'),
-        canvasMainSolveGraph: document.getElementById('canvas-main-solve-graph'),
+        canvasMainSolveGraph: document.getElementById('chart-main-solve-graph') || document.getElementById('canvas-main-solve-graph'),
         toggleMainCumulative: document.getElementById('toggle-main-cumulative'),
         toggleMainTps: document.getElementById('toggle-main-tps'),
         toggleMainDerivative: document.getElementById('toggle-main-derivative'),

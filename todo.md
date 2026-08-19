@@ -415,3 +415,14 @@
     - Optimized `#main-solve-telemetry-bar` with ultra-compact pills to prevent card header text clipping.
 - [x] **Version Upgrade**:
     - Bumped to `v15.7` (sw.js cache `rubiks-timer-v15.7`).
+
+## Apache ECharts Integration & World-Class Visualization Upgrade (全面接入 Apache ECharts 专业图表引擎 - v15.8)
+- [x] **Integrated Apache ECharts (本地离线引入 echarts.min.js)**:
+    - Downloaded full-featured `echarts.min.js` locally into the project with complete PWA Service Worker offline caching.
+- [x] **Rebuilt Solve Movement Breakdown with ECharts (基于 ECharts 重构复原分析曲线)**:
+    - **Dual Y-Axes**: Left axis for Cumulative Solve Time in seconds (`时间 (s)`), Right axis for instant TPS (`TPS`).
+    - **Smooth Glowing Splines**: Emerald time spline (`#10B981`) with soft linear gradient area fill, and Cyan TPS velocity spline (`#06B6D4`).
+    - **Native Stage Bands & Dividers (`markArea`)**: Beautiful color-banded backgrounds for each stage (`Cross`, `F2L 1~4`, `OLL`, `PLL`) with high-contrast embedded stage badges (`Time · TPS`).
+    - **High-Precision Magnetic Tooltip (手势高精度磁吸浮窗)**: Sliding on the curve instantly snaps to every step displaying step notation (`Step #14: U'`), duration (`+0.18s`), cumulative time (`3.42s`), and instant TPS (`5.56 TPS`).
+- [x] **Version Upgrade**:
+    - Bumped to `v15.8` (sw.js cache `rubiks-timer-v15.8`).
