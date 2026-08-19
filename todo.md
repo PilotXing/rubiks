@@ -436,3 +436,11 @@
     - Adjusted grid top margin to 58px for seamless vertical breathing room.
 - [x] **Version Upgrade**:
     - Bumped to `v15.9` (sw.js cache `rubiks-timer-v15.9`).
+
+## Strict Own-Slot F2L Pair Verification & Accurate Milestones (F2L对子自身专属槽位严格判定修复 - v16.0)
+- [x] **Enforced Strict Own-Slot F2L Matching (严格专属槽位对齐判定)**:
+    - Removed rotational `offset` matching from `countFaceF2LPairs`.
+    - An F2L pair is now strictly required to be placed in its **OWN designated slot** matching its two side centers.
+    - Pairs formed temporarily in the top layer or inserted into an incorrect slot (e.g. at move #18) are no longer prematurely flagged as a solved F2L pair milestone.
+- [x] **Version Upgrade**:
+    - Bumped to `v16.0` (sw.js cache `rubiks-timer-v16.0`).

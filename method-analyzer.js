@@ -133,95 +133,73 @@
     };
 
     /**
-     * Check if Cross is solved for a specific base face (color neutral, supports cyclic rotational offset)
+     * Check if Cross is solved for a specific base face (strictly aligned with side centers)
      */
     function isFaceCrossSolved(facelets, cfg) {
         if (!facelets || facelets.length !== 54) return false;
         const baseColor = facelets[cfg.center];
 
-        // 1. Standard alignment check (edges aligned with side centers)
-        let aligned = true;
         for (let i = 0; i < 4; i++) {
             const e = cfg.crossEdges[i];
             if (facelets[e.facelet] !== baseColor || facelets[e.sideFacelet] !== facelets[e.sideCenter]) {
-                aligned = false;
-                break;
+                return false;
             }
         }
-        if (aligned) return true;
-
-        // 2. Rotational cyclic offset check (cross edges placed with cyclic D-layer offset)
-        for (let offset = 1; offset < 4; offset++) {
-            let offsetMatch = true;
-            for (let i = 0; i < 4; i++) {
-                const e = cfg.crossEdges[i];
-                const targetSideCenter = cfg.crossEdges[(i + offset) % 4].sideCenter;
-                if (facelets[e.facelet] !== baseColor || facelets[e.sideFacelet] !== facelets[targetSideCenter]) {
-                    offsetMatch = false;
-                    break;
-                }
-            }
-            if (offsetMatch) return true;
-        }
-        return false;
+        return true;
     }
 
     /**
-     * Count how many cross edges are solved for a specific base face (0..4, color neutral)
+     * Count how many cross edges are solved for a specific base face (0..4, strictly aligned to side centers)
      */
     function countFaceCrossEdges(facelets, cfg) {
         if (!facelets || facelets.length !== 54) return 0;
         const baseColor = facelets[cfg.center];
-        let maxCount = 0;
+        let count = 0;
 
-        for (let offset = 0; offset < 4; offset++) {
-            let count = 0;
-            for (let i = 0; i < 4; i++) {
-                const e = cfg.crossEdges[i];
-                const targetSideCenter = cfg.crossEdges[(i + offset) % 4].sideCenter;
-                if (facelets[e.facelet] === baseColor && facelets[e.sideFacelet] === facelets[targetSideCenter]) {
-                    count++;
-                }
+        for (let i = 0; i < 4; i++) {
+            const e = cfg.crossEdges[i];
+            if (facelets[e.facelet] === baseColor && facelets[e.sideFacelet] === facelets[e.sideCenter]) {
+                count++;
             }
-            if (count > maxCount) maxCount = count;
         }
-        return maxCount;
+        return count;
     }
 
     /**
-     * Count solved F2L pairs for a specific base face (supports cyclic D offsets)
+     * Check if a specific F2L slot is solved in its OWN proper position (matching its own side centers)
+     */
+    function isF2LSlotSolved(facelets, cfg, slot) {
+        const baseColor = facelets[cfg.center];
+        const side1Color = facelets[slot.sideCenters[0]];
+        const side2Color = facelets[slot.sideCenters[1]];
+
+        // Corner check: must match baseColor, side1Color, side2Color exactly in place
+        const c0 = facelets[slot.corner[0]];
+        const c1 = facelets[slot.corner[1]];
+        const c2 = facelets[slot.corner[2]];
+        const cornerSolved = (c0 === baseColor && c1 === side1Color && c2 === side2Color);
+
+        // Edge check: must match side1Color, side2Color exactly in place
+        const e0 = facelets[slot.edge[0]];
+        const e1 = facelets[slot.edge[1]];
+        const edgeSolved = (e0 === side1Color && e1 === side2Color);
+
+        return cornerSolved && edgeSolved;
+    }
+
+    /**
+     * Count solved F2L pairs in their OWN designated slots (0..4)
+     * A pair is only considered solved if placed in its corresponding slot matching side centers.
      */
     function countFaceF2LPairs(facelets, cfg) {
         if (!facelets || facelets.length !== 54) return 0;
-        const baseColor = facelets[cfg.center];
-        let maxCount = 0;
-
-        for (let offset = 0; offset < 4; offset++) {
-            let count = 0;
-            for (let sIdx = 0; sIdx < 4; sIdx++) {
-                const slot = cfg.f2lSlots[sIdx];
-                const targetSlot = cfg.f2lSlots[(sIdx + offset) % 4];
-                const side1Color = facelets[targetSlot.sideCenters[0]];
-                const side2Color = facelets[targetSlot.sideCenters[1]];
-
-                // Corner check
-                const c0 = facelets[slot.corner[0]];
-                const c1 = facelets[slot.corner[1]];
-                const c2 = facelets[slot.corner[2]];
-                const cornerSolved = (c0 === baseColor && c1 === side1Color && c2 === side2Color);
-
-                // Edge check
-                const e0 = facelets[slot.edge[0]];
-                const e1 = facelets[slot.edge[1]];
-                const edgeSolved = (e0 === side1Color && e1 === side2Color);
-
-                if (cornerSolved && edgeSolved) {
-                    count++;
-                }
+        let count = 0;
+        for (let sIdx = 0; sIdx < 4; sIdx++) {
+            if (isF2LSlotSolved(facelets, cfg, cfg.f2lSlots[sIdx])) {
+                count++;
             }
-            if (count > maxCount) maxCount = count;
         }
-        return maxCount;
+        return count;
     }
 
     /**
