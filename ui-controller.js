@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const RubiksCube = CubeEngine.RubiksCube;
     const ScrambleTracker = CubeEngine.ScrambleProgressTracker;
     const generateWcaScramble = CubeEngine.generateWcaScramble;
+    const generateWcaScrambleWithFirstMove = CubeEngine.generateWcaScrambleWithFirstMove;
     const formatTime = TimerEngine.formatTime;
 
     const bluetooth = new GanBluetooth.GanBluetoothAdapter({
@@ -250,6 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // State Variables: Style & Color Themes (Orthogonal Multi-Switching)
     let currentView = 'view-timer';
     let currentScramble = '';
+    let isAwaitingScrambleTurn = false;
     let currentUiStyle = localStorage.getItem('timer_ui_style') || localStorage.getItem('timer_theme') || 'dark';
     let currentAccentColor = localStorage.getItem('timer_accent_color') || 'emerald';
 
@@ -534,43 +536,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const optimalRows = (targetRows !== null && targetRows !== undefined) ? targetRows : getOptimalRowCount(moves.length);
 
-        let correctionHtml = '';
-        if (correctionMoves && correctionMoves.length > 0) {
-            const nextCorrection = correctionMoves[0];
-            const colorCls = getMoveColorClass(nextCorrection);
-            correctionHtml += `<div class="scramble-correction-row">`;
-            correctionHtml += `<span class="scramble-correction-prefix">Correction:</span> `;
-            correctionHtml += `<span class="scramble-move move-correction-active ${colorCls}">${nextCorrection}</span> `;
-            if (correctionMoves.length > 1) {
-                correctionHtml += `<span class="scramble-move move-correction">${correctionMoves.slice(1).join(' ')}</span> `;
-            }
-            correctionHtml += `</div>`;
-        }
-
         const moveSpans = moves.map((move, idx) => {
             let cls = 'move-pending';
             let label = move;
             const colorCls = getMoveColorClass(move);
 
-            if (!correctionMoves || correctionMoves.length === 0) {
-                if (idx < activeIdx) {
-                    cls = 'move-done';
-                } else if (idx === activeIdx) {
-                    if (isHalfTurn) {
-                        cls = 'move-half-active';
-                        label = remainingOnFace ? `${remainingOnFace} (½)` : `${move} (½)`;
-                    } else {
-                        cls = 'move-active';
-                    }
+            if (idx < activeIdx) {
+                cls = 'move-done';
+            } else if (idx === activeIdx) {
+                if (isHalfTurn) {
+                    cls = 'move-half-active';
+                    label = remainingOnFace ? `${remainingOnFace} (½)` : `${move} (½)`;
+                } else {
+                    cls = 'move-active';
                 }
             }
             return `<span class="scramble-move ${cls} ${colorCls}">${label}</span>`;
         });
 
         const rows = splitMovesIntoBalancedRows(moveSpans, optimalRows);
-        const rowsHtml = rows.map(rowSpans => `<div class="scramble-row">${rowSpans.join('')}</div>`).join('');
-
-        return correctionHtml ? `${correctionHtml}${rowsHtml}` : rowsHtml;
+        return rows.map(rowSpans => `<div class="scramble-row">${rowSpans.join('')}</div>`).join('');
     }
 
     const CAROUSEL_GAP = 0;
@@ -919,19 +904,28 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (evalResult.isDeviated) {
             setArenaMode('SCRAMBLE');
             if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
-            const nextCorrection = (evalResult.correctionMoves && evalResult.correctionMoves.length > 0)
-                ? evalResult.correctionMoves[0]
-                : 'Undo move';
+
+            if (evalResult.fullScrambleString && evalResult.fullScrambleString !== currentScramble) {
+                currentScramble = evalResult.fullScrambleString;
+                timer.setScramble(currentScramble);
+                if (scrambleHistory.length > 0 && scrambleHistoryIndex >= 0 && scrambleHistoryIndex < scrambleHistory.length) {
+                    scrambleHistory[scrambleHistoryIndex] = currentScramble;
+                }
+            }
+
+            const nextCorrection = (evalResult.remainingMoves && evalResult.remainingMoves.length > 0)
+                ? evalResult.remainingMoves[0]
+                : (evalResult.correctionMoves && evalResult.correctionMoves.length > 0 ? evalResult.correctionMoves[0] : 'Turn cube');
 
             if (banner) {
-                banner.innerHTML = `<span>Wrong move detected! Turn <strong>${nextCorrection}</strong> to correct</span>`;
+                banner.innerHTML = `<span>打乱已自动更新剩余步骤，请继续转动: <strong>${nextCorrection}</strong></span>`;
                 banner.classList.add('status-warning');
             }
             if (elements.timerStateBadge) {
-                elements.timerStateBadge.textContent = 'CORRECTION';
-                elements.timerStateBadge.className = 'badge badge-warning';
+                elements.timerStateBadge.textContent = 'SCRAMBLING';
+                elements.timerStateBadge.className = 'badge badge-scrambling';
             }
-            timer.setState('CORRECTION');
+            timer.setState('SCRAMBLING');
 
             if (scrambleAlertsEnabled && !wasDeviated) {
                 sound.playScrambleWarning();
@@ -945,7 +939,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             wasDeviated = true;
-            renderScrambleDisplay(evalResult.currentStep, evalResult.correctionMoves);
+            renderScrambleDisplay(evalResult.currentStep);
         } else if (evalResult.isHalfTurn) {
             setArenaMode('SCRAMBLE');
             wasDeviated = false;
@@ -1215,6 +1209,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Standard Timer Engine Routing
+        if (isAwaitingScrambleTurn || timer.state === 'FINISHED' || (timer.state === 'IDLE' && physicalCube.isSolved())) {
+            // User turned any face on the cube: generate new scramble starting with this first turn!
+            isAwaitingScrambleTurn = false;
+            const newScramble = generateWcaScrambleWithFirstMove(moveEvent.move, 21);
+            setNewScramble(newScramble, false);
+            return;
+        }
+
         if (timer.state === 'READY' || timer.state === 'INSPECTION') {
             // First turn begins solve immediately!
             timer.startTimer();
@@ -1306,11 +1308,8 @@ document.addEventListener('DOMContentLoaded', () => {
             trendChart.setData(session.solves);
         }
 
-        // Prepare the next scramble quietly in data so it's ready when user starts scrambling
-        currentScramble = generateWcaScramble(21);
-        timer.setScramble(currentScramble);
-        tracker.setScramble(currentScramble);
-        renderScrambleDisplay(0);
+        // Requirement: Do not compute next scramble yet. Wait until user turns any face.
+        isAwaitingScrambleTurn = true;
         syncAllModuleUIs();
     }
 

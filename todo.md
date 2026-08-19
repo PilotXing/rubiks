@@ -349,3 +349,15 @@
     - Increased Row 1 square buttons to `38px × 38px` with enlarged `19px` icons (+41% touch surface area) for single-handed thumb taps on 6.7-inch screens.
 - [x] **Version Upgrade**:
     - Bumped to `v15.1` (sw.js cache `rubiks-timer-v15.1`).
+
+## Lazy Scramble Generation on First Move & In-Place Scramble Formula Repathing (任意面转动触发打乱与打乱出错原公式实时更新 - v15.2)
+- [x] **Lazy Scramble Calculation on First Move (复原完成后先不计算打乱，转动任意面触发)**:
+    - Solve finished state leaves timer at completed solve time without pre-generating or switching to next scramble.
+    - Turning ANY face on the physical cube generates a new standard WCA random state scramble starting with that exact first turn (`generateWcaScrambleWithFirstMove`).
+    - Immediately flips arena to Scramble view with Step 1 marked complete and Step 2 highlighted.
+- [x] **In-Place Scramble Error Repathing (打乱出错原公式更新剩下所有正确步骤)**:
+    - When a wrong turn occurs during scrambling, dynamically solves from the current physical cube state to the target scrambled state using `min2phase`.
+    - Updates remaining steps in-place directly within the active scramble formula card (`repathRemaining`).
+    - User seamlessly continues following the updated remaining steps in the formula to completion.
+- [x] **Version Upgrade**:
+    - Bumped to `v15.2` (sw.js cache `rubiks-timer-v15.2`).
