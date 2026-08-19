@@ -555,8 +555,10 @@ body {
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    flex: 1;
-    min-width: 0;
+    width: 100%;
+    min-height: 42px;
+    height: 42px;
+    box-sizing: border-box;
 }
 
 .header-brand {
@@ -578,18 +580,79 @@ body {
     white-space: nowrap;
 }
 
-.header-status {
+.header-actions {
     display: flex;
     align-items: center;
     gap: 0.35rem;
     flex-shrink: 0;
 }
 
-.header-actions {
-    display: flex;
+/* Unified Bluetooth Capsule Button (Connect / Battery Indicator) */
+.btn-bluetooth-capsule {
+    display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    flex-shrink: 0;
+    justify-content: center;
+    gap: 0.4rem;
+    height: 34px;
+    padding: 0 0.65rem;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-surface-elevated);
+    color: var(--text-primary);
+    transition: all 0.15s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    white-space: nowrap;
+}
+
+.btn-bluetooth-capsule:hover {
+    background-color: var(--bg-surface-hover);
+    border-color: var(--accent-primary);
+}
+
+.btn-bluetooth-capsule.disconnected {
+    background: var(--accent-subtle);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.btn-bluetooth-capsule.connecting {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.5);
+    color: #F59E0B;
+}
+
+.btn-bluetooth-capsule.connected {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: var(--accent-primary);
+}
+
+.btn-bluetooth-capsule.connected .bt-icon-connected {
+    display: inline-block !important;
+}
+
+.btn-bluetooth-capsule.connected .bt-icon-disconnected {
+    display: none !important;
+}
+
+.bt-pulse-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: #10B981;
+    display: inline-block;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
+    animation: btPulse 2s infinite ease-in-out;
+}
+
+@keyframes btPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.35); opacity: 0.65; }
 }
 
 .app-nav-tabs {
@@ -599,6 +662,9 @@ body {
     background-color: var(--bg-surface-elevated);
     border-radius: var(--radius-sm);
     padding: 0.2rem;
+    width: 100%;
+    min-height: 42px;
+    height: 42px;
     box-sizing: border-box;
 }
 
@@ -607,10 +673,11 @@ body {
     background: transparent;
     color: var(--text-muted);
     font-family: inherit;
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     font-weight: 600;
-    padding: 0.32rem 0.65rem;
-    min-height: 32px;
+    padding: 0 0.65rem;
+    height: 100%;
+    min-height: 100%;
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: all 0.15s ease;
@@ -621,6 +688,7 @@ body {
     gap: 0.35rem;
     line-height: 1;
     box-sizing: border-box;
+    flex: 1;
 }
 
 .nav-tab-btn:hover {
@@ -722,19 +790,28 @@ body {
         gap: var(--card-gap, 0.6rem);
     }
     .module-toggle-toolbar {
-        padding: 0.3rem 0.35rem;
+        padding: 0.2rem 0.35rem;
         gap: 0.35rem;
         width: 100%;
+        min-height: 42px;
+        height: 42px;
         box-sizing: border-box;
     }
     .module-chip-btn {
-        min-height: 38px;
-        padding: 0.35rem 0;
+        min-height: 100%;
+        height: 100%;
+        padding: 0 0.25rem;
         border-radius: var(--radius-sm);
+        display: inline-flex;
+        flex-direction: row;
+        gap: 0.25rem;
     }
     .module-chip-btn svg {
-        width: 18px;
-        height: 18px;
+        width: 14px;
+        height: 14px;
+    }
+    .module-chip-text {
+        font-size: 0.72rem;
     }
 }
 
@@ -756,11 +833,13 @@ body {
     align-items: center;
     justify-content: space-between;
     gap: 0.45rem;
-    padding: 0.35rem 0.45rem;
+    padding: 0.2rem 0.45rem;
     background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     width: 100%;
+    min-height: 42px;
+    height: 42px;
     min-width: 0;
     box-sizing: border-box;
 }
@@ -768,12 +847,13 @@ body {
 .module-chip-btn {
     flex: 1;
     display: inline-flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: 0.22rem;
-    min-height: 48px;
-    padding: 0.35rem 0.15rem;
+    gap: 0.35rem;
+    min-height: 100%;
+    height: 100%;
+    padding: 0 0.4rem;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-color);
     background-color: var(--bg-surface-elevated);
@@ -788,21 +868,94 @@ body {
 
 .module-chip-btn svg {
     display: block;
-    width: 18px;
-    height: 18px;
+    width: 15px;
+    height: 15px;
     flex-shrink: 0;
     transition: transform 0.18s ease, stroke 0.18s ease;
 }
 
 .module-chip-text {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    line-height: 1.1;
+    line-height: 1;
     white-space: nowrap;
     letter-spacing: -0.01em;
     color: var(--text-secondary);
     transition: color 0.18s ease;
 }
+
+/* Bluetooth Diagnostics & Live Logs Modal */
+.bt-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+}
+
+.bt-info-card {
+    background-color: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.6rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.bt-info-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.bt-info-val {
+    font-size: 0.92rem;
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.bt-modal-battery-bar {
+    width: 65px;
+    height: 9px;
+    background: var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.bt-modal-battery-fill {
+    height: 100%;
+    background: #10B981;
+    border-radius: 6px;
+    transition: width 0.3s ease;
+}
+
+.bt-log-terminal {
+    background: #0B0E14;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: #A3B8CC;
+    height: 180px;
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.bt-log-entry {
+    line-height: 1.4;
+    word-break: break-all;
+}
+
+.bt-log-system { color: #60A5FA; }
+.bt-log-move { color: #34D399; }
+.bt-log-warn { color: #FBBF24; }
+.bt-log-err { color: #F87171; }
 
 .module-chip-btn.active {
     background-color: rgba(16, 185, 129, 0.15);

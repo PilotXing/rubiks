@@ -309,3 +309,18 @@
     - Added click listener on `.modal-backdrop` to dismiss modals when clicking outside the dialog card.
 - [x] **Version Upgrade**:
     - Bumped to `v14.8` (sw.js cache `rubiks-timer-v14.8`).
+
+## Unified Bluetooth Capsule, Diagnostics Log & Synchronized Top 3 Rows (合并蓝牙图标与统一前三行高度 - v14.9)
+- [x] **Unified Connect/Disconnect Bluetooth Capsule (`#btn-bluetooth-capsule`)**:
+    - Merged separate connect and disconnect buttons into a single smart capsule button.
+    - When disconnected: shows Bluetooth icon and "连接魔方", clicking initiates Bluetooth connection.
+    - When connected: shows battery icon with live % (`85%`) and green pulsing dot.
+    - When clicked while connected: opens the comprehensive Bluetooth Diagnostics & Live Logs modal.
+- [x] **Bluetooth Diagnostics & Live Logs Modal (`#modal-bluetooth-log`)**:
+    - Real-time display of device model, MAC address, connection status, visual battery gauge bar, and live event/packet stream.
+    - Integrated disconnect button, recalibrate button, copy logs, and clear logs actions.
+- [x] **Synchronized Height for Top 3 Rows (统一前三行高度)**:
+    - Set Row 1 (`.header-top-row`), Row 2 (`.app-nav-tabs`), and Row 3 (`.module-toggle-toolbar`) to identical 42px height (`height: 42px; min-height: 42px;`).
+    - Standardized internal padding and vertical centering across all header and stage dock bars.
+- [x] **Version Upgrade**:
+    - Bumped to `v14.9` (sw.js cache `rubiks-timer-v14.9`).

@@ -37,14 +37,28 @@ document.addEventListener('DOMContentLoaded', () => {
         viewAnalytics: document.getElementById('view-analytics'),
         viewPractice: document.getElementById('view-practice'),
 
-        // Bluetooth & Header
+        // Bluetooth Capsule & Header
         btnConnect: document.getElementById('btn-connect'),
         btnDisconnect: document.getElementById('btn-disconnect'),
+        btnBtCapsule: document.getElementById('btn-bluetooth-capsule'),
+        btCapsuleLabel: document.getElementById('bt-capsule-label'),
         btnInstallPwa: document.getElementById('btn-install-pwa'),
         cubeStatusBadge: document.getElementById('cube-status-badge'),
         cubeBatteryBadge: document.getElementById('cube-battery-badge'),
         btnSettings: document.getElementById('btn-settings'),
         btnHelp: document.getElementById('btn-help'),
+        modalBtLog: document.getElementById('modal-bluetooth-log'),
+        btnCloseBtLog: document.getElementById('btn-close-bt-log'),
+        btModalDeviceName: document.getElementById('bt-modal-device-name'),
+        btModalBatteryVal: document.getElementById('bt-modal-battery-val'),
+        btModalBatteryFill: document.getElementById('bt-modal-battery-fill'),
+        btModalStatusBadge: document.getElementById('bt-modal-status-badge'),
+        btModalMacVal: document.getElementById('bt-modal-mac-val'),
+        btLogTerminal: document.getElementById('bt-log-terminal'),
+        btnCopyBtLog: document.getElementById('btn-copy-bt-log'),
+        btnClearBtLog: document.getElementById('btn-clear-bt-log'),
+        btnModalDisconnect: document.getElementById('btn-modal-disconnect'),
+        btnModalRecalibrate: document.getElementById('btn-modal-recalibrate'),
 
         // Scramble Box & Timer Arena
         scrambleBox: document.getElementById('scramble-box'),
@@ -969,57 +983,184 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.btnCopyScramble) elements.btnCopyScramble.addEventListener('click', () => copyCurrentScramble());
 
     // -------------------------------------------------------------
-    // 4. Bluetooth Integration & Event Routing
+    // 4. Bluetooth Integration, Event Routing & Diagnostics Log
     // -------------------------------------------------------------
-    elements.btnConnect.addEventListener('click', async () => {
-        try {
-            elements.btnConnect.disabled = true;
-            elements.btnConnect.textContent = 'Scanning...';
-            await bluetooth.connect();
-        } catch (err) {
-            console.error("Connection failed:", err);
-            elements.btnConnect.disabled = false;
-            elements.btnConnect.textContent = 'Connect Cube';
-            alert(`Bluetooth Connection Failed:\n${err.message || err}`);
-        }
-    });
+    const btLogEntries = [];
+    let isCubeConnected = false;
+    let currentBatteryLevel = null;
 
-    elements.btnDisconnect.addEventListener('click', async () => {
-        await bluetooth.disconnect();
-    });
+    function appendBtLog(type, message) {
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}.${String(now.getMilliseconds()).padStart(3, '0')}`;
+        const logLine = `[${timeStr}] ${message}`;
+        btLogEntries.push(logLine);
+        if (btLogEntries.length > 200) btLogEntries.shift();
+
+        if (elements.btLogTerminal) {
+            const div = document.createElement('div');
+            div.className = `bt-log-entry bt-log-${type || 'system'}`;
+            div.textContent = logLine;
+            elements.btLogTerminal.appendChild(div);
+            elements.btLogTerminal.scrollTop = elements.btLogTerminal.scrollHeight;
+        }
+    }
+
+    function openBluetoothLogModal() {
+        if (!elements.modalBtLog) return;
+        elements.modalBtLog.classList.add('active');
+        if (elements.btModalMacVal) elements.btModalMacVal.textContent = bluetooth.macOverride || '0c:3d:5e:be:8e:95';
+        if (elements.btLogTerminal) elements.btLogTerminal.scrollTop = elements.btLogTerminal.scrollHeight;
+    }
+
+    if (elements.btnBtCapsule) {
+        elements.btnBtCapsule.addEventListener('click', async () => {
+            if (!isCubeConnected) {
+                try {
+                    elements.btnBtCapsule.className = 'btn-bluetooth-capsule connecting';
+                    if (elements.btCapsuleLabel) elements.btCapsuleLabel.textContent = '连接中...';
+                    appendBtLog('system', '正在启动蓝牙设备扫描 (Web Bluetooth API)...');
+                    await bluetooth.connect();
+                } catch (err) {
+                    console.error("Connection failed:", err);
+                    elements.btnBtCapsule.className = 'btn-bluetooth-capsule disconnected';
+                    if (elements.btCapsuleLabel) elements.btCapsuleLabel.textContent = '连接魔方';
+                    appendBtLog('err', `连接失败: ${err.message || err}`);
+                    alert(`Bluetooth Connection Failed:\n${err.message || err}`);
+                }
+            } else {
+                openBluetoothLogModal();
+            }
+        });
+    }
+
+    if (elements.btnCloseBtLog) {
+        elements.btnCloseBtLog.addEventListener('click', () => {
+            if (elements.modalBtLog) elements.modalBtLog.classList.remove('active');
+        });
+    }
+
+    if (elements.btnModalDisconnect) {
+        elements.btnModalDisconnect.addEventListener('click', async () => {
+            appendBtLog('warn', '用户在详情弹窗中触发断开连接');
+            await bluetooth.disconnect();
+            if (elements.modalBtLog) elements.modalBtLog.classList.remove('active');
+        });
+    }
+
+    if (elements.btnModalRecalibrate) {
+        elements.btnModalRecalibrate.addEventListener('click', () => {
+            recalibrateCube();
+            appendBtLog('system', '手动将魔方校准设为复原态');
+        });
+    }
+
+    if (elements.btnCopyBtLog) {
+        elements.btnCopyBtLog.addEventListener('click', () => {
+            copyTextToClipboard(btLogEntries.join('\n'));
+            appendBtLog('system', '已复制全部蓝牙日志至剪贴板');
+        });
+    }
+
+    if (elements.btnClearBtLog) {
+        elements.btnClearBtLog.addEventListener('click', () => {
+            btLogEntries.length = 0;
+            if (elements.btLogTerminal) elements.btLogTerminal.innerHTML = '<div class="bt-log-entry bt-log-system">[System] 日志已清空</div>';
+        });
+    }
+
+    if (elements.btnConnect) {
+        elements.btnConnect.addEventListener('click', async () => {
+            try {
+                await bluetooth.connect();
+            } catch (err) {
+                console.error("Connection failed:", err);
+            }
+        });
+    }
+
+    if (elements.btnDisconnect) {
+        elements.btnDisconnect.addEventListener('click', async () => {
+            await bluetooth.disconnect();
+        });
+    }
 
     bluetooth.on('status', (info) => {
         if (info.state === 'CONNECTED') {
-            elements.btnConnect.style.display = 'none';
-            elements.btnDisconnect.style.display = 'inline-flex';
-            elements.cubeStatusBadge.innerHTML = `<span class="status-dot"></span> ${info.deviceName || 'GAN Cube'}`;
-            elements.cubeStatusBadge.className = 'badge badge-connected';
+            isCubeConnected = true;
+            if (elements.btnBtCapsule) {
+                elements.btnBtCapsule.className = 'btn-bluetooth-capsule connected';
+                elements.btnBtCapsule.title = '点击查看蓝牙日志与详情 (Click for logs & details)';
+            }
+            const name = info.deviceName || 'GAN Cube';
+            const battText = currentBatteryLevel !== null ? `${currentBatteryLevel}%` : '已连接';
+            if (elements.btCapsuleLabel) elements.btCapsuleLabel.innerHTML = `<span class="bt-pulse-dot"></span> ${battText}`;
+            if (elements.btModalDeviceName) elements.btModalDeviceName.textContent = name;
+            if (elements.btModalStatusBadge) {
+                elements.btModalStatusBadge.innerHTML = `<span class="status-dot"></span> Connected`;
+                elements.btModalStatusBadge.className = 'badge badge-connected';
+            }
+            if (elements.btnModalDisconnect) elements.btnModalDisconnect.style.display = 'inline-flex';
+            if (elements.cubeStatusBadge) {
+                elements.cubeStatusBadge.innerHTML = `<span class="status-dot"></span> ${name}`;
+                elements.cubeStatusBadge.className = 'badge badge-connected';
+            }
             if (elements.btnRecalibrate) elements.btnRecalibrate.style.display = 'inline-flex';
+            appendBtLog('system', `已建立蓝牙通信握手: ${name}`);
             resetBtInactivityTimer();
         } else if (info.state === 'CONNECTING') {
-            elements.cubeStatusBadge.innerHTML = '<span class="status-dot"></span> Connecting...';
-            elements.cubeStatusBadge.className = 'badge badge-connecting';
+            if (elements.btnBtCapsule) elements.btnBtCapsule.className = 'btn-bluetooth-capsule connecting';
+            if (elements.btCapsuleLabel) elements.btCapsuleLabel.textContent = '连接中...';
+            if (elements.btModalStatusBadge) {
+                elements.btModalStatusBadge.innerHTML = '<span class="status-dot"></span> Connecting...';
+                elements.btModalStatusBadge.className = 'badge badge-connecting';
+            }
+            appendBtLog('system', '正在协商 AES-128 加密通信协议...');
         } else {
+            isCubeConnected = false;
+            currentBatteryLevel = null;
             if (btInactivityTimer) {
                 clearTimeout(btInactivityTimer);
                 btInactivityTimer = null;
             }
-            elements.btnConnect.style.display = 'inline-flex';
-            elements.btnConnect.disabled = false;
-            elements.btnConnect.textContent = 'Connect Cube';
-            elements.btnDisconnect.style.display = 'none';
-            elements.cubeStatusBadge.innerHTML = '<span class="status-dot"></span> Disconnected';
-            elements.cubeStatusBadge.className = 'badge badge-disconnected';
-            elements.cubeBatteryBadge.style.display = 'none';
+            if (elements.btnBtCapsule) {
+                elements.btnBtCapsule.className = 'btn-bluetooth-capsule disconnected';
+                elements.btnBtCapsule.title = '点击连接魔方 (Click to connect)';
+            }
+            if (elements.btCapsuleLabel) elements.btCapsuleLabel.textContent = '连接魔方';
+            if (elements.btModalDeviceName) elements.btModalDeviceName.textContent = '未连接';
+            if (elements.btModalBatteryVal) elements.btModalBatteryVal.textContent = '--%';
+            if (elements.btModalBatteryFill) elements.btModalBatteryFill.style.width = '0%';
+            if (elements.btModalStatusBadge) {
+                elements.btModalStatusBadge.innerHTML = '<span class="status-dot"></span> Disconnected';
+                elements.btModalStatusBadge.className = 'badge badge-disconnected';
+            }
+            if (elements.btnModalDisconnect) elements.btnModalDisconnect.style.display = 'none';
+            if (elements.cubeStatusBadge) {
+                elements.cubeStatusBadge.innerHTML = '<span class="status-dot"></span> Disconnected';
+                elements.cubeStatusBadge.className = 'badge badge-disconnected';
+            }
+            if (elements.cubeBatteryBadge) elements.cubeBatteryBadge.style.display = 'none';
+            appendBtLog('warn', '蓝牙连接已断开');
         }
     });
 
     bluetooth.on('battery', (data) => {
-        elements.cubeBatteryBadge.style.display = 'inline-flex';
-        elements.cubeBatteryBadge.innerHTML = `
-            <svg class="svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect><line x1="23" y1="13" x2="23" y2="11"></line></svg>
-            <span>${data.level}%</span>
-        `;
+        currentBatteryLevel = data.level;
+        if (elements.btCapsuleLabel && isCubeConnected) {
+            elements.btCapsuleLabel.innerHTML = `<span class="bt-pulse-dot"></span> ${data.level}%`;
+        }
+        if (elements.cubeBatteryBadge) {
+            elements.cubeBatteryBadge.innerHTML = `
+                <svg class="svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect><line x1="23" y1="13" x2="23" y2="11"></line></svg>
+                <span>${data.level}%</span>
+            `;
+        }
+        if (elements.btModalBatteryVal) elements.btModalBatteryVal.textContent = `${data.level}%`;
+        if (elements.btModalBatteryFill) {
+            elements.btModalBatteryFill.style.width = `${Math.min(100, Math.max(0, data.level))}%`;
+            elements.btModalBatteryFill.style.background = data.level > 50 ? '#10B981' : (data.level > 20 ? '#F59E0B' : '#EF4444');
+        }
+        appendBtLog('system', `魔方电量更新: ${data.level}%`);
     });
 
     bluetooth.on('facelets', (data) => {
@@ -1047,6 +1188,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const faceletStr = physicalCube.getFacelets();
         if (renderer3D) renderer3D.updateFacelets(faceletStr);
         if (renderer2D) renderer2D.updateFacelets(faceletStr);
+
+        appendBtLog('move', `动作: ${moveEvent.move} (硬件刻度: ${moveEvent.hardwareTimestamp || '--'})`);
 
         elements.liveLastMoveBadge.textContent = moveEvent.move;
         const colorCls = getMoveColorClass(moveEvent.move);
