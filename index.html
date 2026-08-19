@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css?v=16.4">
+    <link rel="stylesheet" href="style.css?v=16.5">
 </head>
 <body class="style-dark color-emerald theme-dark">
 
@@ -34,7 +34,7 @@
                     </svg>
                 </span>
                 <span class="brand-title">Rubik Vision</span>
-                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v16.4</span>
+                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v16.5</span>
             </div>
 
             <div class="header-actions">
@@ -101,10 +101,6 @@
                     <button class="module-chip-btn active" data-target="card-cube-views" title="3D/2D 魔方视图 (3D & 2D Cube Views)" aria-label="3D魔方">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
                         <span class="module-chip-text">3D魔方</span>
-                    </button>
-                    <button class="module-chip-btn active" data-target="card-stats-summary" title="成绩统计数据 (Session Statistics)" aria-label="成绩统计">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-                        <span class="module-chip-text">统计</span>
                     </button>
                     <button class="module-chip-btn active" data-target="card-history-table" title="成绩历史列表 (Session History Table)" aria-label="成绩历史">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
@@ -231,56 +227,6 @@
 
             <!-- Sidebar Section: Statistics & Solve History (Minimizable) -->
             <aside class="sidebar-section">
-
-                <!-- Stats Summary Card (Minimizable) -->
-                <div id="card-stats-summary" class="card-collapsible">
-                    <div class="collapsible-header">
-                        <span class="collapsible-title">
-                            <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-                            Session Statistics
-                        </span>
-                        <button class="btn-panel-toggle" data-target="card-stats-summary" title="折叠/展开">
-                            <svg class="svg-icon svg-chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                            <span class="toggle-text">收起</span>
-                        </button>
-                    </div>
-                    <div class="collapsible-body">
-                        <div class="stats-grid">
-                            <div class="stat-card">
-                                <span class="stat-label">Solves</span>
-                                <span id="stat-count" class="stat-val">0</span>
-                            </div>
-                            <div class="stat-card">
-                                <span class="stat-label">Best</span>
-                                <span id="stat-best" class="stat-val">--</span>
-                            </div>
-                            <div class="stat-card">
-                                <span class="stat-label">Current ao5</span>
-                                <span id="stat-ao5" class="stat-val">--</span>
-                            </div>
-                            <div class="stat-card">
-                                <span class="stat-label">Best ao5</span>
-                                <span id="stat-best-ao5" class="stat-val">--</span>
-                            </div>
-                            <div class="stat-card">
-                                <span class="stat-label">Current ao12</span>
-                                <span id="stat-ao12" class="stat-val">--</span>
-                            </div>
-                            <div class="stat-card">
-                                <span class="stat-label">Best ao12</span>
-                                <span id="stat-best-ao12" class="stat-val">--</span>
-                            </div>
-                            <div class="stat-card">
-                                <span class="stat-label">Mean</span>
-                                <span id="stat-mean" class="stat-val">--</span>
-                            </div>
-                            <div class="stat-card">
-                                <span class="stat-label">Std Dev</span>
-                                <span id="stat-stddev" class="stat-val">--</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Solve History Card (Minimizable) -->
                 <div id="card-history-table" class="card-collapsible">
@@ -976,20 +922,20 @@
     </div>
 
     <!-- Scripts -->
-    <script src="aes.js?v=16.4"></script>
-    <script src="min2phase.js?v=16.4"></script>
-    <script src="three.min.js?v=16.4"></script>
-    <script src="echarts.min.js?v=16.4"></script>
-    <script src="cube-engine.js?v=16.4"></script>
-    <script src="alg-database.js?v=16.4"></script>
-    <script src="method-analyzer.js?v=16.4"></script>
-    <script src="chart-engine.js?v=16.4"></script>
-    <script src="gan-bluetooth.js?v=16.4"></script>
-    <script src="audio-synth.js?v=16.4"></script>
-    <script src="renderer-3d.js?v=16.4"></script>
-    <script src="renderer-2d.js?v=16.4"></script>
-    <script src="timer-engine.js?v=16.4"></script>
-    <script src="ui-controller.js?v=16.4"></script>
+    <script src="aes.js?v=16.5"></script>
+    <script src="min2phase.js?v=16.5"></script>
+    <script src="three.min.js?v=16.5"></script>
+    <script src="echarts.min.js?v=16.5"></script>
+    <script src="cube-engine.js?v=16.5"></script>
+    <script src="alg-database.js?v=16.5"></script>
+    <script src="method-analyzer.js?v=16.5"></script>
+    <script src="chart-engine.js?v=16.5"></script>
+    <script src="gan-bluetooth.js?v=16.5"></script>
+    <script src="audio-synth.js?v=16.5"></script>
+    <script src="renderer-3d.js?v=16.5"></script>
+    <script src="renderer-2d.js?v=16.5"></script>
+    <script src="timer-engine.js?v=16.5"></script>
+    <script src="ui-controller.js?v=16.5"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

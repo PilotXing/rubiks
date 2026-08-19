@@ -473,3 +473,10 @@
     - Added `syncAllModuleUIs()` at the end of initial boot sequence.
 - [x] **Version Upgrade**:
     - Bumped to `v16.4` (sw.js cache `rubiks-timer-v16.4`).
+
+## Removed Redundant Statistics Module (移除重复的统计模块 - v16.5)
+- [x] **Removed Session Statistics Card & Capsule (删除统计卡片与顶部胶囊)**:
+    - Removed `#card-stats-summary` and its top capsule button from the toolbar.
+    - Cleaned up `TOGGLE_MODULE_IDS` and guarded rendering references in `ui-controller.js`.
+- [x] **Version Upgrade**:
+    - Bumped to `v16.5` (sw.js cache `rubiks-timer-v16.5`).

@@ -1311,14 +1311,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderStatsAndHistory() {
         const stats = session.getStats();
 
-        elements.statCount.textContent = stats.count;
-        elements.statBest.textContent = stats.bestFormatted;
-        elements.statCurrentAo5.textContent = stats.currentAo5Formatted;
-        elements.statBestAo5.textContent = stats.bestAo5Formatted;
-        elements.statCurrentAo12.textContent = stats.currentAo12Formatted;
-        elements.statBestAo12.textContent = stats.bestAo12Formatted;
-        elements.statMean.textContent = stats.meanFormatted;
-        elements.statStdDev.textContent = stats.stdDevFormatted;
+        if (elements.statCount) elements.statCount.textContent = stats.count;
+        if (elements.statBest) elements.statBest.textContent = stats.bestFormatted;
+        if (elements.statCurrentAo5) elements.statCurrentAo5.textContent = stats.currentAo5Formatted;
+        if (elements.statBestAo5) elements.statBestAo5.textContent = stats.bestAo5Formatted;
+        if (elements.statCurrentAo12) elements.statCurrentAo12.textContent = stats.currentAo12Formatted;
+        if (elements.statBestAo12) elements.statBestAo12.textContent = stats.bestAo12Formatted;
+        if (elements.statMean) elements.statMean.textContent = stats.meanFormatted;
+        if (elements.statStdDev) elements.statStdDev.textContent = stats.stdDevFormatted;
 
         let html = '';
         session.solves.forEach((s, idx) => {
@@ -1674,7 +1674,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    const TOGGLE_MODULE_IDS = ['main-solve-breakdown-card', 'card-cube-views', 'card-stats-summary', 'card-history-table'];
+    const TOGGLE_MODULE_IDS = ['main-solve-breakdown-card', 'card-cube-views', 'card-history-table'];
 
     function syncModuleUI(id) {
         const card = document.getElementById(id);
