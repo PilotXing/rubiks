@@ -466,3 +466,10 @@
     - Removed `#main-proportional-flow` and its rendering pipeline from `main-solve-breakdown-card`, leaving only the pure, sleek ECharts performance curve.
 - [x] **Version Upgrade**:
     - Bumped to `v16.3` (sw.js cache `rubiks-timer-v16.3`).
+
+## Fix Module Chip Button Synchronization on Initial Load (初始加载模块胶囊高亮状态精准同步 - v16.4)
+- [x] **Synchronized Module UI State on Solve Breakdown Render (本次分析渲染时同步高亮胶囊)**:
+    - Added `syncModuleUI('main-solve-breakdown-card')` directly inside `renderMainSolveBreakdown()` so whenever the card is made visible on boot or solve completion, the top `本次分析` capsule button immediately lights up with active styling.
+    - Added `syncAllModuleUIs()` at the end of initial boot sequence.
+- [x] **Version Upgrade**:
+    - Bumped to `v16.4` (sw.js cache `rubiks-timer-v16.4`).

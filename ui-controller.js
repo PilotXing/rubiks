@@ -1623,12 +1623,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderMainSolveBreakdown(solve) {
         if (!solve || !solve.moves || solve.moves.length === 0) {
-            if (elements.mainSolveBreakdownCard) elements.mainSolveBreakdownCard.style.display = 'none';
+            if (elements.mainSolveBreakdownCard) {
+                elements.mainSolveBreakdownCard.style.display = 'none';
+                syncModuleUI('main-solve-breakdown-card');
+            }
             return;
         }
 
         latestFinishedSolve = solve;
-        if (elements.mainSolveBreakdownCard) elements.mainSolveBreakdownCard.style.display = 'block';
+        if (elements.mainSolveBreakdownCard) {
+            elements.mainSolveBreakdownCard.style.display = 'block';
+            elements.mainSolveBreakdownCard.classList.remove('module-hidden');
+            syncModuleUI('main-solve-breakdown-card');
+        }
 
         const method = (elements.selectSettingsReconMethod ? elements.selectSettingsReconMethod.value : null)
             || localStorage.getItem('rubiks_recon_method')
@@ -2481,5 +2488,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (session.solves && session.solves.length > 0) {
         renderMainSolveBreakdown(session.solves[0]);
     }
+    syncAllModuleUIs();
     setNewScramble();
 });
