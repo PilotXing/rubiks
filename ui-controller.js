@@ -515,18 +515,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const viewport = carouselElements.viewport || document.getElementById('scramble-box');
         const width = (viewport && viewport.clientWidth > 0) ? viewport.clientWidth : (window.innerWidth || 360);
         
-        // Approximate horizontal width occupied per move token (2.2ch min-width + 0.45rem gap ≈ 46px)
-        const approxTokenWidth = 46;
-        const availableWidth = Math.max(120, width - 24);
-        const maxMovesPerLine = Math.max(3, Math.floor(availableWidth / approxTokenWidth));
-
-        // If entire scramble fits easily in 1 line (e.g. desktop / wide landscape > 1000px):
-        if (maxMovesPerLine >= totalMoves) {
+        if (width >= 800) {
             return 1;
+        } else if (width >= 560) {
+            return 2;
         }
-        // Calculate optimal balanced row count
-        const rows = Math.ceil(totalMoves / maxMovesPerLine);
-        return Math.max(1, Math.min(rows, 5));
+        // Standard mobile portrait: 3 rows (7 moves per row for 20-21 moves)
+        return Math.max(1, Math.min(3, Math.ceil(totalMoves / 7)));
     }
 
     function formatScrambleHTML(scrambleStr, activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, targetRows = null) {

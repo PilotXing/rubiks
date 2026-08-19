@@ -444,3 +444,11 @@
     - Pairs formed temporarily in the top layer or inserted into an incorrect slot (e.g. at move #18) are no longer prematurely flagged as a solved F2L pair milestone.
 - [x] **Version Upgrade**:
     - Bumped to `v16.0` (sw.js cache `rubiks-timer-v16.0`).
+
+## Scramble Font Size & Full-Width 7-Move Row Expansion (打乱公式大字号全宽填满扩展 - v16.1)
+- [x] **Enlarged Scramble Font Size (大字号打乱公式)**:
+    - Scaled up scramble card font size to `clamp(1.45rem, 5.2vw, 2.05rem)` with `fontWeight: 800`.
+- [x] **Full-Width Row Expansion for 7-Move Layout (7步最宽move全宽均布)**:
+    - Applied `flex: 1 1 0px` on `.scramble-move` and `space-between` on `.scramble-row` to evenly stretch 7 moves (even with widest 3-char moves like `R2'`, `D2'`, `F2'`) across the entire 100% card width with zero side margins.
+- [x] **Version Upgrade**:
+    - Bumped to `v16.1` (sw.js cache `rubiks-timer-v16.1`).
