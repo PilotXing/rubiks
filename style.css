@@ -2419,20 +2419,30 @@ body {
     color: var(--text-muted);
 }
 
+#main-solve-telemetry-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.35rem;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
 .breakdown-stat-pill {
     display: inline-flex;
     align-items: center;
     font-family: var(--font-mono);
-    font-size: 0.8rem;
+    font-size: 0.74rem;
     font-weight: 700;
     color: var(--text-primary);
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-color);
-    padding: 0.15rem 0.42rem;
+    padding: 0.1rem 0.35rem;
     border-radius: var(--radius-sm);
     white-space: nowrap;
-    line-height: 1.2;
+    line-height: 1.15;
     transition: all 0.15s ease;
+    box-sizing: border-box;
 }
 
 .breakdown-stat-pill.highlight-moves {
@@ -2455,7 +2465,7 @@ body {
 
 .breakdown-stat-pill.stat-avg {
     color: var(--text-secondary);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 600;
     background: rgba(255, 255, 255, 0.03);
 }
@@ -2463,7 +2473,7 @@ body {
 .breakdown-stat-divider {
     color: var(--border-color);
     font-weight: 300;
-    margin: 0 0.1rem;
+    margin: 0 0.05rem;
     opacity: 0.5;
 }
 

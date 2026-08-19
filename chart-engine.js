@@ -536,7 +536,7 @@
                     }
                 });
 
-                // B. Smart Staggered Multi-Tier Anti-Collision Badge Placement (Only Time & TPS, no units, high contrast)
+                // B. Smart Staggered Multi-Tier Anti-Collision Badge Placement (Exact auto-measured dynamic pills, zero overflow)
                 if (this.options.showStageLabels) {
                     const badgeH = 18;
                     const tierY = [
@@ -544,13 +544,21 @@
                         pad.top - badgeH - 2      // Tier 1 (Bottom): pad.top - 20
                     ];
 
+                    ctx.font = 'bold 8px JetBrains Mono, monospace';
+
+                    // Compute exact text string and dynamic box width for each stage
+                    stageLayout.forEach(item => {
+                        item.labelText = `${item.timeVal} · ${item.tpsVal}`;
+                        const textW = ctx.measureText(item.labelText).width;
+                        item.pillW = Math.ceil(textW + 10); // Guaranteed 5px padding on both sides
+                    });
+
                     // Check for narrow or crowded stages and assign alternating tiers
                     let needsStagger = stageLayout.some(item => item.bandW < 48);
                     if (stageLayout.length > 4) needsStagger = true;
 
                     stageLayout.forEach((item, i) => {
                         item.tier = needsStagger ? (i % 2) : 0;
-                        item.pillW = 46;
                         item.pillX = item.anchorX - item.pillW / 2;
 
                         // Clamp pillX within chart horizontal viewport bounds
@@ -564,12 +572,12 @@
                         for (let i = 1; i < tierItems.length; i++) {
                             const prev = tierItems[i - 1];
                             const curr = tierItems[i];
-                            const overlap = (prev.pillX + prev.pillW + 2) - curr.pillX;
+                            const overlap = (prev.pillX + prev.pillW + 3) - curr.pillX;
                             if (overlap > 0) {
                                 curr.pillX += overlap;
                                 if (curr.pillX + curr.pillW > w - pad.right) {
                                     curr.pillX = w - pad.right - curr.pillW;
-                                    prev.pillX = Math.max(pad.left, curr.pillX - prev.pillW - 2);
+                                    prev.pillX = Math.max(pad.left, curr.pillX - prev.pillW - 3);
                                 }
                             }
                         }
@@ -602,7 +610,7 @@
 
                         // High-Contrast Dark Glass Pill Background (Fixes light background contrast)
                         ctx.save();
-                        ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+                        ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
                         if (typeof ctx.roundRect === 'function') {
                             ctx.beginPath();
                             ctx.roundRect(item.pillX, y, item.pillW, badgeH, 4);
@@ -623,12 +631,12 @@
                         }
                         ctx.restore();
 
-                        // Pure High-Contrast Numeric Text: [Time] · [TPS] (No stage name, no units)
+                        // Pure High-Contrast Numeric Text: [Time] · [TPS] (Exact measured fit, zero overflow)
                         ctx.save();
                         ctx.textAlign = 'center';
-                        ctx.font = 'bold 8.5px JetBrains Mono, monospace';
+                        ctx.font = 'bold 8px JetBrains Mono, monospace';
                         ctx.fillStyle = '#FFFFFF';
-                        ctx.fillText(`${item.timeVal} · ${item.tpsVal}`, pillCenterX, y + 12.5);
+                        ctx.fillText(item.labelText, pillCenterX, y + 12.5);
                         ctx.restore();
                     });
                 }

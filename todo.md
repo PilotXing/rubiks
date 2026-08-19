@@ -406,3 +406,12 @@
     - Pill width reduced to ultra-compact `46px` and height `18px`, eliminating all text overflow.
 - [x] **Version Upgrade**:
     - Bumped to `v15.6` (sw.js cache `rubiks-timer-v15.6`).
+
+## Dynamic Auto-Measured Pill Widths & Zero-Overflow Layout Guarantee (动态字宽测量自适应与零溢出保证 - v15.7)
+- [x] **Exact Canvas Text Measurement & Dynamic Auto-Sized Pills (精确文本测量自适应微卡宽度)**:
+    - Sized every badge dynamically via `ctx.measureText` with guaranteed 5px side paddings.
+    - Zero character truncation, zero border overflow, and seamless fit across all screen resolutions.
+- [x] **Responsive Mobile Telemetry Strip (移动端高密度统计条自适应)**:
+    - Optimized `#main-solve-telemetry-bar` with ultra-compact pills to prevent card header text clipping.
+- [x] **Version Upgrade**:
+    - Bumped to `v15.7` (sw.js cache `rubiks-timer-v15.7`).
