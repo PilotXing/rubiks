@@ -424,12 +424,36 @@
             }
         }
 
+        resize() {
+            if (this.chart && this.dom && this.dom.clientWidth > 0) {
+                this.chart.resize();
+            }
+        }
+
         bindResize() {
-            window.addEventListener('resize', () => {
-                if (this.chart) {
+            const handleResize = () => {
+                if (this.chart && this.dom && this.dom.clientWidth > 0) {
                     this.chart.resize();
                 }
-            });
+            };
+
+            window.addEventListener('resize', handleResize);
+
+            if (typeof ResizeObserver !== 'undefined' && this.dom) {
+                this.resizeObserver = new ResizeObserver((entries) => {
+                    for (const entry of entries) {
+                        if (entry.contentRect && entry.contentRect.width > 0) {
+                            if (this.chart) {
+                                this.chart.resize();
+                            }
+                        }
+                    }
+                });
+                this.resizeObserver.observe(this.dom);
+                if (this.dom.parentElement) {
+                    this.resizeObserver.observe(this.dom.parentElement);
+                }
+            }
         }
 
         setSolve(solve, highlightStep = -1, overlaySolves = []) {
@@ -463,6 +487,10 @@
                 this.initChart();
             }
             if (!this.chart) return;
+
+            if (this.dom && this.dom.clientWidth > 0) {
+                this.chart.resize();
+            }
 
             if (!this.solve || !this.solve.moves || this.solve.moves.length === 0) {
                 this.chart.clear();
@@ -721,6 +749,18 @@
             };
 
             this.chart.setOption(option, true);
+
+            // Safe post-render layout pass to guarantee uncollapsed full-width rendering on initial page load
+            requestAnimationFrame(() => {
+                if (this.chart && this.dom && this.dom.clientWidth > 0) {
+                    this.chart.resize();
+                }
+            });
+            setTimeout(() => {
+                if (this.chart && this.dom && this.dom.clientWidth > 0) {
+                    this.chart.resize();
+                }
+            }, 60);
         }
     }
 

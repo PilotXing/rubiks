@@ -452,3 +452,11 @@
     - Applied `flex: 1 1 0px` on `.scramble-move` and `space-between` on `.scramble-row` to evenly stretch 7 moves (even with widest 3-char moves like `R2'`, `D2'`, `F2'`) across the entire 100% card width with zero side margins.
 - [x] **Version Upgrade**:
     - Bumped to `v16.1` (sw.js cache `rubiks-timer-v16.1`).
+
+## ResizeObserver Integration & Collapsed Chart Layout Fix (图表自适应缩放与刷新塌陷彻底修复 - v16.2)
+- [x] **Integrated Native ResizeObserver for ECharts (引入原生 ResizeObserver 监听容器尺寸)**:
+    - Added `ResizeObserver` on `chart-main-solve-graph` and its parent cards to immediately invoke `chart.resize()` the exact millisecond the card is mounted, rendered, or toggled open.
+- [x] **Multi-Stage Layout Safety Passes (双重布局安全重排)**:
+    - Added `requestAnimationFrame` and delayed resize passes in `render()` and `togglePanel()` to eliminate initial zero-width layout clumping on page load and module restoration.
+- [x] **Version Upgrade**:
+    - Bumped to `v16.2` (sw.js cache `rubiks-timer-v16.2`).

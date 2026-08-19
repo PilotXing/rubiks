@@ -1658,6 +1658,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (analysis && analysis.stages) {
                 mainMovementChart.setStages(analysis.stages);
             }
+            requestAnimationFrame(() => {
+                if (mainMovementChart) mainMovementChart.resize();
+            });
+            setTimeout(() => {
+                if (mainMovementChart) mainMovementChart.resize();
+            }, 80);
         }
 
         // 2. Proportional Move Tokens
@@ -1718,6 +1724,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (id === 'main-solve-breakdown-card') {
                 const solveToRender = latestFinishedSolve || (session.solves && session.solves.length > 0 ? session.solves[0] : null);
                 if (solveToRender) renderMainSolveBreakdown(solveToRender);
+                setTimeout(() => {
+                    if (mainMovementChart) mainMovementChart.resize();
+                }, 80);
             }
         }
 
