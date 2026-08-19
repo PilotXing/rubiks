@@ -376,11 +376,11 @@
             this.canvas = canvasElement;
             this.ctx = canvasElement.getContext('2d');
             this.options = Object.assign({
-                padding: { top: 28, right: 30, bottom: 25, left: 50 },
+                padding: { top: 44, right: 14, bottom: 24, left: 32 },
                 highlightStep: -1,
                 cumulativeCurve: { enabled: true, color: '#10B981', width: 2.5, opacity: 1.0 },
                 derivativeBars: { enabled: true, color: 'rgba(59, 130, 246, 0.35)', activeColor: '#F59E0B' },
-                tpsCurve: { enabled: false, color: '#06B6D4', width: 2.0, opacity: 0.85 },
+                tpsCurve: { enabled: true, color: '#06B6D4', width: 2.0, opacity: 0.85 },
                 showStageBands: true,
                 showStageDividers: true,
                 showStageLabels: true,
@@ -399,7 +399,7 @@
             const dpr = Math.min(window.devicePixelRatio || 1, 2);
             const rect = this.canvas.getBoundingClientRect();
             const w = rect.width || this.canvas.clientWidth || 500;
-            const h = rect.height || this.canvas.clientHeight || 180;
+            const h = rect.height || this.canvas.clientHeight || 230;
             this.canvas.width = Math.round(w * dpr);
             this.canvas.height = Math.round(h * dpr);
             this.ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -485,28 +485,29 @@
             const getX = (idx) => pad.left + (n === 1 ? plotW / 2 : (idx / Math.max(1, n - 1)) * plotW);
             const getY = (timeMs) => pad.top + plotH - (timeMs / maxTime) * (plotH * 0.75);
 
-            // 1. Stage Segmentation Background Bands & Step Dividers (Requirement 2)
+            // 1. Stage Segmentation Background Bands, Dividers, and Embedded Stage Metrics (Name, Moves, TPS)
             const stages = (this.stages && this.stages.length > 0) ? this.stages : (this.options.stages || []);
             if (this.options.showStageBands && stages.length > 0) {
                 stages.forEach((stg, sIdx) => {
                     const startX = getX(stg.startIdx);
                     const endX = stg.endIdx >= n - 1 ? (w - pad.right) : getX(stg.endIdx + 0.5);
                     const bandW = Math.max(4, endX - startX);
+                    const stgColor = stg.color || '#3B82F6';
 
-                    // Stage translucent fill
+                    // A. Stage Translucent Background Fill with subtle bottom fade
                     ctx.save();
-                    ctx.fillStyle = stg.color || '#3B82F6';
-                    ctx.globalAlpha = 0.10;
+                    ctx.fillStyle = stgColor;
+                    ctx.globalAlpha = 0.12;
                     ctx.fillRect(startX, pad.top, bandW, plotH);
                     ctx.restore();
 
-                    // Stage Divider Line
+                    // B. Stage Boundary Divider Line
                     if (this.options.showStageDividers && sIdx > 0) {
                         ctx.save();
-                        ctx.strokeStyle = stg.color || '#3B82F6';
-                        ctx.lineWidth = 1;
-                        ctx.setLineDash([3, 3]);
-                        ctx.globalAlpha = 0.45;
+                        ctx.strokeStyle = stgColor;
+                        ctx.lineWidth = 1.2;
+                        ctx.setLineDash([4, 4]);
+                        ctx.globalAlpha = 0.55;
                         ctx.beginPath();
                         ctx.moveTo(startX, pad.top);
                         ctx.lineTo(startX, pad.top + plotH);
@@ -514,14 +515,74 @@
                         ctx.restore();
                     }
 
-                    // Stage Top Label
+                    // C. Direct Stage Metrics Header Tag (Stage Name, Move Count, TPS) directly on the curve's stage segment
                     if (this.options.showStageLabels) {
+                        const stgName = (stg.name || `Phase ${sIdx + 1}`).toUpperCase();
+                        const moveCount = stg.moveCount !== undefined ? stg.moveCount : (stg.endIdx - stg.startIdx + 1);
+                        const tpsVal = stg.tps !== undefined ? Number(stg.tps).toFixed(1) : (stg.durationMs > 0 ? (moveCount / (stg.durationMs / 1000)).toFixed(1) : '0.0');
+
+                        const pillH = 34;
+                        const pillY = pad.top - pillH - 4;
+                        const pillW = Math.max(20, bandW - 3);
+                        const pillX = startX + (bandW - pillW) / 2;
+                        const textCenterX = startX + bandW / 2;
+
+                        // Header pill background & subtle border
                         ctx.save();
-                        ctx.fillStyle = stg.color || '#3B82F6';
-                        ctx.font = 'bold 9px JetBrains Mono, monospace';
+                        ctx.fillStyle = stgColor;
+                        ctx.globalAlpha = 0.18;
+                        if (typeof ctx.roundRect === 'function') {
+                            ctx.beginPath();
+                            ctx.roundRect(pillX, pillY, pillW, pillH, 4);
+                            ctx.fill();
+                        } else {
+                            ctx.fillRect(pillX, pillY, pillW, pillH);
+                        }
+
+                        ctx.strokeStyle = stgColor;
+                        ctx.globalAlpha = 0.65;
+                        ctx.lineWidth = 1;
+                        if (typeof ctx.roundRect === 'function') {
+                            ctx.beginPath();
+                            ctx.roundRect(pillX, pillY, pillW, pillH, 4);
+                            ctx.stroke();
+                        } else {
+                            ctx.strokeRect(pillX, pillY, pillW, pillH);
+                        }
+                        ctx.restore();
+
+                        // Stage Label Text & Metrics
+                        ctx.save();
                         ctx.textAlign = 'center';
-                        const labelX = startX + bandW / 2;
-                        ctx.fillText(stg.name.toUpperCase(), labelX, pad.top - 8);
+
+                        if (bandW >= 58) {
+                            // Full readable 2-line badge
+                            ctx.fillStyle = stgColor;
+                            ctx.font = 'bold 10px JetBrains Mono, monospace';
+                            ctx.fillText(stgName, textCenterX, pillY + 13);
+
+                            ctx.fillStyle = '#E5E7EB';
+                            ctx.font = '8.5px JetBrains Mono, monospace';
+                            ctx.fillText(`${moveCount}步 · ${tpsVal} TPS`, textCenterX, pillY + 27);
+                        } else if (bandW >= 36) {
+                            // Compact 2-line badge
+                            ctx.fillStyle = stgColor;
+                            ctx.font = 'bold 9px JetBrains Mono, monospace';
+                            ctx.fillText(stgName.replace('F2L ', 'F'), textCenterX, pillY + 13);
+
+                            ctx.fillStyle = '#E5E7EB';
+                            ctx.font = '8px JetBrains Mono, monospace';
+                            ctx.fillText(`${moveCount}步·${tpsVal}T`, textCenterX, pillY + 26);
+                        } else {
+                            // Ultra-compact badge for very short/fast stages
+                            ctx.fillStyle = stgColor;
+                            ctx.font = 'bold 8px JetBrains Mono, monospace';
+                            ctx.fillText(stgName.substring(0, 3), textCenterX, pillY + 12);
+
+                            ctx.fillStyle = '#E5E7EB';
+                            ctx.font = '7.5px JetBrains Mono, monospace';
+                            ctx.fillText(`${moveCount}m`, textCenterX, pillY + 25);
+                        }
                         ctx.restore();
                     }
                 });
@@ -640,7 +701,7 @@
             ctx.fillText('1', pad.left, pad.top + plotH + 14);
             ctx.textAlign = 'right';
             ctx.fillText(`${n} moves`, w - pad.right, pad.top + plotH + 14);
-            ctx.fillText((maxTime / 1000).toFixed(1) + 's', pad.left - 6, pad.top + 10);
+            ctx.fillText((maxTime / 1000).toFixed(1) + 's', pad.left - 4, pad.top + 10);
         }
     }
 

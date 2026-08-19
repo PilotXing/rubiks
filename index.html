@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css?v=15.3">
+    <link rel="stylesheet" href="style.css?v=15.4">
 </head>
 <body class="style-dark color-emerald theme-dark">
 
@@ -34,7 +34,7 @@
                     </svg>
                 </span>
                 <span class="brand-title">Rubik Vision</span>
-                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v15.3</span>
+                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v15.4</span>
             </div>
 
             <div class="header-actions">
@@ -153,10 +153,10 @@
                 <!-- 2. Inline Latest Solve Summary Breakdown & Performance Curve (Directly Below Timer) -->
                 <div id="main-solve-breakdown-card" class="card-collapsible" style="display: none;">
                     <div class="collapsible-header">
-                        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                             <span class="collapsible-title">
                                 <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
-                                Latest Solve Breakdown & Curve
+                                复原分析与各阶段曲线
                             </span>
                             <span id="main-solve-time-badge" class="badge badge-ready" style="font-size: 0.8rem; font-weight: 700;">--</span>
                             <span id="main-solve-recon-badge" class="badge badge-ready" style="font-size: 0.75rem;">Cross: --</span>
@@ -164,7 +164,7 @@
                         <div style="display: flex; align-items: center; gap: 0.4rem;">
                             <select id="select-main-recon-method" style="padding: 0.2rem 0.45rem; font-size: 0.75rem; border-radius: var(--radius-sm); background: var(--bg-surface-elevated); color: var(--text-primary); border: 1px solid var(--border-color);">
                                 <option value="CFOP" selected>CFOP</option>
-                                <option value="CFOP_PAIRS">CFOP Detailed (Pairs 1-4)</option>
+                                <option value="CFOP_PAIRS">CFOP (详细对)</option>
                                 <option value="Roux">Roux</option>
                                 <option value="LBL">LBL</option>
                             </select>
@@ -174,27 +174,27 @@
                             </button>
                         </div>
                     </div>
-                    <div class="collapsible-body">
-                        <!-- Stage Breakdown Cards (Cross, F2L Pairs 1-4, OLL, PLL) -->
-                        <div id="main-stage-cards" class="stage-summary-cards"></div>
-
-                        <!-- Live Performance & TPS Velocity Chart -->
-                        <div style="position: relative; margin-top: 0.75rem; background: var(--bg-surface-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.75rem;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.4rem;">
-                                <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Performance Curve & Stage Velocity</span>
-                                <div style="display: flex; gap: 0.6rem; font-size: 0.72rem;">
-                                    <label class="form-check"><input type="checkbox" id="toggle-main-cumulative" checked> <span>Time</span></label>
+                    <div class="collapsible-body" style="padding: 0.35rem 0.4rem;">
+                        <!-- Full-Width High-Density Performance Curve with On-Curve Stage Metrics -->
+                        <div class="breakdown-chart-wrapper" style="position: relative; width: 100%; background: var(--bg-surface-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.4rem 0.3rem 0.3rem 0.3rem; box-sizing: border-box;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.25rem; padding: 0 0.2rem; flex-wrap: wrap; gap: 0.3rem;">
+                                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); display: flex; align-items: center; gap: 0.35rem;">
+                                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent-primary);"></span>
+                                    阶段步数与 TPS 轨迹曲线
+                                </span>
+                                <div style="display: flex; gap: 0.55rem; font-size: 0.72rem;">
+                                    <label class="form-check"><input type="checkbox" id="toggle-main-cumulative" checked> <span>时间</span></label>
                                     <label class="form-check"><input type="checkbox" id="toggle-main-tps" checked> <span>TPS</span></label>
-                                    <label class="form-check"><input type="checkbox" id="toggle-main-derivative" checked> <span>Pauses</span></label>
+                                    <label class="form-check"><input type="checkbox" id="toggle-main-derivative" checked> <span>停顿</span></label>
                                 </div>
                             </div>
-                            <div style="height: 180px; width: 100%;">
+                            <div style="height: 240px; width: 100%; position: relative;">
                                 <canvas id="canvas-main-solve-graph" style="width: 100%; height: 100%; display: block;"></canvas>
                             </div>
                         </div>
 
                         <!-- Move Flow Tokens -->
-                        <div id="main-proportional-flow" style="margin-top: 0.75rem;"></div>
+                        <div id="main-proportional-flow" style="margin-top: 0.4rem; width: 100%;"></div>
                     </div>
                 </div>
 
@@ -974,19 +974,19 @@
     </div>
 
     <!-- Scripts -->
-    <script src="aes.js?v=15.3"></script>
-    <script src="min2phase.js?v=15.3"></script>
-    <script src="three.min.js?v=15.3"></script>
-    <script src="cube-engine.js?v=15.3"></script>
-    <script src="alg-database.js?v=15.3"></script>
-    <script src="method-analyzer.js?v=15.3"></script>
-    <script src="chart-engine.js?v=15.3"></script>
-    <script src="gan-bluetooth.js?v=15.3"></script>
-    <script src="audio-synth.js?v=15.3"></script>
-    <script src="renderer-3d.js?v=15.3"></script>
-    <script src="renderer-2d.js?v=15.3"></script>
-    <script src="timer-engine.js?v=15.3"></script>
-    <script src="ui-controller.js?v=15.3"></script>
+    <script src="aes.js?v=15.4"></script>
+    <script src="min2phase.js?v=15.4"></script>
+    <script src="three.min.js?v=15.4"></script>
+    <script src="cube-engine.js?v=15.4"></script>
+    <script src="alg-database.js?v=15.4"></script>
+    <script src="method-analyzer.js?v=15.4"></script>
+    <script src="chart-engine.js?v=15.4"></script>
+    <script src="gan-bluetooth.js?v=15.4"></script>
+    <script src="audio-synth.js?v=15.4"></script>
+    <script src="renderer-3d.js?v=15.4"></script>
+    <script src="renderer-2d.js?v=15.4"></script>
+    <script src="timer-engine.js?v=15.4"></script>
+    <script src="ui-controller.js?v=15.4"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

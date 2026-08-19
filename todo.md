@@ -372,3 +372,14 @@
     - Removed `beforeinstallprompt` display injection in `ui-controller.js`.
 - [x] **Version Upgrade**:
     - Bumped to `v15.3` (sw.js cache `rubiks-timer-v15.3`).
+
+## High-Density Full-Width Performance Curve with Embedded Stage Metrics (阶段步数与TPS直显曲线与宽度拉满 - v15.4)
+- [x] **Direct On-Curve Stage Metrics Rendering (各阶段步数与TPS直显在曲线上)**:
+    - Replaced separate bulky stage cards with embedded stage tags drawn directly above/in each segment of the curve (`CROSS`, `F2L 1..4`, `OLL`, `PLL`, `ROUX`, `LBL`).
+    - Displays exact move count (`6步`), instant stage TPS (`4.8 TPS`), and duration directly atop each stage's color-banded segment.
+    - Smart text-wrapping and font scaling for narrow/fast sub-stages.
+- [x] **Expanded Full-Width Curve Arena (曲线宽度与高度拉满)**:
+    - Expanded chart canvas height to 240px and reduced internal padding to utilize 96%+ of available horizontal screen width.
+    - Removed redundant margins, borders, and empty card slots for maximum information density.
+- [x] **Version Upgrade**:
+    - Bumped to `v15.4` (sw.js cache `rubiks-timer-v15.4`).

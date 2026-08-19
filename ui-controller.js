@@ -85,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
         mainSolveTimeBadge: document.getElementById('main-solve-time-badge'),
         mainSolveReconBadge: document.getElementById('main-solve-recon-badge'),
         selectMainReconMethod: document.getElementById('select-main-recon-method'),
-        mainStageCards: document.getElementById('main-stage-cards'),
         canvasMainSolveGraph: document.getElementById('canvas-main-solve-graph'),
         toggleMainCumulative: document.getElementById('toggle-main-cumulative'),
         toggleMainTps: document.getElementById('toggle-main-tps'),
@@ -1655,22 +1654,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 1. Stage Cards
-        let cardsHtml = '';
-        if (analysis && analysis.stages) {
-            analysis.stages.forEach(stg => {
-                cardsHtml += `
-                    <div class="stage-card" data-start="${stg.startIdx}" data-end="${stg.endIdx}">
-                        <span class="stage-card-title" style="color: ${stg.color};">${stg.name}</span>
-                        <span class="stage-card-stat">${stg.durationFormatted}</span>
-                        <span class="stage-card-sub">${stg.moveCount} moves @ ${stg.tps} TPS</span>
-                    </div>
-                `;
-            });
-        }
-        if (elements.mainStageCards) elements.mainStageCards.innerHTML = cardsHtml;
-
-        // 2. Chart Rendering
+        // 1. Full-Width Chart Rendering with On-Curve Stage Metrics
         if (mainMovementChart) {
             mainMovementChart.setSolve(solve);
             if (analysis && analysis.stages) {
