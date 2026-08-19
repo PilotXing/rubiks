@@ -376,7 +376,7 @@
             this.canvas = canvasElement;
             this.ctx = canvasElement.getContext('2d');
             this.options = Object.assign({
-                padding: { top: 44, right: 14, bottom: 24, left: 32 },
+                padding: { top: 54, right: 14, bottom: 24, left: 32 },
                 highlightStep: -1,
                 cumulativeCurve: { enabled: true, color: '#10B981', width: 2.5, opacity: 1.0 },
                 derivativeBars: { enabled: true, color: 'rgba(59, 130, 246, 0.35)', activeColor: '#F59E0B' },
@@ -399,7 +399,7 @@
             const dpr = Math.min(window.devicePixelRatio || 1, 2);
             const rect = this.canvas.getBoundingClientRect();
             const w = rect.width || this.canvas.clientWidth || 500;
-            const h = rect.height || this.canvas.clientHeight || 230;
+            const h = rect.height || this.canvas.clientHeight || 240;
             this.canvas.width = Math.round(w * dpr);
             this.canvas.height = Math.round(h * dpr);
             this.ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -485,107 +485,159 @@
             const getX = (idx) => pad.left + (n === 1 ? plotW / 2 : (idx / Math.max(1, n - 1)) * plotW);
             const getY = (timeMs) => pad.top + plotH - (timeMs / maxTime) * (plotH * 0.75);
 
-            // 1. Stage Segmentation Background Bands, Dividers, and Embedded Stage Metrics (Name, Moves, TPS)
+            // 1. Stage Segmentation Background Bands, Dividers, and Staggered Anti-Collision Embedded Metrics
             const stages = (this.stages && this.stages.length > 0) ? this.stages : (this.options.stages || []);
             if (this.options.showStageBands && stages.length > 0) {
-                stages.forEach((stg, sIdx) => {
+                // Pre-calculate band dimensions and layout coordinates
+                const stageLayout = stages.map((stg, sIdx) => {
                     const startX = getX(stg.startIdx);
                     const endX = stg.endIdx >= n - 1 ? (w - pad.right) : getX(stg.endIdx + 0.5);
                     const bandW = Math.max(4, endX - startX);
+                    const anchorX = startX + bandW / 2;
                     const stgColor = stg.color || '#3B82F6';
+                    const stgName = (stg.name || `P${sIdx + 1}`).toUpperCase();
+                    const moveCount = stg.moveCount !== undefined ? stg.moveCount : (stg.endIdx - stg.startIdx + 1);
+                    const tpsVal = stg.tps !== undefined ? Number(stg.tps).toFixed(1) : (stg.durationMs > 0 ? (moveCount / (stg.durationMs / 1000)).toFixed(1) : '0.0');
+                    return {
+                        stg,
+                        sIdx,
+                        startX,
+                        endX,
+                        bandW,
+                        anchorX,
+                        stgColor,
+                        stgName,
+                        moveCount,
+                        tpsVal,
+                        tier: 0,
+                        pillX: 0,
+                        pillW: 0
+                    };
+                });
 
-                    // A. Stage Translucent Background Fill with subtle bottom fade
+                // A. Background fills and vertical dividers
+                stageLayout.forEach((item, sIdx) => {
                     ctx.save();
-                    ctx.fillStyle = stgColor;
+                    ctx.fillStyle = item.stgColor;
                     ctx.globalAlpha = 0.12;
-                    ctx.fillRect(startX, pad.top, bandW, plotH);
+                    ctx.fillRect(item.startX, pad.top, item.bandW, plotH);
                     ctx.restore();
 
-                    // B. Stage Boundary Divider Line
                     if (this.options.showStageDividers && sIdx > 0) {
                         ctx.save();
-                        ctx.strokeStyle = stgColor;
+                        ctx.strokeStyle = item.stgColor;
                         ctx.lineWidth = 1.2;
                         ctx.setLineDash([4, 4]);
                         ctx.globalAlpha = 0.55;
                         ctx.beginPath();
-                        ctx.moveTo(startX, pad.top);
-                        ctx.lineTo(startX, pad.top + plotH);
+                        ctx.moveTo(item.startX, pad.top);
+                        ctx.lineTo(item.startX, pad.top + plotH);
                         ctx.stroke();
                         ctx.restore();
                     }
+                });
 
-                    // C. Direct Stage Metrics Header Tag (Stage Name, Move Count, TPS) directly on the curve's stage segment
-                    if (this.options.showStageLabels) {
-                        const stgName = (stg.name || `Phase ${sIdx + 1}`).toUpperCase();
-                        const moveCount = stg.moveCount !== undefined ? stg.moveCount : (stg.endIdx - stg.startIdx + 1);
-                        const tpsVal = stg.tps !== undefined ? Number(stg.tps).toFixed(1) : (stg.durationMs > 0 ? (moveCount / (stg.durationMs / 1000)).toFixed(1) : '0.0');
+                // B. Smart Staggered Multi-Tier Anti-Collision Badge Placement (Fixes narrow/fast stage crowding)
+                if (this.options.showStageLabels) {
+                    const badgeH = 22;
+                    const tierY = [
+                        pad.top - badgeH * 2 - 6, // Tier 0 (Top): pad.top - 50
+                        pad.top - badgeH - 3      // Tier 1 (Bottom): pad.top - 25
+                    ];
 
-                        const pillH = 34;
-                        const pillY = pad.top - pillH - 4;
-                        const pillW = Math.max(20, bandW - 3);
-                        const pillX = startX + (bandW - pillW) / 2;
-                        const textCenterX = startX + bandW / 2;
+                    // Check for narrow or crowded stages and assign alternating tiers
+                    let needsStagger = stageLayout.some(item => item.bandW < 56);
+                    if (stageLayout.length > 4) needsStagger = true;
 
-                        // Header pill background & subtle border
-                        ctx.save();
-                        ctx.fillStyle = stgColor;
-                        ctx.globalAlpha = 0.18;
-                        if (typeof ctx.roundRect === 'function') {
+                    stageLayout.forEach((item, i) => {
+                        item.tier = needsStagger ? (i % 2) : 0;
+                        item.pillW = Math.max(48, Math.min(78, Math.max(item.bandW, 54)));
+                        item.pillX = item.anchorX - item.pillW / 2;
+
+                        // Clamp pillX within chart horizontal viewport bounds
+                        if (item.pillX < pad.left) item.pillX = pad.left;
+                        if (item.pillX + item.pillW > w - pad.right) item.pillX = w - pad.right - item.pillW;
+                    });
+
+                    // Resolve horizontal overlap within the same tier
+                    [0, 1].forEach(t => {
+                        const tierItems = stageLayout.filter(item => item.tier === t);
+                        for (let i = 1; i < tierItems.length; i++) {
+                            const prev = tierItems[i - 1];
+                            const curr = tierItems[i];
+                            const overlap = (prev.pillX + prev.pillW + 3) - curr.pillX;
+                            if (overlap > 0) {
+                                curr.pillX += overlap;
+                                if (curr.pillX + curr.pillW > w - pad.right) {
+                                    curr.pillX = w - pad.right - curr.pillW;
+                                    prev.pillX = Math.max(pad.left, curr.pillX - prev.pillW - 3);
+                                }
+                            }
+                        }
+                    });
+
+                    // Render badges with guide lines for displaced/fast stages
+                    stageLayout.forEach(item => {
+                        const y = tierY[item.tier];
+                        const pillCenterX = item.pillX + item.pillW / 2;
+
+                        // Draw leader connector line from badge to actual stage band if displaced or narrow
+                        const isDisplaced = Math.abs(pillCenterX - item.anchorX) > 6 || item.bandW < 38 || item.tier === 0;
+                        if (isDisplaced) {
+                            ctx.save();
+                            ctx.strokeStyle = item.stgColor;
+                            ctx.fillStyle = item.stgColor;
+                            ctx.lineWidth = 1;
+                            ctx.globalAlpha = 0.5;
                             ctx.beginPath();
-                            ctx.roundRect(pillX, pillY, pillW, pillH, 4);
+                            ctx.moveTo(pillCenterX, y + badgeH);
+                            ctx.lineTo(item.anchorX, pad.top);
+                            ctx.stroke();
+
+                            // Small anchor point dot at stage start
+                            ctx.beginPath();
+                            ctx.arc(item.anchorX, pad.top, 2, 0, Math.PI * 2);
                             ctx.fill();
-                        } else {
-                            ctx.fillRect(pillX, pillY, pillW, pillH);
+                            ctx.restore();
                         }
 
-                        ctx.strokeStyle = stgColor;
-                        ctx.globalAlpha = 0.65;
+                        // Badge Pill Background
+                        ctx.save();
+                        ctx.fillStyle = item.stgColor;
+                        ctx.globalAlpha = 0.22;
+                        if (typeof ctx.roundRect === 'function') {
+                            ctx.beginPath();
+                            ctx.roundRect(item.pillX, y, item.pillW, badgeH, 4);
+                            ctx.fill();
+                        } else {
+                            ctx.fillRect(item.pillX, y, item.pillW, badgeH);
+                        }
+
+                        ctx.strokeStyle = item.stgColor;
+                        ctx.globalAlpha = 0.75;
                         ctx.lineWidth = 1;
                         if (typeof ctx.roundRect === 'function') {
                             ctx.beginPath();
-                            ctx.roundRect(pillX, pillY, pillW, pillH, 4);
+                            ctx.roundRect(item.pillX, y, item.pillW, badgeH, 4);
                             ctx.stroke();
                         } else {
-                            ctx.strokeRect(pillX, pillY, pillW, pillH);
+                            ctx.strokeRect(item.pillX, y, item.pillW, badgeH);
                         }
                         ctx.restore();
 
-                        // Stage Label Text & Metrics
+                        // Badge Text: Name + (Moves / TPS)
                         ctx.save();
                         ctx.textAlign = 'center';
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.font = 'bold 8.5px JetBrains Mono, monospace';
 
-                        if (bandW >= 58) {
-                            // Full readable 2-line badge
-                            ctx.fillStyle = stgColor;
-                            ctx.font = 'bold 10px JetBrains Mono, monospace';
-                            ctx.fillText(stgName, textCenterX, pillY + 13);
+                        let displayName = item.stgName;
+                        if (displayName.length > 5 && item.pillW < 60) displayName = displayName.replace('F2L ', 'F');
 
-                            ctx.fillStyle = '#E5E7EB';
-                            ctx.font = '8.5px JetBrains Mono, monospace';
-                            ctx.fillText(`${moveCount}步 · ${tpsVal} TPS`, textCenterX, pillY + 27);
-                        } else if (bandW >= 36) {
-                            // Compact 2-line badge
-                            ctx.fillStyle = stgColor;
-                            ctx.font = 'bold 9px JetBrains Mono, monospace';
-                            ctx.fillText(stgName.replace('F2L ', 'F'), textCenterX, pillY + 13);
-
-                            ctx.fillStyle = '#E5E7EB';
-                            ctx.font = '8px JetBrains Mono, monospace';
-                            ctx.fillText(`${moveCount}步·${tpsVal}T`, textCenterX, pillY + 26);
-                        } else {
-                            // Ultra-compact badge for very short/fast stages
-                            ctx.fillStyle = stgColor;
-                            ctx.font = 'bold 8px JetBrains Mono, monospace';
-                            ctx.fillText(stgName.substring(0, 3), textCenterX, pillY + 12);
-
-                            ctx.fillStyle = '#E5E7EB';
-                            ctx.font = '7.5px JetBrains Mono, monospace';
-                            ctx.fillText(`${moveCount}m`, textCenterX, pillY + 25);
-                        }
+                        ctx.fillText(`${displayName} ${item.moveCount}m·${item.tpsVal}T`, pillCenterX, y + 14);
                         ctx.restore();
-                    }
-                });
+                    });
+                }
             }
 
             // 2. Axes & Grid

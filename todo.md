@@ -383,3 +383,15 @@
     - Removed redundant margins, borders, and empty card slots for maximum information density.
 - [x] **Version Upgrade**:
     - Bumped to `v15.4` (sw.js cache `rubiks-timer-v15.4`).
+
+## Telemetry-Only Breakdown Header & Staggered Collision-Free On-Curve Badges (纯数据指标栏与错峰防重叠阶段曲线上移 - v15.5)
+- [x] **Telemetry-Only Breakdown Header (删除标题只显示步数/时间/tps/ao3/ao5/ao12)**:
+    - Completely removed redundant card title and method dropdown from the inline breakdown header.
+    - Replaced with high-density compact telemetry strip: `步数`, `时间`, `TPS`, `ao3`, `ao5`, `ao12` and a sleek collapse toggle button.
+- [x] **Relocated Solve Method Selector to Settings (方法选择移入设置，默认CFOP详细对 cffffop)**:
+    - Added "Solve Analysis Method" selector in Settings Modal (`CFOP 详细对 cffffop` as default, `CFOP`, `Roux`, `LBL`).
+- [x] **Staggered Multi-Tier Anti-Collision Stage Badges (错峰防重叠算法解决快速阶段显示空间不足)**:
+    - Implemented a 2-tier staggered layout algorithm with guide leader lines and anchor points.
+    - Fast/narrow stages (e.g. 1-2 move Cross or AUF) cleanly display without text truncation or horizontal collisions.
+- [x] **Version Upgrade**:
+    - Bumped to `v15.5` (sw.js cache `rubiks-timer-v15.5`).

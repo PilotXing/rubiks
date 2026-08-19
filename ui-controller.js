@@ -82,9 +82,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Inline Latest Solve Breakdown & Performance Curve
         mainSolveBreakdownCard: document.getElementById('main-solve-breakdown-card'),
-        mainSolveTimeBadge: document.getElementById('main-solve-time-badge'),
-        mainSolveReconBadge: document.getElementById('main-solve-recon-badge'),
-        selectMainReconMethod: document.getElementById('select-main-recon-method'),
+        mainStatMoves: document.getElementById('main-stat-moves'),
+        mainStatTime: document.getElementById('main-stat-time'),
+        mainStatTps: document.getElementById('main-stat-tps'),
+        mainStatAo3: document.getElementById('main-stat-ao3'),
+        mainStatAo5: document.getElementById('main-stat-ao5'),
+        mainStatAo12: document.getElementById('main-stat-ao12'),
+        selectSettingsReconMethod: document.getElementById('select-settings-recon-method'),
         canvasMainSolveGraph: document.getElementById('canvas-main-solve-graph'),
         toggleMainCumulative: document.getElementById('toggle-main-cumulative'),
         toggleMainTps: document.getElementById('toggle-main-tps'),
@@ -1622,14 +1626,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (elements.selectMainReconMethod) {
-        elements.selectMainReconMethod.addEventListener('change', () => {
-            if (latestFinishedSolve) {
-                renderMainSolveBreakdown(latestFinishedSolve);
-            }
-        });
-    }
-
     function renderMainSolveBreakdown(solve) {
         if (!solve || !solve.moves || solve.moves.length === 0) {
             if (elements.mainSolveBreakdownCard) elements.mainSolveBreakdownCard.style.display = 'none';
@@ -1639,22 +1635,29 @@ document.addEventListener('DOMContentLoaded', () => {
         latestFinishedSolve = solve;
         if (elements.mainSolveBreakdownCard) elements.mainSolveBreakdownCard.style.display = 'block';
 
-        const method = elements.selectMainReconMethod ? elements.selectMainReconMethod.value : 'CFOP';
+        const method = (elements.selectSettingsReconMethod ? elements.selectSettingsReconMethod.value : null)
+            || localStorage.getItem('rubiks_recon_method')
+            || 'CFOP_PAIRS';
+
         const analysis = MethodAnalyzer.analyzeSolve(solve, method, 'auto');
 
-        if (elements.mainSolveTimeBadge) {
-            elements.mainSolveTimeBadge.textContent = `${solve.formattedTime || (solve.finalTimeMs / 1000).toFixed(2)}s (${solve.moveCount || solve.moves.length} moves)`;
-        }
-        if (elements.mainSolveReconBadge) {
-            if (analysis && analysis.baseFace) {
-                elements.mainSolveReconBadge.style.display = 'inline-block';
-                elements.mainSolveReconBadge.textContent = `Cross: ${analysis.baseFace}`;
-            } else {
-                elements.mainSolveReconBadge.style.display = 'none';
-            }
-        }
+        const moveCount = solve.moveCount || (solve.moves ? solve.moves.length : 0);
+        const solveTimeStr = solve.formattedTime || (solve.finalTimeMs ? (solve.finalTimeMs / 1000).toFixed(2) + 's' : '--s');
+        const solveTpsStr = solve.tps || (solve.finalTimeMs > 0 ? (moveCount / (solve.finalTimeMs / 1000)).toFixed(2) : '--');
 
-        // 1. Full-Width Chart Rendering with On-Curve Stage Metrics
+        const stats = session.getStats();
+        const ao3Str = stats.currentAo3 !== null ? (stats.currentAo3 > 0 ? (stats.currentAo3 / 1000).toFixed(2) : 'DNF') : '--';
+        const ao5Str = stats.currentAo5 !== null ? (stats.currentAo5 > 0 ? (stats.currentAo5 / 1000).toFixed(2) : 'DNF') : '--';
+        const ao12Str = stats.currentAo12 !== null ? (stats.currentAo12 > 0 ? (stats.currentAo12 / 1000).toFixed(2) : 'DNF') : '--';
+
+        if (elements.mainStatMoves) elements.mainStatMoves.textContent = `${moveCount}步`;
+        if (elements.mainStatTime) elements.mainStatTime.textContent = `${solveTimeStr}`;
+        if (elements.mainStatTps) elements.mainStatTps.textContent = `${solveTpsStr} TPS`;
+        if (elements.mainStatAo3) elements.mainStatAo3.textContent = `ao3: ${ao3Str}`;
+        if (elements.mainStatAo5) elements.mainStatAo5.textContent = `ao5: ${ao5Str}`;
+        if (elements.mainStatAo12) elements.mainStatAo12.textContent = `ao12: ${ao12Str}`;
+
+        // 1. Full-Width Chart Rendering with Anti-Collision On-Curve Stage Metrics
         if (mainMovementChart) {
             mainMovementChart.setSolve(solve);
             if (analysis && analysis.stages) {
@@ -1662,7 +1665,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 3. Proportional Move Tokens
+        // 2. Proportional Move Tokens
         if (elements.mainProportionalFlow) {
             elements.mainProportionalFlow.innerHTML = MethodAnalyzer.generateProportionalHtml(solve.moves);
         }
@@ -2348,6 +2351,19 @@ document.addEventListener('DOMContentLoaded', () => {
             btInactivityTimeoutSec = parseInt(e.target.value, 10);
             localStorage.setItem('bt_inactivity_timeout', String(btInactivityTimeoutSec));
             resetBtInactivityTimer();
+        });
+    }
+
+    // Solve Stage Analysis Method (CFOP Pairs cffffop default)
+    if (elements.selectSettingsReconMethod) {
+        const savedMethod = localStorage.getItem('rubiks_recon_method') || 'CFOP_PAIRS';
+        elements.selectSettingsReconMethod.value = savedMethod;
+        elements.selectSettingsReconMethod.addEventListener('change', (e) => {
+            localStorage.setItem('rubiks_recon_method', e.target.value);
+            triggerHaptic('light');
+            if (latestFinishedSolve) {
+                renderMainSolveBreakdown(latestFinishedSolve);
+            }
         });
     }
 

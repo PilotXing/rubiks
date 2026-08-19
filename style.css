@@ -2419,6 +2419,54 @@ body {
     color: var(--text-muted);
 }
 
+.breakdown-stat-pill {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    padding: 0.15rem 0.42rem;
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    line-height: 1.2;
+    transition: all 0.15s ease;
+}
+
+.breakdown-stat-pill.highlight-moves {
+    color: #3B82F6;
+    border-color: rgba(59, 130, 246, 0.45);
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.breakdown-stat-pill.highlight-time {
+    color: #10B981;
+    border-color: rgba(16, 185, 129, 0.45);
+    background: rgba(16, 185, 129, 0.08);
+}
+
+.breakdown-stat-pill.highlight-tps {
+    color: #F59E0B;
+    border-color: rgba(245, 158, 11, 0.45);
+    background: rgba(245, 158, 11, 0.08);
+}
+
+.breakdown-stat-pill.stat-avg {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.breakdown-stat-divider {
+    color: var(--border-color);
+    font-weight: 300;
+    margin: 0 0.1rem;
+    opacity: 0.5;
+}
+
 .breakdown-chart-wrapper {
     position: relative;
     width: 100%;

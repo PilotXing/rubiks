@@ -191,6 +191,19 @@
                 stdDev = Math.sqrt(variance);
             }
 
+            // Current ao3 and best ao3 (mean of 3 / ao3)
+            let currentAo3 = null;
+            let bestAo3 = null;
+            if (count >= 3) {
+                currentAo3 = calcAverage(times.slice(0, 3));
+                for (let i = 0; i <= count - 3; i++) {
+                    const avg = calcAverage(times.slice(i, i + 3));
+                    if (avg > 0) {
+                        bestAo3 = (bestAo3 === null) ? avg : Math.min(bestAo3, avg);
+                    }
+                }
+            }
+
             // Current ao5 and best ao5
             let currentAo5 = null;
             let bestAo5 = null;
@@ -222,6 +235,8 @@
                 count,
                 best,
                 worst,
+                currentAo3,
+                bestAo3,
                 currentAo5,
                 bestAo5,
                 currentAo12,
