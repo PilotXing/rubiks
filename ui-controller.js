@@ -1016,13 +1016,15 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.btnBtCapsule.addEventListener('click', async () => {
             if (!isCubeConnected) {
                 try {
-                    elements.btnBtCapsule.className = 'btn-bluetooth-capsule connecting';
+                    elements.btnBtCapsule.className = 'btn btn-icon-square btn-secondary btn-sm connecting';
+                    elements.btnBtCapsule.title = '正在连接魔方...';
                     if (elements.btCapsuleLabel) elements.btCapsuleLabel.textContent = '连接中...';
                     appendBtLog('system', '正在启动蓝牙设备扫描 (Web Bluetooth API)...');
                     await bluetooth.connect();
                 } catch (err) {
                     console.error("Connection failed:", err);
-                    elements.btnBtCapsule.className = 'btn-bluetooth-capsule disconnected';
+                    elements.btnBtCapsule.className = 'btn btn-icon-square btn-secondary btn-sm disconnected';
+                    elements.btnBtCapsule.title = '点击连接魔方 (Click to connect)';
                     if (elements.btCapsuleLabel) elements.btCapsuleLabel.textContent = '连接魔方';
                     appendBtLog('err', `连接失败: ${err.message || err}`);
                     alert(`Bluetooth Connection Failed:\n${err.message || err}`);
@@ -1084,15 +1086,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const btConnectedDot = document.getElementById('bt-connected-dot');
+
     bluetooth.on('status', (info) => {
         if (info.state === 'CONNECTED') {
             isCubeConnected = true;
-            if (elements.btnBtCapsule) {
-                elements.btnBtCapsule.className = 'btn-bluetooth-capsule connected';
-                elements.btnBtCapsule.title = '点击查看蓝牙日志与详情 (Click for logs & details)';
-            }
             const name = info.deviceName || 'GAN Cube';
             const battText = currentBatteryLevel !== null ? `${currentBatteryLevel}%` : '已连接';
+            if (elements.btnBtCapsule) {
+                elements.btnBtCapsule.className = 'btn btn-icon-square btn-secondary btn-sm connected';
+                elements.btnBtCapsule.title = `魔方已连接: ${name} | 电量: ${battText} (点击查看日志与详情)`;
+            }
+            if (btConnectedDot) btConnectedDot.style.display = 'block';
             if (elements.btCapsuleLabel) elements.btCapsuleLabel.innerHTML = `<span class="bt-pulse-dot"></span> ${battText}`;
             if (elements.btModalDeviceName) elements.btModalDeviceName.textContent = name;
             if (elements.btModalStatusBadge) {
@@ -1108,7 +1113,11 @@ document.addEventListener('DOMContentLoaded', () => {
             appendBtLog('system', `已建立蓝牙通信握手: ${name}`);
             resetBtInactivityTimer();
         } else if (info.state === 'CONNECTING') {
-            if (elements.btnBtCapsule) elements.btnBtCapsule.className = 'btn-bluetooth-capsule connecting';
+            if (elements.btnBtCapsule) {
+                elements.btnBtCapsule.className = 'btn btn-icon-square btn-secondary btn-sm connecting';
+                elements.btnBtCapsule.title = '正在连接魔方...';
+            }
+            if (btConnectedDot) btConnectedDot.style.display = 'none';
             if (elements.btCapsuleLabel) elements.btCapsuleLabel.textContent = '连接中...';
             if (elements.btModalStatusBadge) {
                 elements.btModalStatusBadge.innerHTML = '<span class="status-dot"></span> Connecting...';
@@ -1123,9 +1132,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 btInactivityTimer = null;
             }
             if (elements.btnBtCapsule) {
-                elements.btnBtCapsule.className = 'btn-bluetooth-capsule disconnected';
+                elements.btnBtCapsule.className = 'btn btn-icon-square btn-secondary btn-sm disconnected';
                 elements.btnBtCapsule.title = '点击连接魔方 (Click to connect)';
             }
+            if (btConnectedDot) btConnectedDot.style.display = 'none';
             if (elements.btCapsuleLabel) elements.btCapsuleLabel.textContent = '连接魔方';
             if (elements.btModalDeviceName) elements.btModalDeviceName.textContent = '未连接';
             if (elements.btModalBatteryVal) elements.btModalBatteryVal.textContent = '--%';
@@ -1146,6 +1156,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     bluetooth.on('battery', (data) => {
         currentBatteryLevel = data.level;
+        if (elements.btnBtCapsule && isCubeConnected) {
+            elements.btnBtCapsule.title = `魔方已连接 | 电量: ${data.level}% (点击查看日志与详情)`;
+        }
         if (elements.btCapsuleLabel && isCubeConnected) {
             elements.btCapsuleLabel.innerHTML = `<span class="bt-pulse-dot"></span> ${data.level}%`;
         }

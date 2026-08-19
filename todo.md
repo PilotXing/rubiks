@@ -324,3 +324,16 @@
     - Standardized internal padding and vertical centering across all header and stage dock bars.
 - [x] **Version Upgrade**:
     - Bumped to `v14.9` (sw.js cache `rubiks-timer-v14.9`).
+
+## 40px Synchronized Rows & Square Action Buttons (每行40px与第一行统一正方形按钮 - v15.0)
+- [x] **Strict 40px Height for All 3 Top Rows (每行40px)**:
+    - Row 1 (`.header-top-row`): `height: 40px; min-height: 40px; max-height: 40px;`
+    - Row 2 (`.app-nav-tabs`): `height: 40px; min-height: 40px; max-height: 40px;`
+    - Row 3 (`.module-toggle-toolbar`): `height: 40px; min-height: 40px; max-height: 40px;`
+- [x] **Unified 32×32 Square Buttons in Row 1 (第一行三个按钮统一宽度正方形)**:
+    - Button 1 (Bluetooth): 32px × 32px square icon button with centered Bluetooth/Battery SVG and corner status indicator.
+    - Button 2 (Settings): 32px × 32px square icon button with ⚙️ icon.
+    - Button 3 (Help): 32px × 32px square icon button with ❓ icon.
+    - All 3 buttons share exact identical geometry, border radius, and aspect ratio.
+- [x] **Version Upgrade**:
+    - Bumped to `v15.0` (sw.js cache `rubiks-timer-v15.0`).
