@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css?v=15.0">
+    <link rel="stylesheet" href="style.css?v=15.1">
 </head>
 <body class="style-dark color-emerald theme-dark">
 
@@ -34,7 +34,7 @@
                     </svg>
                 </span>
                 <span class="brand-title">Rubik Vision</span>
-                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v15.0</span>
+                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v15.1</span>
             </div>
 
             <div class="header-actions">
@@ -660,6 +660,7 @@
                     </label>
                     <select id="select-ui-style">
                         <option value="dark">Precision Dark (极简暗黑 - 默认)</option>
+                        <option value="flat">Designmodo Flat UI (经典纯平设计)</option>
                         <option value="apple">Apple Liquid Glass (苹果流体玻璃 iOS / visionOS)</option>
                         <option value="material">Material Design 3 (谷歌 Material You)</option>
                         <option value="cyber">Cyber Neon (赛博霓虹科幻)</option>
@@ -675,6 +676,7 @@
                     </label>
                     <select id="select-accent-color">
                         <option value="emerald">🟢 翡翠绿 (Emerald Green - 默认)</option>
+                        <option value="turquoise">💎 绿松石青 (Flat Turquoise - 经典)</option>
                         <option value="blue">🔵 苹果蓝 (Apple / System Blue)</option>
                         <option value="purple">🟣 罗兰紫 (Electric Violet)</option>
                         <option value="cyan">🔷 霓虹青 (Cyber Cyan)</option>
@@ -685,6 +687,7 @@
                     <!-- Quick Swatch Buttons -->
                     <div class="color-palette-swatches" id="color-palette-swatches">
                         <button type="button" class="swatch-btn color-swatch-emerald active" data-color="emerald" title="翡翠绿 (Emerald)"></button>
+                        <button type="button" class="swatch-btn color-swatch-turquoise" data-color="turquoise" title="绿松石青 (Flat Turquoise)"></button>
                         <button type="button" class="swatch-btn color-swatch-blue" data-color="blue" title="苹果蓝 (Apple Blue)"></button>
                         <button type="button" class="swatch-btn color-swatch-purple" data-color="purple" title="罗兰紫 (Violet)"></button>
                         <button type="button" class="swatch-btn color-swatch-cyan" data-color="cyan" title="霓虹青 (Cyan)"></button>
@@ -977,19 +980,19 @@
     </div>
 
     <!-- Scripts -->
-    <script src="aes.js?v=15.0"></script>
-    <script src="min2phase.js?v=15.0"></script>
-    <script src="three.min.js?v=15.0"></script>
-    <script src="cube-engine.js?v=15.0"></script>
-    <script src="alg-database.js?v=15.0"></script>
-    <script src="method-analyzer.js?v=15.0"></script>
-    <script src="chart-engine.js?v=15.0"></script>
-    <script src="gan-bluetooth.js?v=15.0"></script>
-    <script src="audio-synth.js?v=15.0"></script>
-    <script src="renderer-3d.js?v=15.0"></script>
-    <script src="renderer-2d.js?v=15.0"></script>
-    <script src="timer-engine.js?v=15.0"></script>
-    <script src="ui-controller.js?v=15.0"></script>
+    <script src="aes.js?v=15.1"></script>
+    <script src="min2phase.js?v=15.1"></script>
+    <script src="three.min.js?v=15.1"></script>
+    <script src="cube-engine.js?v=15.1"></script>
+    <script src="alg-database.js?v=15.1"></script>
+    <script src="method-analyzer.js?v=15.1"></script>
+    <script src="chart-engine.js?v=15.1"></script>
+    <script src="gan-bluetooth.js?v=15.1"></script>
+    <script src="audio-synth.js?v=15.1"></script>
+    <script src="renderer-3d.js?v=15.1"></script>
+    <script src="renderer-2d.js?v=15.1"></script>
+    <script src="timer-engine.js?v=15.1"></script>
+    <script src="ui-controller.js?v=15.1"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

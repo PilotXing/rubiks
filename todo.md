@@ -337,3 +337,15 @@
     - All 3 buttons share exact identical geometry, border radius, and aspect ratio.
 - [x] **Version Upgrade**:
     - Bumped to `v15.0` (sw.js cache `rubiks-timer-v15.0`).
+
+## Designmodo Flat-UI Integration & 6.7" Screen Touch Target Optimization (经典纯平设计与6.7寸屏大按钮适配 - v15.1)
+- [x] **Designmodo Flat-UI Theme Engine (`body.style-flat`)**:
+    - Implemented authentic Designmodo Flat-UI system tokens: Midnight Blue (`#2C3E50`), Wet Asphalt (`#34495E`), Clouds (`#ECF0F1`), Silver (`#BDC3C7`).
+    - Flat 2D solid buttons with 3px solid bottom border offset and physical down-press micro-animation (`translateY(2px)`).
+    - 0 skeuomorphic drop shadows, 0 glassy blurs, crisp 4px-6px radii.
+    - Added `Flat Turquoise` (`#1ABC9C`) accent color and quick color swatch.
+- [x] **6.7" Mobile Screen Touch Optimization (大屏幕手感升级)**:
+    - Expanded top 3 rows height to Apple HIG gold standard `44px` (`min-height: 44px; height: 44px;`).
+    - Increased Row 1 square buttons to `38px × 38px` with enlarged `19px` icons (+41% touch surface area) for single-handed thumb taps on 6.7-inch screens.
+- [x] **Version Upgrade**:
+    - Bumped to `v15.1` (sw.js cache `rubiks-timer-v15.1`).

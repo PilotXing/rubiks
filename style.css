@@ -339,6 +339,149 @@ body.style-light, body.theme-light {
     --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
+/* 1.6 Designmodo Flat UI (经典纯平设计风格) */
+body.style-flat, body.theme-flat {
+    --bg-primary: #2C3E50; /* Midnight Blue */
+    --bg-surface: #34495E; /* Wet Asphalt */
+    --bg-surface-elevated: #243342;
+    --bg-surface-hover: #3D566E;
+    --border-color: #415B76;
+    --border-subtle: #3A5169;
+
+    --text-primary: #FFFFFF;
+    --text-secondary: #ECF0F1; /* Clouds */
+    --text-muted: #BDC3C7; /* Silver */
+
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --shadow-subtle: none;
+}
+
+body.style-flat .card-collapsible,
+body.style-flat .arena-card,
+body.style-flat .module-toggle-toolbar,
+body.style-flat .app-header,
+body.style-flat .modal-card {
+    background-color: #34495E;
+    border: 2px solid #415B76;
+    border-radius: 6px;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+body.style-flat .app-nav-tabs {
+    background-color: #243342;
+    border: 2px solid #415B76;
+    border-radius: 6px;
+    padding: 0.15rem;
+}
+
+body.style-flat .nav-tab-btn {
+    border-radius: 4px;
+    font-weight: 700;
+    color: #BDC3C7;
+    transition: all 0.1s ease;
+}
+
+body.style-flat .nav-tab-btn:hover {
+    color: #FFFFFF;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+body.style-flat .nav-tab-btn.active {
+    background-color: var(--accent-primary, #1ABC9C);
+    color: #FFFFFF;
+    box-shadow: none;
+}
+
+body.style-flat .module-chip-btn {
+    background-color: #243342;
+    border: none;
+    border-bottom: 2px solid #1A252F;
+    border-radius: 4px;
+    font-weight: 700;
+    color: #ECF0F1;
+}
+
+body.style-flat .module-chip-btn:hover {
+    background-color: #2D3E4F;
+}
+
+body.style-flat .module-chip-btn.active {
+    background-color: var(--accent-primary, #1ABC9C);
+    color: #FFFFFF;
+    border-bottom: 2px solid var(--accent-hover, #16A085);
+    box-shadow: none;
+}
+
+body.style-flat .module-chip-btn.active svg {
+    stroke: #FFFFFF;
+    filter: none;
+}
+
+/* Flat UI 2D Solid Buttons with Click Down Offset */
+body.style-flat .btn {
+    border: none;
+    border-bottom: 3px solid rgba(0, 0, 0, 0.28);
+    border-radius: 4px;
+    font-weight: 700;
+    box-shadow: none !important;
+    transition: transform 0.08s ease, filter 0.1s ease;
+}
+
+body.style-flat .btn:hover {
+    filter: brightness(1.08);
+}
+
+body.style-flat .btn:active,
+body.style-flat .btn-icon-square:active {
+    transform: translateY(2px);
+    border-bottom-width: 1px;
+}
+
+body.style-flat .btn-primary {
+    background-color: var(--accent-primary, #1ABC9C);
+    color: #FFFFFF;
+    border-bottom: 3px solid var(--accent-hover, #16A085);
+}
+
+body.style-flat .btn-secondary {
+    background-color: #4E6D8C;
+    color: #FFFFFF;
+    border-bottom: 3px solid #34495E;
+}
+
+body.style-flat .btn-danger {
+    background-color: #E74C3C;
+    color: #FFFFFF;
+    border-bottom: 3px solid #C0392B;
+}
+
+body.style-flat .btn-icon-square {
+    border-radius: 4px;
+    border-bottom: 3px solid rgba(0, 0, 0, 0.28);
+}
+
+body.style-flat .badge {
+    border: none;
+    border-radius: 4px;
+    font-weight: 700;
+    background-color: #243342;
+    color: #ECF0F1;
+}
+
+body.style-flat .badge-connected {
+    background-color: #2ECC71;
+    color: #FFFFFF;
+}
+
+body.style-flat .badge-disconnected {
+    background-color: #95A5A6;
+    color: #2C3E50;
+}
+
 /* ==========================================================================
    2. Accent Color Palettes (强调主题色 - 自由正交切换)
    ========================================================================== */
@@ -413,6 +556,16 @@ body.color-rose {
     --accent-text: #FFFFFF;
 }
 
+/* 2.8 Flat Turquoise (绿松石青 - Designmodo) */
+body.color-turquoise {
+    --accent-primary: #1ABC9C;
+    --accent-hover: #16A085;
+    --accent-active: #117A65;
+    --accent-glow: rgba(26, 188, 156, 0.45);
+    --accent-subtle: rgba(26, 188, 156, 0.15);
+    --accent-text: #FFFFFF;
+}
+
 /* Color Palette Swatches Widget */
 .color-palette-swatches {
     display: flex;
@@ -453,6 +606,7 @@ body.color-rose {
 }
 
 .color-swatch-emerald { background-color: #10B981; color: #10B981; }
+.color-swatch-turquoise { background-color: #1ABC9C; color: #1ABC9C; }
 .color-swatch-blue { background-color: #0A84FF; color: #0A84FF; }
 .color-swatch-purple { background-color: #A855F7; color: #A855F7; }
 .color-swatch-cyan { background-color: #06B6D4; color: #06B6D4; }
@@ -556,9 +710,9 @@ body {
     justify-content: space-between;
     gap: 0.75rem;
     width: 100%;
-    min-height: 40px;
-    height: 40px;
-    max-height: 40px;
+    min-height: 44px;
+    height: 44px;
+    max-height: 44px;
     box-sizing: border-box;
 }
 
@@ -584,19 +738,19 @@ body {
 .header-actions {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.45rem;
     flex-shrink: 0;
 }
 
-/* Unified Square Icon Buttons for Row 1 Actions */
+/* Unified Square Icon Buttons for Row 1 Actions (Optimized for 6.7" Mobile Touch) */
 .btn-icon-square,
 .header-actions .btn {
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    min-height: 32px;
-    max-width: 32px;
-    max-height: 32px;
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+    max-width: 38px;
+    max-height: 38px;
     aspect-ratio: 1 / 1;
     border-radius: var(--radius-sm);
     padding: 0 !important;
@@ -613,8 +767,8 @@ body {
 
 .btn-icon-square svg,
 .header-actions .btn svg {
-    width: 16px;
-    height: 16px;
+    width: 19px;
+    height: 19px;
     display: block;
     flex-shrink: 0;
 }
@@ -652,10 +806,10 @@ body {
 
 .bt-connected-dot {
     position: absolute;
-    top: 3px;
-    right: 3px;
-    width: 6px;
-    height: 6px;
+    top: 4px;
+    right: 4px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     background-color: #10B981;
     box-shadow: 0 0 5px rgba(16, 185, 129, 0.9);
@@ -673,11 +827,11 @@ body {
     gap: 0.35rem;
     background-color: var(--bg-surface-elevated);
     border-radius: var(--radius-sm);
-    padding: 0.15rem;
+    padding: 0.18rem;
     width: 100%;
-    min-height: 40px;
-    height: 40px;
-    max-height: 40px;
+    min-height: 44px;
+    height: 44px;
+    max-height: 44px;
     box-sizing: border-box;
 }
 
@@ -806,9 +960,9 @@ body {
         padding: 0.15rem 0.35rem;
         gap: 0.35rem;
         width: 100%;
-        min-height: 40px;
-        height: 40px;
-        max-height: 40px;
+        min-height: 44px;
+        height: 44px;
+        max-height: 44px;
         box-sizing: border-box;
     }
     .module-chip-btn {
@@ -821,11 +975,11 @@ body {
         gap: 0.25rem;
     }
     .module-chip-btn svg {
-        width: 14px;
-        height: 14px;
+        width: 15px;
+        height: 15px;
     }
     .module-chip-text {
-        font-size: 0.72rem;
+        font-size: 0.74rem;
     }
 }
 
@@ -852,9 +1006,9 @@ body {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     width: 100%;
-    min-height: 40px;
-    height: 40px;
-    max-height: 40px;
+    min-height: 44px;
+    height: 44px;
+    max-height: 44px;
     min-width: 0;
     box-sizing: border-box;
 }
