@@ -492,28 +492,14 @@
 
                     markAreaData.push([
                         {
-                            name: `${timeVal} · ${tpsVal}`,
+                            name: stg.name || `Stage ${sIdx + 1}`,
                             xAxis: Math.max(0, stg.startIdx),
                             itemStyle: {
                                 color: stgColor,
-                                opacity: 0.12
+                                opacity: 0.14
                             },
                             label: {
-                                show: this.options.showStageLabels !== false,
-                                position: (sIdx % 2 === 0) ? 'insideTop' : ['50%', '22px'],
-                                distance: 4,
-                                color: '#FFFFFF',
-                                backgroundColor: 'rgba(15, 23, 42, 0.94)',
-                                borderColor: stgColor,
-                                borderWidth: 1.2,
-                                borderRadius: 4,
-                                padding: [2, 6],
-                                fontFamily: 'JetBrains Mono, monospace',
-                                fontWeight: 'bold',
-                                fontSize: 9,
-                                shadowColor: 'rgba(0, 0, 0, 0.4)',
-                                shadowBlur: 4,
-                                formatter: `${timeVal} · ${tpsVal}`
+                                show: false
                             }
                         },
                         {
