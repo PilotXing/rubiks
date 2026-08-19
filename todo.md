@@ -395,3 +395,14 @@
     - Fast/narrow stages (e.g. 1-2 move Cross or AUF) cleanly display without text truncation or horizontal collisions.
 - [x] **Version Upgrade**:
     - Bumped to `v15.5` (sw.js cache `rubiks-timer-v15.5`).
+
+## Ultra-Clean Numeric-Only Stage Badges with High Contrast Dark Glass Pills (纯时间TPS数值直显与高对比度暗色微卡 - v15.6)
+- [x] **Removed Stage Names & Units (完全隐藏阶段名称与单位)**:
+    - Completely stripped text like `CROSS`, `F2L`, `OLL`, `PLL` and units (`s`, `m`, `TPS`, `步`, `T`).
+    - Only renders clean numeric pair: `[Time] · [TPS]` (e.g. `1.24 · 4.8`).
+- [x] **High-Contrast Dark Glass Pill Container (暗色高对比微容器彻底解决浅色背景白字看不清)**:
+    - Rendered badges on dark glass pills (`rgba(15, 23, 42, 0.92)`) with stage-colored glowing borders.
+    - Crisp white/colored numeric text is 100% legible on all light and dark themes.
+    - Pill width reduced to ultra-compact `46px` and height `18px`, eliminating all text overflow.
+- [x] **Version Upgrade**:
+    - Bumped to `v15.6` (sw.js cache `rubiks-timer-v15.6`).

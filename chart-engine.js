@@ -376,7 +376,7 @@
             this.canvas = canvasElement;
             this.ctx = canvasElement.getContext('2d');
             this.options = Object.assign({
-                padding: { top: 54, right: 14, bottom: 24, left: 32 },
+                padding: { top: 46, right: 14, bottom: 24, left: 32 },
                 highlightStep: -1,
                 cumulativeCurve: { enabled: true, color: '#10B981', width: 2.5, opacity: 1.0 },
                 derivativeBars: { enabled: true, color: 'rgba(59, 130, 246, 0.35)', activeColor: '#F59E0B' },
@@ -495,8 +495,8 @@
                     const bandW = Math.max(4, endX - startX);
                     const anchorX = startX + bandW / 2;
                     const stgColor = stg.color || '#3B82F6';
-                    const stgName = (stg.name || `P${sIdx + 1}`).toUpperCase();
                     const moveCount = stg.moveCount !== undefined ? stg.moveCount : (stg.endIdx - stg.startIdx + 1);
+                    const timeVal = stg.durationMs ? (stg.durationMs / 1000).toFixed(2) : (stg.durationFormatted ? stg.durationFormatted.replace('s', '') : '0.00');
                     const tpsVal = stg.tps !== undefined ? Number(stg.tps).toFixed(1) : (stg.durationMs > 0 ? (moveCount / (stg.durationMs / 1000)).toFixed(1) : '0.0');
                     return {
                         stg,
@@ -506,8 +506,7 @@
                         bandW,
                         anchorX,
                         stgColor,
-                        stgName,
-                        moveCount,
+                        timeVal,
                         tpsVal,
                         tier: 0,
                         pillX: 0,
@@ -537,21 +536,21 @@
                     }
                 });
 
-                // B. Smart Staggered Multi-Tier Anti-Collision Badge Placement (Fixes narrow/fast stage crowding)
+                // B. Smart Staggered Multi-Tier Anti-Collision Badge Placement (Only Time & TPS, no units, high contrast)
                 if (this.options.showStageLabels) {
-                    const badgeH = 22;
+                    const badgeH = 18;
                     const tierY = [
-                        pad.top - badgeH * 2 - 6, // Tier 0 (Top): pad.top - 50
-                        pad.top - badgeH - 3      // Tier 1 (Bottom): pad.top - 25
+                        pad.top - badgeH * 2 - 4, // Tier 0 (Top): pad.top - 40
+                        pad.top - badgeH - 2      // Tier 1 (Bottom): pad.top - 20
                     ];
 
                     // Check for narrow or crowded stages and assign alternating tiers
-                    let needsStagger = stageLayout.some(item => item.bandW < 56);
+                    let needsStagger = stageLayout.some(item => item.bandW < 48);
                     if (stageLayout.length > 4) needsStagger = true;
 
                     stageLayout.forEach((item, i) => {
                         item.tier = needsStagger ? (i % 2) : 0;
-                        item.pillW = Math.max(48, Math.min(78, Math.max(item.bandW, 54)));
+                        item.pillW = 46;
                         item.pillX = item.anchorX - item.pillW / 2;
 
                         // Clamp pillX within chart horizontal viewport bounds
@@ -565,12 +564,12 @@
                         for (let i = 1; i < tierItems.length; i++) {
                             const prev = tierItems[i - 1];
                             const curr = tierItems[i];
-                            const overlap = (prev.pillX + prev.pillW + 3) - curr.pillX;
+                            const overlap = (prev.pillX + prev.pillW + 2) - curr.pillX;
                             if (overlap > 0) {
                                 curr.pillX += overlap;
                                 if (curr.pillX + curr.pillW > w - pad.right) {
                                     curr.pillX = w - pad.right - curr.pillW;
-                                    prev.pillX = Math.max(pad.left, curr.pillX - prev.pillW - 3);
+                                    prev.pillX = Math.max(pad.left, curr.pillX - prev.pillW - 2);
                                 }
                             }
                         }
@@ -582,13 +581,13 @@
                         const pillCenterX = item.pillX + item.pillW / 2;
 
                         // Draw leader connector line from badge to actual stage band if displaced or narrow
-                        const isDisplaced = Math.abs(pillCenterX - item.anchorX) > 6 || item.bandW < 38 || item.tier === 0;
+                        const isDisplaced = Math.abs(pillCenterX - item.anchorX) > 4 || item.bandW < 32 || item.tier === 0;
                         if (isDisplaced) {
                             ctx.save();
                             ctx.strokeStyle = item.stgColor;
                             ctx.fillStyle = item.stgColor;
                             ctx.lineWidth = 1;
-                            ctx.globalAlpha = 0.5;
+                            ctx.globalAlpha = 0.55;
                             ctx.beginPath();
                             ctx.moveTo(pillCenterX, y + badgeH);
                             ctx.lineTo(item.anchorX, pad.top);
@@ -601,10 +600,9 @@
                             ctx.restore();
                         }
 
-                        // Badge Pill Background
+                        // High-Contrast Dark Glass Pill Background (Fixes light background contrast)
                         ctx.save();
-                        ctx.fillStyle = item.stgColor;
-                        ctx.globalAlpha = 0.22;
+                        ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
                         if (typeof ctx.roundRect === 'function') {
                             ctx.beginPath();
                             ctx.roundRect(item.pillX, y, item.pillW, badgeH, 4);
@@ -614,8 +612,8 @@
                         }
 
                         ctx.strokeStyle = item.stgColor;
-                        ctx.globalAlpha = 0.75;
-                        ctx.lineWidth = 1;
+                        ctx.globalAlpha = 0.85;
+                        ctx.lineWidth = 1.2;
                         if (typeof ctx.roundRect === 'function') {
                             ctx.beginPath();
                             ctx.roundRect(item.pillX, y, item.pillW, badgeH, 4);
@@ -625,16 +623,12 @@
                         }
                         ctx.restore();
 
-                        // Badge Text: Name + (Moves / TPS)
+                        // Pure High-Contrast Numeric Text: [Time] · [TPS] (No stage name, no units)
                         ctx.save();
                         ctx.textAlign = 'center';
-                        ctx.fillStyle = '#FFFFFF';
                         ctx.font = 'bold 8.5px JetBrains Mono, monospace';
-
-                        let displayName = item.stgName;
-                        if (displayName.length > 5 && item.pillW < 60) displayName = displayName.replace('F2L ', 'F');
-
-                        ctx.fillText(`${displayName} ${item.moveCount}m·${item.tpsVal}T`, pillCenterX, y + 14);
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillText(`${item.timeVal} · ${item.tpsVal}`, pillCenterX, y + 12.5);
                         ctx.restore();
                     });
                 }
