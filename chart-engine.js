@@ -486,20 +486,49 @@
 
             if (this.options.showStageBands && stages.length > 0) {
                 stages.forEach((stg, sIdx) => {
-                    const timeVal = stg.durationMs ? (stg.durationMs / 1000).toFixed(2) : '0.00';
-                    const tpsVal = stg.tps !== undefined ? Number(stg.tps).toFixed(1) : '0.0';
+                    const moveCount = stg.moveCount !== undefined ? stg.moveCount : (stg.endIdx - stg.startIdx + 1);
+                    const tpsVal = stg.tps !== undefined ? Number(stg.tps).toFixed(1) : (stg.durationMs > 0 ? (moveCount / (stg.durationMs / 1000)).toFixed(1) : '0.0');
                     const stgColor = stg.color || '#3B82F6';
 
                     markAreaData.push([
                         {
-                            name: stg.name || `Stage ${sIdx + 1}`,
+                            name: `${moveCount}步\n${tpsVal}`,
                             xAxis: Math.max(0, stg.startIdx),
                             itemStyle: {
                                 color: stgColor,
-                                opacity: 0.14
+                                opacity: 0.12
                             },
                             label: {
-                                show: false
+                                show: this.options.showStageLabels !== false,
+                                position: (sIdx % 2 === 0) ? 'insideTop' : ['50%', '30px'],
+                                distance: 6,
+                                color: '#FFFFFF',
+                                backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                                borderColor: stgColor,
+                                borderWidth: 1.5,
+                                borderRadius: 5,
+                                padding: [4, 7],
+                                shadowColor: 'rgba(0, 0, 0, 0.5)',
+                                shadowBlur: 6,
+                                formatter: `{moves|${moveCount}步}\n{tps|${tpsVal}}`,
+                                rich: {
+                                    moves: {
+                                        fontSize: 13,
+                                        fontWeight: '800',
+                                        fontFamily: 'JetBrains Mono, monospace',
+                                        color: '#FFFFFF',
+                                        align: 'center',
+                                        lineHeight: 16
+                                    },
+                                    tps: {
+                                        fontSize: 11,
+                                        fontWeight: '700',
+                                        fontFamily: 'JetBrains Mono, monospace',
+                                        color: '#38BDF8',
+                                        align: 'center',
+                                        lineHeight: 14
+                                    }
+                                }
                             }
                         },
                         {
@@ -588,7 +617,7 @@
                 animationDuration: 400,
                 animationEasing: 'cubicOut',
                 grid: {
-                    top: 48,
+                    top: 58,
                     right: 36,
                     bottom: 22,
                     left: 36,

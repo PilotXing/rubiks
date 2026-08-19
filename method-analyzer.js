@@ -623,23 +623,6 @@
             };
         }
 
-        generateStageTelemetryPillsHtml(stages) {
-            if (!stages || stages.length === 0) return '';
-            let html = '';
-            stages.forEach(stg => {
-                const timeVal = stg.durationMs ? (stg.durationMs / 1000).toFixed(2) : '0.00';
-                const tpsVal = stg.tps !== undefined ? Number(stg.tps).toFixed(1) : '0.0';
-                const color = stg.color || '#3B82F6';
-                html += `
-                    <div class="stage-telemetry-pill" style="display: inline-flex; align-items: center; gap: 0.35rem; background: rgba(15, 23, 42, 0.94); border: 1px solid ${color}; border-radius: 6px; padding: 0.15rem 0.4rem; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; box-shadow: 0 2px 6px rgba(0,0,0,0.3); white-space: nowrap;">
-                        <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${color};"></span>
-                        <span style="color: #FFFFFF; font-weight: 700;">${timeVal} · ${tpsVal}</span>
-                    </div>
-                `;
-            });
-            return html;
-        },
-
         generateProportionalHtml(moves) {
             if (!moves || moves.length === 0) return '';
             let html = '<div class="proportional-moves-flow">';

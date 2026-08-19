@@ -93,7 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleMainCumulative: document.getElementById('toggle-main-cumulative'),
         toggleMainTps: document.getElementById('toggle-main-tps'),
         toggleMainDerivative: document.getElementById('toggle-main-derivative'),
-        mainStageTelemetryStrip: document.getElementById('main-stage-telemetry-strip'),
         mainProportionalFlow: document.getElementById('main-proportional-flow'),
 
         // 3D & 2D Cube Stages
@@ -1666,12 +1665,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // 2. Stage Telemetry Pill Strip (Clean, 0% overlap)
-        if (elements.mainStageTelemetryStrip && analysis && analysis.stages) {
-            elements.mainStageTelemetryStrip.innerHTML = MethodAnalyzer.generateStageTelemetryPillsHtml(analysis.stages);
-        }
-
-        // 3. Proportional Move Tokens
+        // 2. Proportional Move Tokens
         if (elements.mainProportionalFlow) {
             elements.mainProportionalFlow.innerHTML = MethodAnalyzer.generateProportionalHtml(solve.moves);
         }

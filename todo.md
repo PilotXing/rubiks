@@ -426,3 +426,13 @@
     - **High-Precision Magnetic Tooltip (手势高精度磁吸浮窗)**: Sliding on the curve instantly snaps to every step displaying step notation (`Step #14: U'`), duration (`+0.18s`), cumulative time (`3.42s`), and instant TPS (`5.56 TPS`).
 - [x] **Version Upgrade**:
     - Bumped to `v15.8` (sw.js cache `rubiks-timer-v15.8`).
+
+## Vertically Stacked & Enlarged Moves and TPS on ECharts Stage Badges (步数与TPS上下叠放并加粗放大 - v15.9)
+- [x] **Vertically Stacked Multi-Line Stage Badges (上下叠放双行微卡)**:
+    - **Line 1 (步数)**: Exact stage move count (e.g. `6步`) rendered in extra bold **13px** `#FFFFFF`.
+    - **Line 2 (TPS)**: Stage TPS (e.g. `4.8`) rendered in bold **11px** Sky Blue `#38BDF8`.
+- [x] **Compact High-Density Card Dimensions (微卡宽度压缩至 28px，数字大且绝不占横向空间)**:
+    - Squeezed badge width from 50px down to ~28px, allowing large bold numbers even in narrow 1-2 move stages without clipping.
+    - Adjusted grid top margin to 58px for seamless vertical breathing room.
+- [x] **Version Upgrade**:
+    - Bumped to `v15.9` (sw.js cache `rubiks-timer-v15.9`).
