@@ -765,12 +765,18 @@ body {
     transition: all 0.15s ease;
 }
 
+.btn-icon-square *,
+.header-actions .btn * {
+    pointer-events: none;
+}
+
 .btn-icon-square svg,
 .header-actions .btn svg {
     width: 19px;
     height: 19px;
     display: block;
     flex-shrink: 0;
+    pointer-events: none;
 }
 
 .btn-icon-square.disconnected {

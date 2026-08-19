@@ -361,3 +361,14 @@
     - User seamlessly continues following the updated remaining steps in the formula to completion.
 - [x] **Version Upgrade**:
     - Bumped to `v15.2` (sw.js cache `rubiks-timer-v15.2`).
+
+## Bluetooth Capsule Click Fix & PWA Download Button Removal (蓝牙连接按钮修复与删除下载按钮 - v15.3)
+- [x] **Fixed Bluetooth Capsule Connection Click Ineffectiveness (修复蓝牙按钮点击失效)**:
+    - Removed invalid HTML nested `<button>` tags inside `#btn-bluetooth-capsule` that caused browser DOM parser to prematurely close the outer button and drop click events.
+    - Added `pointer-events: none` to all inner SVG icons and text spans to guarantee direct bubble-free tap response.
+    - Updated click event listeners with `e.preventDefault()` and `e.stopPropagation()` for instant, reliable connection trigger.
+- [x] **Removed PWA Install / Download Button (彻底删除蓝牙旁边的下载按钮)**:
+    - Completely stripped `#btn-install-pwa` from header actions.
+    - Removed `beforeinstallprompt` display injection in `ui-controller.js`.
+- [x] **Version Upgrade**:
+    - Bumped to `v15.3` (sw.js cache `rubiks-timer-v15.3`).

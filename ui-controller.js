@@ -39,11 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
         viewPractice: document.getElementById('view-practice'),
 
         // Bluetooth Capsule & Header
-        btnConnect: document.getElementById('btn-connect'),
-        btnDisconnect: document.getElementById('btn-disconnect'),
         btnBtCapsule: document.getElementById('btn-bluetooth-capsule'),
         btCapsuleLabel: document.getElementById('bt-capsule-label'),
-        btnInstallPwa: document.getElementById('btn-install-pwa'),
         cubeStatusBadge: document.getElementById('cube-status-badge'),
         cubeBatteryBadge: document.getElementById('cube-battery-badge'),
         btnSettings: document.getElementById('btn-settings'),
@@ -1007,7 +1004,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (elements.btnBtCapsule) {
-        elements.btnBtCapsule.addEventListener('click', async () => {
+        elements.btnBtCapsule.addEventListener('click', async (e) => {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
             if (!isCubeConnected) {
                 try {
                     elements.btnBtCapsule.className = 'btn btn-icon-square btn-secondary btn-sm connecting';
@@ -1021,7 +1022,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     elements.btnBtCapsule.title = '点击连接魔方 (Click to connect)';
                     if (elements.btCapsuleLabel) elements.btCapsuleLabel.textContent = '连接魔方';
                     appendBtLog('err', `连接失败: ${err.message || err}`);
-                    alert(`Bluetooth Connection Failed:\n${err.message || err}`);
+                    if (!err.message || (!err.message.includes('User cancelled') && !err.message.includes('cancelled'))) {
+                        alert(`Bluetooth Connection Failed:\n${err.message || err}`);
+                    }
                 }
             } else {
                 openBluetoothLogModal();
@@ -1061,22 +1064,6 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.btnClearBtLog.addEventListener('click', () => {
             btLogEntries.length = 0;
             if (elements.btLogTerminal) elements.btLogTerminal.innerHTML = '<div class="bt-log-entry bt-log-system">[System] 日志已清空</div>';
-        });
-    }
-
-    if (elements.btnConnect) {
-        elements.btnConnect.addEventListener('click', async () => {
-            try {
-                await bluetooth.connect();
-            } catch (err) {
-                console.error("Connection failed:", err);
-            }
-        });
-    }
-
-    if (elements.btnDisconnect) {
-        elements.btnDisconnect.addEventListener('click', async () => {
-            await bluetooth.disconnect();
         });
     }
 
@@ -2471,29 +2458,6 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (currentView === 'view-practice') resetPracticeAttempt();
         }
     });
-
-    // PWA Install Prompt Handling
-    let deferredInstallPrompt = null;
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredInstallPrompt = e;
-        if (elements.btnInstallPwa) {
-            elements.btnInstallPwa.style.display = 'inline-flex';
-        }
-    });
-
-    if (elements.btnInstallPwa) {
-        elements.btnInstallPwa.addEventListener('click', async () => {
-            if (deferredInstallPrompt) {
-                deferredInstallPrompt.prompt();
-                const { outcome } = await deferredInstallPrompt.userChoice;
-                if (outcome === 'accepted') {
-                    elements.btnInstallPwa.style.display = 'none';
-                }
-                deferredInstallPrompt = null;
-            }
-        });
-    }
 
     // Window Resize & Reorientation Adaptive Redraw
     window.addEventListener('resize', () => {
