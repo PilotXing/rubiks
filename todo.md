@@ -460,3 +460,9 @@
     - Added `requestAnimationFrame` and delayed resize passes in `render()` and `togglePanel()` to eliminate initial zero-width layout clumping on page load and module restoration.
 - [x] **Version Upgrade**:
     - Bumped to `v16.2` (sw.js cache `rubiks-timer-v16.2`).
+
+## Removed Solve Move Sequence below Chart (移除分析图下方的解法步骤条 - v16.3)
+- [x] **Removed Move Flow Sequence (删除图表下方的解法流)**:
+    - Removed `#main-proportional-flow` and its rendering pipeline from `main-solve-breakdown-card`, leaving only the pure, sleek ECharts performance curve.
+- [x] **Version Upgrade**:
+    - Bumped to `v16.3` (sw.js cache `rubiks-timer-v16.3`).

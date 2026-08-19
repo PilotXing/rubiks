@@ -1665,11 +1665,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (mainMovementChart) mainMovementChart.resize();
             }, 80);
         }
-
-        // 2. Proportional Move Tokens
-        if (elements.mainProportionalFlow) {
-            elements.mainProportionalFlow.innerHTML = MethodAnalyzer.generateProportionalHtml(solve.moves);
-        }
     }
 
     const TOGGLE_MODULE_IDS = ['main-solve-breakdown-card', 'card-cube-views', 'card-stats-summary', 'card-history-table'];
