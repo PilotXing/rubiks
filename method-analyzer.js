@@ -247,22 +247,33 @@
                 };
             }
 
-            const scramble = solveRecord.scramble || '';
-            const moves = solveRecord.moves;
+            const scramble = (solveRecord.scramble || '').trim();
+            const rawMoves = solveRecord.moveList || solveRecord.moves || [];
+            let moves = [];
+            if (Array.isArray(rawMoves)) {
+                moves = rawMoves;
+            } else if (typeof rawMoves === 'string') {
+                moves = rawMoves.trim().split(/\s+/).filter(Boolean).map(m => ({ move: m }));
+            }
+
+            if (moves.length === 0) {
+                return {
+                    method: preferredMethod,
+                    baseFace: "White / U (Top)",
+                    baseFaceKey: "U",
+                    stages: [],
+                    totalMoves: 0,
+                    totalDurationMs: 0,
+                    overallTps: 0
+                };
+            }
+
             const startCube = new RubiksCube();
             if (scramble) {
+                // 1. When a valid scramble exists, apply it to get the true initial cube state
                 startCube.applyMoves(scramble);
-            }
-
-            // Verify if applying moves to startCube reaches a solved cube
-            const endCheck = startCube.clone();
-            for (let i = 0; i < moves.length; i++) {
-                endCheck.applyMove(moves[i].move);
-            }
-
-            // If endCheck is not solved (e.g. freestyle solve without scramble, or inspection rotation),
-            // reconstruct the exact startCube by inverting the solve moves from solved state
-            if (!endCheck.isSolved()) {
+            } else {
+                // 2. Freestyle solve without scramble: reconstruct starting state by inverting moves from solved cube
                 const invertedCube = new RubiksCube();
                 const moveStrings = moves.map(m => typeof m === 'string' ? m : (m && m.move ? m.move : ''));
                 const invMoves = (CubeEngine && typeof CubeEngine.invertMoves === 'function')

@@ -480,3 +480,11 @@
     - Cleaned up `TOGGLE_MODULE_IDS` and guarded rendering references in `ui-controller.js`.
 - [x] **Version Upgrade**:
     - Bumped to `v16.5` (sw.js cache `rubiks-timer-v16.5`).
+
+## Scramble-First State Initialization for Reconstruction Analysis (复原分析精准以打乱状态为起点修复 - v16.6)
+- [x] **Fixed Initial State Reconstruction Logic (修复起点魔方状态还原)**:
+    - Fixed `analyzeSolve` in `method-analyzer.js` to normalize move objects and strictly apply the valid WCA scramble directly to `startCube`.
+    - Eliminated flawed invert-from-end logic which previously corrupted the starting state when solve moves were followed by post-finish turns (e.g. at step #59).
+    - White Cross at step #6 (`L F F U' L' U'`) is now recognized with 100% precision.
+- [x] **Version Upgrade**:
+    - Bumped to `v16.6` (sw.js cache `rubiks-timer-v16.6`).
