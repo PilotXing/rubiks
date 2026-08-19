@@ -2186,6 +2186,14 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.modalReconstruct.classList.remove('active');
     });
 
+    document.querySelectorAll('.modal-backdrop').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+    });
+
     elements.toggleInspection.addEventListener('change', (e) => {
         timer.inspectionEnabled = e.target.checked;
         localStorage.setItem('inspection_enabled', String(timer.inspectionEnabled));

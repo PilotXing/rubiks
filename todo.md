@@ -299,3 +299,13 @@
     - Dynamic `.timer-digits-long` support for long format solves (> 1 min).
 - [x] **Version Upgrade**:
     - Bumped to `v14.7` (sw.js cache `rubiks-timer-v14.7`).
+
+## Modal DOM Hierarchy & Universal View Access Fix (设置与弹窗全页面可用修复 - v14.8)
+- [x] **Fixed Nested Modal Hierarchy in `index.html`**:
+    - Resolved DOM nesting defect where `#modal-settings`, `#modal-help`, and other dialogs were trapped inside `#view-practice`.
+    - Because `#view-practice` was `display: none` when on Timer or Trends pages, settings modal could not be shown.
+    - Lifted all modals to top-level `<body>` children outside `<main>`, ensuring Settings & Help open seamlessly from any view tab (Timer, Trends, Practice).
+- [x] **Added Click-Outside Backdrop Dismissal**:
+    - Added click listener on `.modal-backdrop` to dismiss modals when clicking outside the dialog card.
+- [x] **Version Upgrade**:
+    - Bumped to `v14.8` (sw.js cache `rubiks-timer-v14.8`).
