@@ -974,7 +974,18 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch(err => console.log('SW registration error:', err));
+                navigator.serviceWorker.register('/sw.js').then((reg) => {
+                    // Actively check for SW updates
+                    reg.update();
+                }).catch(err => console.log('SW registration error:', err));
+
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (!refreshing) {
+                        refreshing = true;
+                        window.location.reload();
+                    }
+                });
             });
         }
     </script>
