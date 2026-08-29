@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css?v=16.6">
+    <link rel="stylesheet" href="style.css?v=17.0">
 </head>
 <body class="style-dark color-emerald theme-dark">
 
@@ -34,7 +34,7 @@
                     </svg>
                 </span>
                 <span class="brand-title">Rubik Vision</span>
-                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v16.6</span>
+                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v17.0</span>
             </div>
 
             <div class="header-actions">
@@ -554,6 +554,41 @@
                     <small style="color: var(--text-muted);">用于在复原后自动识别各阶段（Cross、F2L 1~4、OLL、PLL）并在曲线上直显各阶段步数与 TPS。</small>
                 </div>
 
+                <!-- Scramble Layout & Reel Configuration -->
+                <div class="form-group">
+                    <label for="select-scramble-display-style" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16M4 6h16M4 18h16"></path></svg>
+                        <span>打乱显示样式 (Scramble Layout):</span>
+                    </label>
+                    <select id="select-scramble-display-style" class="form-control">
+                        <option value="reel" selected>横向聚焦视轨 (Horizontal Reel Track - 默认)</option>
+                        <option value="grid">标准多行全览 (Multi-Line Grid)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="group-scramble-visible-steps">
+                    <div style="display: flex; gap: 0.75rem; width: 100%;">
+                        <div style="flex: 1;">
+                            <label for="select-scramble-visible-prev" style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 0.2rem; display: block;">前置可见 (Prior):</label>
+                            <select id="select-scramble-visible-prev" class="form-control">
+                                <option value="0">0 步 (仅看当前与后置)</option>
+                                <option value="1" selected>1 步 (默认)</option>
+                                <option value="2">2 步</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1;">
+                            <label for="select-scramble-visible-next" style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 0.2rem; display: block;">后置可见 (Next):</label>
+                            <select id="select-scramble-visible-next" class="form-control">
+                                <option value="3">3 步</option>
+                                <option value="4">4 步</option>
+                                <option value="5" selected>5 步 (默认)</option>
+                                <option value="6">6 步</option>
+                                <option value="7">7 步</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label class="form-check">
                         <input type="checkbox" id="toggle-inspection">
@@ -922,20 +957,20 @@
     </div>
 
     <!-- Scripts -->
-    <script src="aes.js?v=16.6"></script>
-    <script src="min2phase.js?v=16.6"></script>
-    <script src="three.min.js?v=16.6"></script>
-    <script src="echarts.min.js?v=16.6"></script>
-    <script src="cube-engine.js?v=16.6"></script>
-    <script src="alg-database.js?v=16.6"></script>
-    <script src="method-analyzer.js?v=16.6"></script>
-    <script src="chart-engine.js?v=16.6"></script>
-    <script src="gan-bluetooth.js?v=16.6"></script>
-    <script src="audio-synth.js?v=16.6"></script>
-    <script src="renderer-3d.js?v=16.6"></script>
-    <script src="renderer-2d.js?v=16.6"></script>
-    <script src="timer-engine.js?v=16.6"></script>
-    <script src="ui-controller.js?v=16.6"></script>
+    <script src="aes.js?v=17.0"></script>
+    <script src="min2phase.js?v=17.0"></script>
+    <script src="three.min.js?v=17.0"></script>
+    <script src="echarts.min.js?v=17.0"></script>
+    <script src="cube-engine.js?v=17.0"></script>
+    <script src="alg-database.js?v=17.0"></script>
+    <script src="method-analyzer.js?v=17.0"></script>
+    <script src="chart-engine.js?v=17.0"></script>
+    <script src="gan-bluetooth.js?v=17.0"></script>
+    <script src="audio-synth.js?v=17.0"></script>
+    <script src="renderer-3d.js?v=17.0"></script>
+    <script src="renderer-2d.js?v=17.0"></script>
+    <script src="timer-engine.js?v=17.0"></script>
+    <script src="ui-controller.js?v=17.0"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

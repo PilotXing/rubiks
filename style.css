@@ -1581,6 +1581,177 @@ body {
     font-size: 0.85rem;
 }
 
+/* ==========================================================================
+   Horizontal Focused Reel Scramble Track (Apple Spring Fluid Motion)
+   ========================================================================== */
+
+.scramble-reel-container {
+    width: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 0.2rem 0;
+    user-select: none;
+    -webkit-user-select: none;
+    box-sizing: border-box;
+}
+
+.scramble-reel-viewport {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 82px;
+    mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 12%, rgba(0,0,0,1) 88%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 12%, rgba(0,0,0,1) 88%, transparent 100%);
+}
+
+.scramble-reel-track {
+    display: flex;
+    align-items: center;
+    position: relative;
+    left: 0;
+    top: 0;
+    transform: translate3d(0px, 0, 0);
+    will-change: transform;
+    transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+    white-space: nowrap;
+    height: 100%;
+}
+
+.scramble-reel-track.is-dragging {
+    transition: none !important;
+}
+
+.scramble-reel-track.error-shake {
+    animation: scramble-error-shake 0.44s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes scramble-error-shake {
+    0%, 100% { transform: translate3d(var(--track-x, 0px), 0, 0); }
+    15% { transform: translate3d(calc(var(--track-x, 0px) - 10px), 0, 0); }
+    30% { transform: translate3d(calc(var(--track-x, 0px) + 9px), 0, 0); }
+    45% { transform: translate3d(calc(var(--track-x, 0px) - 6px), 0, 0); }
+    60% { transform: translate3d(calc(var(--track-x, 0px) + 5px), 0, 0); }
+    75% { transform: translate3d(calc(var(--track-x, 0px) - 2px), 0, 0); }
+}
+
+.reel-step-item {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 56px;
+    margin: 0 5px;
+    box-sizing: border-box;
+    border-radius: 10px;
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: 1.55rem;
+    line-height: 1;
+    color: var(--text-secondary);
+    background: transparent;
+    transition: all 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+    flex-shrink: 0;
+    position: relative;
+}
+
+/* Done past steps */
+.reel-step-item.step-done {
+    color: var(--text-muted);
+    opacity: 0.35;
+    transform: scale(0.84);
+}
+
+/* Active current step in center */
+.reel-step-item.step-active {
+    width: 74px;
+    height: 64px;
+    margin: 0 8px;
+    font-size: 2.3rem;
+    font-weight: 900;
+    color: #FFFFFF;
+    background: rgba(16, 185, 129, 0.22);
+    border: 2px solid var(--accent-primary);
+    border-radius: 12px;
+    box-shadow: 0 0 24px rgba(16, 185, 129, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    transform: scale(1.06);
+    opacity: 1;
+    z-index: 5;
+}
+
+/* Half-turn (1/2) in-progress */
+.reel-step-item.step-half-active {
+    width: 74px;
+    height: 64px;
+    margin: 0 8px;
+    font-size: 2.1rem;
+    font-weight: 900;
+    color: #60A5FA;
+    background: rgba(59, 130, 246, 0.24);
+    border: 2px dashed rgba(96, 165, 250, 0.85);
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.35);
+    transform: scale(1.04);
+    opacity: 1;
+    z-index: 5;
+}
+
+/* Error Correction Capsule in Center */
+.reel-correction-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.75rem;
+    background: rgba(245, 158, 11, 0.22);
+    border: 1.5px solid rgba(245, 158, 11, 0.85);
+    border-radius: 9999px;
+    box-shadow: 0 0 22px rgba(245, 158, 11, 0.4);
+    font-family: var(--font-mono);
+}
+
+.reel-correction-undo {
+    color: #F59E0B;
+    font-weight: 800;
+    font-size: 1.5rem;
+}
+
+.reel-correction-arrow {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.reel-correction-next {
+    color: var(--accent-primary);
+    font-weight: 800;
+    font-size: 1.5rem;
+}
+
+/* Footer progress label */
+.scramble-reel-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+}
+
+.scramble-reel-footer .progress-highlight {
+    color: var(--accent-primary);
+    font-weight: 700;
+}
+
 .scramble-divider {
     color: var(--text-muted);
     margin: 0 0.5rem;

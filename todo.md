@@ -488,3 +488,21 @@
     - White Cross at step #6 (`L F F U' L' U'`) is now recognized with 100% precision.
 - [x] **Version Upgrade**:
     - Bumped to `v16.6` (sw.js cache `rubiks-timer-v16.6`).
+
+## Horizontal Focused Reel Scramble, Interactive 3D Chart Sync, Pinch-Zoom & Offline PWA (v17.0)
+- [x] **Horizontal Focused Scramble Reel Track (全新极简横向聚焦打乱视轨 - #3)**:
+    - Implemented a single-line horizontal ribbon with Apple spring physics (`cubic-bezier(0.22, 1, 0.36, 1)`).
+    - Current active move locked in exact horizontal center with enlarged glowing badge (`2.3rem` bold typography).
+    - Configurable visible window: 1 prior step (faded left) and 5 upcoming steps (graduated perspective scale).
+    - 2-Step visual undo capsule with physical track error shake (`@keyframes scramble-error-shake`).
+    - Dynamic Kociemba re-pathing for > 2 move deviations.
+    - Sleek footer progress indicator (`已完成 X 步 · 剩余 Y 步 (Z%)`).
+    - Added Settings switcher between `横向聚焦视轨 (Horizontal Reel)` and `标准多行全览 (Multi-Line Grid)`.
+- [x] **Chart Click to 3D Cube Synchronization (图表点击联动 3D 魔方 - #5)**:
+    - Clicking any move node on the main ECharts solve breakdown chart updates the 3D cube and 2D net model to the exact physical state at that step in real-time.
+- [x] **Pinch-to-Zoom & Pan on Trend Curves (趋势曲线双指手势缩放 - #8)**:
+    - Multi-touch pinch-to-zoom and single-finger pan gestures on historical trend curves with double-tap reset.
+- [x] **Robust Offline PWA & Zero-Latency Startup (离线加固与样式缓存修复 - #6 & #7)**:
+    - Updated Service Worker with Cache-First + Stale-While-Revalidate and `ignoreSearch: true` query-string matching, guaranteeing 100% offline styling and instantaneous startup even when the backend is stopped.
+- [x] **Version Upgrade**:
+    - Bumped to `v17.0` (sw.js cache `rubiks-timer-v17.0`).

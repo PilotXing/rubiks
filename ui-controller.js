@@ -136,6 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleSound: document.getElementById('toggle-sound'),
         toggleVoice: document.getElementById('toggle-voice'),
         selectBtTimeout: document.getElementById('select-bt-timeout'),
+        selectScrambleDisplayStyle: document.getElementById('select-scramble-display-style'),
+        groupScrambleVisibleSteps: document.getElementById('group-scramble-visible-steps'),
+        selectScrambleVisiblePrev: document.getElementById('select-scramble-visible-prev'),
+        selectScrambleVisibleNext: document.getElementById('select-scramble-visible-next'),
         selectUiStyle: document.getElementById('select-ui-style'),
         selectAccentColor: document.getElementById('select-accent-color'),
         selectTheme: document.getElementById('select-theme'),
@@ -289,6 +293,44 @@ document.addEventListener('DOMContentLoaded', () => {
             currentMoveMetric = elements.selectMoveMetric.value;
             localStorage.setItem('move_counting_metric', currentMoveMetric);
             renderStatsAndHistory();
+        });
+    }
+
+    // Scramble Display Style & Visible Steps Settings
+    let scrambleDisplayStyle = localStorage.getItem('rubiks_scramble_display_style') || 'reel';
+    let scrambleVisiblePrev = parseInt(localStorage.getItem('rubiks_scramble_visible_prev') || '1', 10);
+    let scrambleVisibleNext = parseInt(localStorage.getItem('rubiks_scramble_visible_next') || '5', 10);
+
+    if (elements.selectScrambleDisplayStyle) {
+        elements.selectScrambleDisplayStyle.value = scrambleDisplayStyle;
+        if (elements.groupScrambleVisibleSteps) {
+            elements.groupScrambleVisibleSteps.style.display = scrambleDisplayStyle === 'reel' ? 'block' : 'none';
+        }
+        elements.selectScrambleDisplayStyle.addEventListener('change', () => {
+            scrambleDisplayStyle = elements.selectScrambleDisplayStyle.value;
+            localStorage.setItem('rubiks_scramble_display_style', scrambleDisplayStyle);
+            if (elements.groupScrambleVisibleSteps) {
+                elements.groupScrambleVisibleSteps.style.display = scrambleDisplayStyle === 'reel' ? 'block' : 'none';
+            }
+            renderScrambleDisplay(tracker ? tracker.currentStep : 0);
+        });
+    }
+
+    if (elements.selectScrambleVisiblePrev) {
+        elements.selectScrambleVisiblePrev.value = String(scrambleVisiblePrev);
+        elements.selectScrambleVisiblePrev.addEventListener('change', () => {
+            scrambleVisiblePrev = parseInt(elements.selectScrambleVisiblePrev.value, 10);
+            localStorage.setItem('rubiks_scramble_visible_prev', scrambleVisiblePrev);
+            renderScrambleDisplay(tracker ? tracker.currentStep : 0);
+        });
+    }
+
+    if (elements.selectScrambleVisibleNext) {
+        elements.selectScrambleVisibleNext.value = String(scrambleVisibleNext);
+        elements.selectScrambleVisibleNext.addEventListener('change', () => {
+            scrambleVisibleNext = parseInt(elements.selectScrambleVisibleNext.value, 10);
+            localStorage.setItem('rubiks_scramble_visible_next', scrambleVisibleNext);
+            renderScrambleDisplay(tracker ? tracker.currentStep : 0);
         });
     }
 
@@ -524,7 +566,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.max(1, Math.min(3, Math.ceil(totalMoves / 7)));
     }
 
-    function formatScrambleHTML(scrambleStr, activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, targetRows = null) {
+    function renderScrambleGridHTML(scrambleStr, activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, targetRows = null) {
         if (!scrambleStr) return '<span class="scramble-empty-hint">Loading scramble...</span>';
         const moves = scrambleStr.trim().split(/\s+/).filter(Boolean);
         if (moves.length === 0) return '<span class="scramble-empty-hint">Loading scramble...</span>';
@@ -553,6 +595,126 @@ document.addEventListener('DOMContentLoaded', () => {
         return rows.map(rowSpans => `<div class="scramble-row">${rowSpans.join('')}</div>`).join('');
     }
 
+    function renderScrambleReelHTML(scrambleStr, activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, isDeviated = false) {
+        if (!scrambleStr) return '<span class="scramble-empty-hint">Loading scramble...</span>';
+        const moves = scrambleStr.trim().split(/\s+/).filter(Boolean);
+        if (moves.length === 0) return '<span class="scramble-empty-hint">Loading scramble...</span>';
+
+        const totalMoves = moves.length;
+        const visiblePrev = scrambleVisiblePrev;
+        const visibleNext = scrambleVisibleNext;
+
+        let trackItemsHtml = '';
+
+        if (isDeviated && correctionMoves && correctionMoves.length > 0 && correctionMoves.length <= 2) {
+            // 2-step visual undo/correction mode
+            const undoMove = correctionMoves[0];
+            const nextMove = correctionMoves.length > 1 ? correctionMoves[1] : (moves[activeIdx] || '');
+            
+            // Prior moves
+            for (let i = 0; i < activeIdx; i++) {
+                const isVisible = (activeIdx - i) <= visiblePrev;
+                const m = moves[i];
+                const colorCls = getMoveColorClass(m);
+                const style = isVisible ? '' : 'display: none;';
+                trackItemsHtml += `<div class="reel-step-item step-done ${colorCls}" style="${style}">${m}</div>`;
+            }
+
+            // Error Correction Center Badge
+            trackItemsHtml += `
+                <div class="reel-step-item step-active" style="width: auto; padding: 0 0.6rem;">
+                    <div class="reel-correction-badge">
+                        <span class="reel-correction-undo">${undoMove}</span>
+                        <span class="reel-correction-arrow">➔</span>
+                        <span class="reel-correction-next">${nextMove}</span>
+                    </div>
+                </div>
+            `;
+
+            // Next moves
+            for (let i = activeIdx + 1; i < totalMoves; i++) {
+                const rel = i - activeIdx;
+                const isVisible = rel <= visibleNext;
+                const m = moves[i];
+                const colorCls = getMoveColorClass(m);
+                const opacity = Math.max(0.2, 1.0 - (rel - 1) * 0.16);
+                const scale = Math.max(0.68, 1.0 - (rel - 1) * 0.05);
+                const style = isVisible ? `opacity: ${opacity}; transform: scale(${scale});` : 'display: none;';
+                trackItemsHtml += `<div class="reel-step-item step-pending ${colorCls}" style="${style}">${m}</div>`;
+            }
+        } else {
+            // Normal progression / Repathed formula
+            moves.forEach((move, idx) => {
+                let cls = 'step-pending';
+                let label = move;
+                const colorCls = getMoveColorClass(move);
+                let inlineStyle = '';
+
+                if (idx < activeIdx) {
+                    cls = 'step-done';
+                    const rel = activeIdx - idx;
+                    if (rel > visiblePrev) {
+                        inlineStyle = 'display: none;';
+                    }
+                } else if (idx === activeIdx) {
+                    if (isHalfTurn) {
+                        cls = 'step-half-active';
+                        label = remainingOnFace ? `${remainingOnFace} (½)` : `${move} (½)`;
+                    } else {
+                        cls = 'step-active';
+                    }
+                } else {
+                    // idx > activeIdx
+                    const rel = idx - activeIdx;
+                    if (rel > visibleNext) {
+                        inlineStyle = 'display: none;';
+                    } else {
+                        const opacity = Math.max(0.2, 1.0 - (rel - 1) * 0.16);
+                        const scale = Math.max(0.68, 1.0 - (rel - 1) * 0.05);
+                        inlineStyle = `opacity: ${opacity}; transform: scale(${scale});`;
+                    }
+                }
+
+                trackItemsHtml += `<div class="reel-step-item ${cls} ${colorCls}" style="${inlineStyle}">${label}</div>`;
+            });
+        }
+
+        // Calculate horizontal offset
+        const baseItemWidth = 70;
+        const trackOffset = - (activeIdx * baseItemWidth);
+
+        // Footer progress sub-label
+        const completedCount = Math.min(activeIdx, totalMoves);
+        const remainingCount = Math.max(0, totalMoves - completedCount);
+        const pct = Math.round((completedCount / totalMoves) * 100);
+        const footerHtml = `
+            <div class="scramble-reel-footer">
+                <span>已完成 <strong class="progress-highlight">${completedCount}</strong> 步</span>
+                <span>·</span>
+                <span>剩余 <strong class="progress-highlight">${remainingCount}</strong> 步</span>
+                <span style="opacity: 0.65;">(${pct}%)</span>
+            </div>
+        `;
+
+        return `
+            <div class="scramble-reel-container">
+                <div class="scramble-reel-viewport">
+                    <div class="scramble-reel-track" style="--track-x: ${trackOffset}px; transform: translate3d(${trackOffset}px, 0, 0);">
+                        ${trackItemsHtml}
+                    </div>
+                </div>
+                ${footerHtml}
+            </div>
+        `;
+    }
+
+    function formatScrambleHTML(scrambleStr, activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, targetRows = null, isDeviated = false) {
+        if (scrambleDisplayStyle === 'grid') {
+            return renderScrambleGridHTML(scrambleStr, activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, targetRows);
+        }
+        return renderScrambleReelHTML(scrambleStr, activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, isDeviated);
+    }
+
     const CAROUSEL_GAP = 0;
 
     function getCarouselMetrics() {
@@ -579,7 +741,7 @@ document.addEventListener('DOMContentLoaded', () => {
         track.style.transform = `translate3d(${offsetPx}px, 0, 0)`;
     }
 
-    function updateCarouselCards(activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null) {
+    function updateCarouselCards(activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, isDeviated = false) {
         if (!carouselElements.cardCurrent) {
             carouselElements.cardCurrent = document.getElementById('scramble-text');
             carouselElements.cardPrev = document.getElementById('scramble-card-prev');
@@ -603,7 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Center Active Card
         if (carouselElements.cardCurrent) {
-            carouselElements.cardCurrent.innerHTML = formatScrambleHTML(currentStr, activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace);
+            carouselElements.cardCurrent.innerHTML = formatScrambleHTML(currentStr, activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, null, isDeviated);
             carouselElements.cardCurrent.classList.remove('scramble-empty-hint');
         }
 
@@ -862,8 +1024,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initScrambleGesture();
 
-    function renderScrambleDisplay(activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null) {
-        updateCarouselCards(activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace);
+    function renderScrambleDisplay(activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, isDeviated = false) {
+        updateCarouselCards(activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, isDeviated);
     }
 
     function updateScrambleStatus(evalResult) {
@@ -924,6 +1086,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (scrambleAlertsEnabled && !wasDeviated) {
                 sound.playScrambleWarning();
+                // Trigger physical track error shake
+                const trackEl = document.querySelector('.scramble-reel-track');
+                if (trackEl) {
+                    trackEl.classList.remove('error-shake');
+                    void trackEl.offsetWidth;
+                    trackEl.classList.add('error-shake');
+                }
                 if (elements.scrambleBox) {
                     elements.scrambleBox.classList.remove('scramble-alert-active');
                     void elements.scrambleBox.offsetWidth;
@@ -934,7 +1103,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             wasDeviated = true;
-            renderScrambleDisplay(evalResult.currentStep);
+            renderScrambleDisplay(evalResult.currentStep, evalResult.correctionMoves || [], false, null, null, true);
         } else if (evalResult.isHalfTurn) {
             setArenaMode('SCRAMBLE');
             wasDeviated = false;
@@ -949,7 +1118,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.timerStateBadge.className = 'badge badge-scrambling';
             }
             timer.setState('SCRAMBLING');
-            renderScrambleDisplay(evalResult.currentStep, [], true, evalResult.halfFace, evalResult.remainingOnFace);
+            renderScrambleDisplay(evalResult.currentStep, [], true, evalResult.halfFace, evalResult.remainingOnFace, false);
         } else {
             setArenaMode('SCRAMBLE');
             wasDeviated = false;
@@ -1596,12 +1765,46 @@ document.addEventListener('DOMContentLoaded', () => {
     let mainMovementChart = null;
     let latestFinishedSolve = null;
 
+    function syncMainCubeToSolveStep(solve, stepNum) {
+        if (!solve || !CubeEngine || !CubeEngine.RubiksCube) return;
+        const simCube = new (CubeEngine.RubiksCube)();
+        if (solve.scramble) {
+            simCube.applyMoves(solve.scramble);
+        }
+        const moves = solve.moves || [];
+        const count = Math.max(0, Math.min(stepNum, moves.length));
+        for (let i = 0; i < count; i++) {
+            const m = typeof moves[i] === 'string' ? moves[i] : (moves[i] && moves[i].move ? moves[i].move : '');
+            simCube.applyMove(m);
+        }
+        const faceletStr = simCube.getFacelets();
+        if (renderer3D) renderer3D.updateFacelets(faceletStr);
+        if (renderer2D) renderer2D.updateFacelets(faceletStr);
+
+        if (count > 0 && count <= moves.length) {
+            const lastMoveObj = moves[count - 1];
+            const moveName = typeof lastMoveObj === 'string' ? lastMoveObj : (lastMoveObj.move || '');
+            if (elements.liveLastMoveBadge) {
+                elements.liveLastMoveBadge.textContent = moveName;
+                elements.liveLastMoveBadge.className = `badge ${getMoveColorClass(moveName)}`;
+            }
+        }
+    }
+
     if (elements.canvasMainSolveGraph && window.ChartEngine && typeof ChartEngine.SolveMovementChart === 'function') {
         mainMovementChart = new ChartEngine.SolveMovementChart(elements.canvasMainSolveGraph, {
             cumulativeCurve: { enabled: true, color: '#10B981', width: 2.5, opacity: 1.0 },
             derivativeBars: { enabled: true, color: 'rgba(59, 130, 246, 0.35)', activeColor: '#F59E0B' },
             tpsCurve: { enabled: true, color: '#06B6D4', width: 2.0, opacity: 0.85 },
-            showStageBands: true
+            showStageBands: true,
+            onStepClick: (stepNum) => {
+                if (latestFinishedSolve) {
+                    syncMainCubeToSolveStep(latestFinishedSolve, stepNum);
+                    if (mainMovementChart) {
+                        mainMovementChart.setSolve(latestFinishedSolve, stepNum - 1);
+                    }
+                }
+            }
         });
     }
 

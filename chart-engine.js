@@ -107,6 +107,7 @@
 
             this.solves = [];
             this.hoverIndex = -1;
+            this.zoomRange = { start: 0, end: 1 };
             this.initResize();
             this.bindEvents();
         }
@@ -125,6 +126,12 @@
         }
 
         bindEvents() {
+            let initialPinchDistance = 0;
+            let initialZoom = { start: 0, end: 1 };
+            let isPanning = false;
+            let panStartX = 0;
+            let panStartZoom = { start: 0, end: 1 };
+
             const handleHover = (e) => {
                 if (!this.solves || this.solves.length === 0) return;
                 const rect = this.canvas.getBoundingClientRect();
@@ -134,9 +141,13 @@
                 const plotW = this.width - pad.left - pad.right;
                 const n = this.solves.length;
 
+                const startIdx = Math.floor(this.zoomRange.start * (n - 1));
+                const endIdx = Math.min(n - 1, Math.ceil(this.zoomRange.end * (n - 1)));
+                const visibleCount = Math.max(1, endIdx - startIdx + 1);
+
                 if (x >= pad.left && x <= this.width - pad.right) {
-                    const idx = Math.round(((x - pad.left) / plotW) * (n - 1));
-                    this.hoverIndex = Math.max(0, Math.min(n - 1, idx));
+                    const localIdx = Math.round(((x - pad.left) / plotW) * (visibleCount - 1));
+                    this.hoverIndex = Math.max(startIdx, Math.min(endIdx, startIdx + localIdx));
                 } else {
                     this.hoverIndex = -1;
                 }
@@ -144,13 +155,84 @@
             };
 
             this.canvas.addEventListener('mousemove', handleHover);
-            this.canvas.addEventListener('touchmove', handleHover, { passive: true });
             this.canvas.addEventListener('mouseleave', () => {
                 this.hoverIndex = -1;
                 this.render();
             });
+
+            // Touch Gestures: 1-finger hover/pan, 2-finger pinch-to-zoom
+            this.canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    isPanning = false;
+                    const x1 = e.touches[0].clientX;
+                    const y1 = e.touches[0].clientY;
+                    const x2 = e.touches[1].clientX;
+                    const y2 = e.touches[1].clientY;
+                    initialPinchDistance = Math.hypot(x2 - x1, y2 - y1);
+                    initialZoom = { ...this.zoomRange };
+                } else if (e.touches.length === 1) {
+                    if (this.zoomRange.start > 0.001 || this.zoomRange.end < 0.999) {
+                        isPanning = true;
+                        panStartX = e.touches[0].clientX;
+                        panStartZoom = { ...this.zoomRange };
+                    }
+                    handleHover(e);
+                }
+            }, { passive: true });
+
+            this.canvas.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2 && initialPinchDistance > 0) {
+                    e.preventDefault();
+                    const x1 = e.touches[0].clientX;
+                    const y1 = e.touches[0].clientY;
+                    const x2 = e.touches[1].clientX;
+                    const y2 = e.touches[1].clientY;
+                    const currentDistance = Math.hypot(x2 - x1, y2 - y1);
+                    const scale = initialPinchDistance / Math.max(10, currentDistance);
+
+                    const initialSpan = initialZoom.end - initialZoom.start;
+                    const newSpan = Math.max(0.08, Math.min(1.0, initialSpan * scale));
+                    const center = (initialZoom.start + initialZoom.end) / 2;
+
+                    let newStart = center - newSpan / 2;
+                    let newEnd = center + newSpan / 2;
+                    if (newStart < 0) { newEnd += -newStart; newStart = 0; }
+                    if (newEnd > 1) { newStart -= (newEnd - 1); newEnd = 1; }
+
+                    this.zoomRange.start = Math.max(0, newStart);
+                    this.zoomRange.end = Math.min(1, newEnd);
+                    this.render();
+                } else if (e.touches.length === 1 && isPanning) {
+                    e.preventDefault();
+                    const rect = this.canvas.getBoundingClientRect();
+                    const plotW = this.width - this.options.padding.left - this.options.padding.right;
+                    const deltaPx = e.touches[0].clientX - panStartX;
+                    const deltaRatio = - (deltaPx / plotW) * (panStartZoom.end - panStartZoom.start);
+
+                    let newStart = panStartZoom.start + deltaRatio;
+                    let newEnd = panStartZoom.end + deltaRatio;
+                    const span = panStartZoom.end - panStartZoom.start;
+
+                    if (newStart < 0) { newStart = 0; newEnd = span; }
+                    if (newEnd > 1) { newEnd = 1; newStart = 1 - span; }
+
+                    this.zoomRange.start = Math.max(0, newStart);
+                    this.zoomRange.end = Math.min(1, newEnd);
+                    this.render();
+                } else if (e.touches.length === 1) {
+                    handleHover(e);
+                }
+            }, { passive: false });
+
             this.canvas.addEventListener('touchend', () => {
+                isPanning = false;
+                initialPinchDistance = 0;
                 this.hoverIndex = -1;
+                this.render();
+            });
+
+            this.canvas.addEventListener('dblclick', () => {
+                this.zoomRange = { start: 0, end: 1 };
                 this.render();
             });
         }
@@ -226,7 +308,11 @@
             const plotH = h - pad.top - pad.bottom;
             const n = this.solves.length;
 
-            const getX = (idx) => pad.left + (n === 1 ? plotW / 2 : (idx / (n - 1)) * plotW);
+            const startIdx = Math.floor(this.zoomRange.start * (n - 1));
+            const endIdx = Math.min(n - 1, Math.ceil(this.zoomRange.end * (n - 1)));
+            const visibleSpan = Math.max(1, endIdx - startIdx);
+
+            const getX = (idx) => pad.left + (visibleSpan === 0 ? plotW / 2 : ((idx - startIdx) / visibleSpan) * plotW);
             const getY = (val) => {
                 const clamped = Math.max(minVal, Math.min(maxVal, val));
                 return pad.top + plotH - ((clamped - minVal) / Math.max(1, maxVal - minVal)) * plotH;
@@ -250,13 +336,16 @@
                 ctx.fillText((val / 1000).toFixed(1) + 's', pad.left - 8, y + 3.5);
             }
 
-            // Draw Y-Axis Range Badge Mode
+            // Draw Y-Axis Range Badge Mode & Zoom Indicator
             ctx.fillStyle = '#646A7E';
             ctx.font = '9px Inter, sans-serif';
             ctx.textAlign = 'left';
-            const modeText = this.options.yRangeMode === 'auto90'
+            let modeText = this.options.yRangeMode === 'auto90'
                 ? 'Auto-Zoom (90% in View)'
                 : (this.options.yRangeMode === 'custom' ? 'Custom Range' : 'Full Range');
+            if (this.zoomRange.start > 0.001 || this.zoomRange.end < 0.999) {
+                modeText += ` | Zoom: #${startIdx + 1}~#${endIdx + 1} (${Math.round((endIdx - startIdx + 1) / n * 100)}%) - 双击复原`;
+            }
             ctx.fillText(modeText, pad.left, pad.top - 10);
 
             // 3. Render Series Curves
@@ -278,7 +367,7 @@
                 ctx.beginPath();
 
                 let started = false;
-                for (let i = 0; i < data.length; i++) {
+                for (let i = startIdx; i <= endIdx; i++) {
                     const val = data[i];
                     if (val == null) continue;
                     const x = getX(i);
@@ -292,10 +381,10 @@
                 }
                 ctx.stroke();
 
-                // Draw dots on raw points if small dataset
-                if (key === 'raw' && n <= 40) {
+                // Draw dots on raw points if small dataset or zoomed in
+                if (key === 'raw' && (visibleSpan <= 40)) {
                     ctx.fillStyle = cfg.color;
-                    for (let i = 0; i < data.length; i++) {
+                    for (let i = startIdx; i <= endIdx; i++) {
                         if (data[i] != null) {
                             ctx.beginPath();
                             ctx.arc(getX(i), getY(data[i]), 3, 0, Math.PI * 2);
@@ -359,12 +448,16 @@
                 ctx.restore();
             }
 
-            // 5. X-axis labels
+            // 5. X-axis labels with zoom support
             ctx.fillStyle = '#9CA3AF';
             ctx.font = '10px JetBrains Mono, monospace';
             ctx.textAlign = 'center';
-            ctx.fillText('Solve 1', pad.left, pad.top + plotH + 18);
-            ctx.fillText(`Solve ${n}`, w - pad.right, pad.top + plotH + 18);
+            ctx.fillText(`#${startIdx + 1}`, pad.left, pad.top + plotH + 18);
+            if (visibleSpan >= 2) {
+                const midIdx = startIdx + Math.round(visibleSpan / 2);
+                ctx.fillText(`#${midIdx + 1}`, getX(midIdx), pad.top + plotH + 18);
+            }
+            ctx.fillText(`#${endIdx + 1}`, w - pad.right, pad.top + plotH + 18);
         }
     }
 
