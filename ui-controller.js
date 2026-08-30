@@ -657,10 +657,11 @@ document.addEventListener('DOMContentLoaded', () => {
             trackItemsHtml += `<div class="reel-step-item ${cls} ${colorCls}" style="${inlineStyle}">${label}</div>`;
         });
 
-        // Calculate horizontal offset so active item is mathematically at center (50% of viewport)
+        // Calculate horizontal offset so active item is mathematically at center:
+        // Track has margin-left: 50% (placing left edge at 50% viewport).
+        // Then translate left by exactly (clampedActiveIdx * 74 + 37)px!
         const clampedActiveIdx = Math.min(activeIdx, Math.max(0, totalMoves - 1));
-        const offsetPx = clampedActiveIdx * 74 + 37;
-        const trackTransform = `calc(50% - ${offsetPx}px)`;
+        const offsetPx = - (clampedActiveIdx * 74 + 37);
 
         // Footer progress sub-label
         const completedCount = Math.min(activeIdx, totalMoves);
@@ -678,7 +679,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
             <div class="scramble-reel-container">
                 <div class="scramble-reel-viewport">
-                    <div class="scramble-reel-track" style="--track-x: ${trackTransform}; transform: translate3d(${trackTransform}, 0, 0);">
+                    <div class="scramble-reel-track" style="--track-x: ${offsetPx}px; transform: translate3d(${offsetPx}px, 0, 0);">
                         ${trackItemsHtml}
                     </div>
                 </div>

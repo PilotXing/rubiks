@@ -530,3 +530,11 @@
     - Mathematically guarantees that Move 0 is locked at exact 50% screen center from the very first step, completely eliminating any jump or sticking at the tail of the sequence.
 - [x] **Version Upgrade**:
     - Bumped to `v17.3` (sw.js cache `rubiks-timer-v17.3`).
+
+## Scramble Reel Margin-Left 50% Pixel-Translation Centering Engine (v17.4)
+- [x] **Fixed CSS Transform Percentage Scope Misinterpretation (修正 CSS transform 百分比作用域导致全屏空白问题)**:
+    - Root cause: In CSS transforms, percentage values (e.g. `translateX(50%)`) calculate against the element's *own* width (1554px $\times$ 50% = +777px), pushing the entire track completely out of the right screen edge.
+    - Solution: Set `margin-left: 50%` on `.scramble-reel-track` (which resolves strictly against the parent viewport width $W/2$), combined with exact pixel translation `transform: translate3d(- (activeIdx * 74 + 37)px, 0, 0)`.
+    - Mathematically verified: Step 0 is placed exactly at $W/2$, and each successive step glides into the exact horizontal center without any offset or overflow.
+- [x] **Version Upgrade**:
+    - Bumped to `v17.4` (sw.js cache `rubiks-timer-v17.4`).
