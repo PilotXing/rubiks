@@ -1593,7 +1593,7 @@ body {
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    padding: 0.2rem 0;
+    padding: 0.25rem 0;
     user-select: none;
     -webkit-user-select: none;
     box-sizing: border-box;
@@ -1603,25 +1603,22 @@ body {
     width: 100%;
     position: relative;
     overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 82px;
-    mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 12%, rgba(0,0,0,1) 88%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 12%, rgba(0,0,0,1) 88%, transparent 100%);
+    display: block;
+    height: 88px;
+    mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 8%, rgba(0,0,0,1) 92%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 8%, rgba(0,0,0,1) 92%, transparent 100%);
 }
 
 .scramble-reel-track {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    position: relative;
+    position: absolute;
     left: 50%;
-    top: 0;
-    transform: translate3d(var(--track-x, 0px), 0, 0);
+    top: 50%;
+    transform: translate3d(var(--track-x, 0px), -50%, 0);
     will-change: transform;
     transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
     white-space: nowrap;
-    height: 100%;
 }
 
 .scramble-reel-track.is-dragging {
@@ -1633,12 +1630,12 @@ body {
 }
 
 @keyframes scramble-error-shake {
-    0%, 100% { transform: translate3d(var(--track-x, 0px), 0, 0); }
-    15% { transform: translate3d(calc(var(--track-x, 0px) - 10px), 0, 0); }
-    30% { transform: translate3d(calc(var(--track-x, 0px) + 9px), 0, 0); }
-    45% { transform: translate3d(calc(var(--track-x, 0px) - 6px), 0, 0); }
-    60% { transform: translate3d(calc(var(--track-x, 0px) + 5px), 0, 0); }
-    75% { transform: translate3d(calc(var(--track-x, 0px) - 2px), 0, 0); }
+    0%, 100% { transform: translate3d(var(--track-x, 0px), -50%, 0); }
+    15% { transform: translate3d(calc(var(--track-x, 0px) - 10px), -50%, 0); }
+    30% { transform: translate3d(calc(var(--track-x, 0px) + 9px), -50%, 0); }
+    45% { transform: translate3d(calc(var(--track-x, 0px) - 6px), -50%, 0); }
+    60% { transform: translate3d(calc(var(--track-x, 0px) + 5px), -50%, 0); }
+    75% { transform: translate3d(calc(var(--track-x, 0px) - 2px), -50%, 0); }
 }
 
 .reel-step-item {
@@ -1646,14 +1643,14 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 60px;
-    height: 56px;
+    width: 64px;
+    height: 60px;
     margin: 0 5px;
     box-sizing: border-box;
     border-radius: 10px;
     font-family: var(--font-mono);
     font-weight: 800;
-    font-size: 1.55rem;
+    font-size: 1.65rem;
     line-height: 1;
     color: var(--text-secondary);
     background: transparent;
@@ -1673,7 +1670,7 @@ body {
 .reel-step-item.step-active {
     width: 74px;
     height: 64px;
-    margin: 0 8px;
+    margin: 0 5px;
     font-size: 2.3rem;
     font-weight: 900;
     color: #FFFFFF;

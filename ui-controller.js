@@ -646,8 +646,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 // idx > activeIdx
                 const rel = idx - activeIdx;
                 if (rel <= visibleNext) {
-                    const opacity = Math.max(0.2, 1.0 - (rel - 1) * 0.16);
-                    const scale = Math.max(0.68, 1.0 - (rel - 1) * 0.05);
+                    const opacity = Math.max(0.28, 0.95 - (rel - 1) * 0.14);
+                    const scale = Math.max(0.72, 1.0 - (rel - 1) * 0.04);
                     inlineStyle = `opacity: ${opacity}; transform: scale(${scale});`;
                 } else {
                     inlineStyle = 'opacity: 0; visibility: hidden; pointer-events: none;';
@@ -659,7 +659,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Calculate horizontal offset so active item is mathematically at center (left: 50%)
         const clampedActiveIdx = Math.min(activeIdx, Math.max(0, totalMoves - 1));
-        const trackOffset = - (clampedActiveIdx * 70 + 35);
+        const trackOffset = - (clampedActiveIdx * 74 + 37);
 
         // Footer progress sub-label
         const completedCount = Math.min(activeIdx, totalMoves);
@@ -677,7 +677,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
             <div class="scramble-reel-container">
                 <div class="scramble-reel-viewport">
-                    <div class="scramble-reel-track" style="--track-x: ${trackOffset}px; transform: translate3d(${trackOffset}px, 0, 0);">
+                    <div class="scramble-reel-track" style="--track-x: ${trackOffset}px; transform: translate3d(${trackOffset}px, -50%, 0);">
                         ${trackItemsHtml}
                     </div>
                 </div>

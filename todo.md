@@ -514,3 +514,11 @@
     - Active move is mathematically locked in dead center across all 21 steps of the scramble.
 - [x] **Version Upgrade**:
     - Bumped to `v17.1` (sw.js cache `rubiks-timer-v17.1`).
+
+## Scramble Reel Track Absolute Absolute Centering & Visibility Fix (v17.2)
+- [x] **Fixed Scramble Reel Viewport & Absolute Centering (视轨双重居中位移与视窗溢出修复)**:
+    - Removed `justify-content: center` flex centering on `.scramble-reel-viewport` that previously pushed track items off the right screen edge.
+    - Switched `.scramble-reel-track` to `position: absolute; left: 50%; top: 50%;` with `transform: translate3d(var(--track-x, 0px), -50%, 0)`.
+    - Mathematically fixed exact step pitch (74px) and center offset (`-(clampedActiveIdx * 74 + 37)px`), guaranteeing that the 0-th move (e.g. `D'`) sits precisely in the center of the viewport, with the upcoming 5 moves (`F2`, `R2`, `B'`, `L`, `U2`) displayed in full perspective view to the right.
+- [x] **Version Upgrade**:
+    - Bumped to `v17.2` (sw.js cache `rubiks-timer-v17.2`).
