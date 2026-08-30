@@ -1603,7 +1603,9 @@ body {
     width: 100%;
     position: relative;
     overflow: hidden;
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
     height: 88px;
     mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 8%, rgba(0,0,0,1) 92%, transparent 100%);
     -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 8%, rgba(0,0,0,1) 92%, transparent 100%);
@@ -1612,10 +1614,12 @@ body {
 .scramble-reel-track {
     display: inline-flex;
     align-items: center;
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate3d(var(--track-x, 0px), -50%, 0);
+    position: relative;
+    left: 0;
+    top: 0;
+    width: max-content;
+    height: 100%;
+    transform: translate3d(var(--track-x, 0px), 0, 0);
     will-change: transform;
     transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
     white-space: nowrap;
@@ -1630,12 +1634,12 @@ body {
 }
 
 @keyframes scramble-error-shake {
-    0%, 100% { transform: translate3d(var(--track-x, 0px), -50%, 0); }
-    15% { transform: translate3d(calc(var(--track-x, 0px) - 10px), -50%, 0); }
-    30% { transform: translate3d(calc(var(--track-x, 0px) + 9px), -50%, 0); }
-    45% { transform: translate3d(calc(var(--track-x, 0px) - 6px), -50%, 0); }
-    60% { transform: translate3d(calc(var(--track-x, 0px) + 5px), -50%, 0); }
-    75% { transform: translate3d(calc(var(--track-x, 0px) - 2px), -50%, 0); }
+    0%, 100% { transform: translate3d(var(--track-x, 0px), 0, 0); }
+    15% { transform: translate3d(calc(var(--track-x, 0px) - 10px), 0, 0); }
+    30% { transform: translate3d(calc(var(--track-x, 0px) + 9px), 0, 0); }
+    45% { transform: translate3d(calc(var(--track-x, 0px) - 6px), 0, 0); }
+    60% { transform: translate3d(calc(var(--track-x, 0px) + 5px), 0, 0); }
+    75% { transform: translate3d(calc(var(--track-x, 0px) - 2px), 0, 0); }
 }
 
 .reel-step-item {

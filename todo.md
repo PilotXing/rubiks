@@ -522,3 +522,11 @@
     - Mathematically fixed exact step pitch (74px) and center offset (`-(clampedActiveIdx * 74 + 37)px`), guaranteeing that the 0-th move (e.g. `D'`) sits precisely in the center of the viewport, with the upcoming 5 moves (`F2`, `R2`, `B'`, `L`, `U2`) displayed in full perspective view to the right.
 - [x] **Version Upgrade**:
     - Bumped to `v17.2` (sw.js cache `rubiks-timer-v17.2`).
+
+## Scramble Reel Calc-Based Universal Centering & Absolute Isolation Fix (v17.3)
+- [x] **Calc-Based Universal Reel Centering (基于 CSS calc 的通用视轨居中机制)**:
+    - Eliminated nested `position: absolute; left: 50%` coordinate collisions between the carousel container and the reel track.
+    - Switched `.scramble-reel-track` to normal static flow with `width: max-content;` and dynamic CSS translation `transform: translate3d(calc(50% - (clampedActiveIdx * 74 + 37)px), 0, 0)`.
+    - Mathematically guarantees that Move 0 is locked at exact 50% screen center from the very first step, completely eliminating any jump or sticking at the tail of the sequence.
+- [x] **Version Upgrade**:
+    - Bumped to `v17.3` (sw.js cache `rubiks-timer-v17.3`).
