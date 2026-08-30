@@ -605,83 +605,61 @@ document.addEventListener('DOMContentLoaded', () => {
         const visibleNext = scrambleVisibleNext;
 
         let trackItemsHtml = '';
+        const isCorrectionMode = isDeviated && correctionMoves && correctionMoves.length > 0 && correctionMoves.length <= 2;
 
-        if (isDeviated && correctionMoves && correctionMoves.length > 0 && correctionMoves.length <= 2) {
-            // 2-step visual undo/correction mode
-            const undoMove = correctionMoves[0];
-            const nextMove = correctionMoves.length > 1 ? correctionMoves[1] : (moves[activeIdx] || '');
-            
-            // Prior moves
-            for (let i = 0; i < activeIdx; i++) {
-                const isVisible = (activeIdx - i) <= visiblePrev;
-                const m = moves[i];
-                const colorCls = getMoveColorClass(m);
-                const style = isVisible ? '' : 'display: none;';
-                trackItemsHtml += `<div class="reel-step-item step-done ${colorCls}" style="${style}">${m}</div>`;
-            }
+        moves.forEach((move, idx) => {
+            let cls = 'step-pending';
+            let label = move;
+            const colorCls = getMoveColorClass(move);
+            let inlineStyle = '';
 
-            // Error Correction Center Badge
-            trackItemsHtml += `
-                <div class="reel-step-item step-active" style="width: auto; padding: 0 0.6rem;">
-                    <div class="reel-correction-badge">
-                        <span class="reel-correction-undo">${undoMove}</span>
-                        <span class="reel-correction-arrow">➔</span>
-                        <span class="reel-correction-next">${nextMove}</span>
-                    </div>
-                </div>
-            `;
-
-            // Next moves
-            for (let i = activeIdx + 1; i < totalMoves; i++) {
-                const rel = i - activeIdx;
-                const isVisible = rel <= visibleNext;
-                const m = moves[i];
-                const colorCls = getMoveColorClass(m);
-                const opacity = Math.max(0.2, 1.0 - (rel - 1) * 0.16);
-                const scale = Math.max(0.68, 1.0 - (rel - 1) * 0.05);
-                const style = isVisible ? `opacity: ${opacity}; transform: scale(${scale});` : 'display: none;';
-                trackItemsHtml += `<div class="reel-step-item step-pending ${colorCls}" style="${style}">${m}</div>`;
-            }
-        } else {
-            // Normal progression / Repathed formula
-            moves.forEach((move, idx) => {
-                let cls = 'step-pending';
-                let label = move;
-                const colorCls = getMoveColorClass(move);
-                let inlineStyle = '';
-
-                if (idx < activeIdx) {
-                    cls = 'step-done';
-                    const rel = activeIdx - idx;
-                    if (rel > visiblePrev) {
-                        inlineStyle = 'display: none;';
-                    }
-                } else if (idx === activeIdx) {
-                    if (isHalfTurn) {
-                        cls = 'step-half-active';
-                        label = remainingOnFace ? `${remainingOnFace} (½)` : `${move} (½)`;
-                    } else {
-                        cls = 'step-active';
-                    }
+            if (idx < activeIdx) {
+                cls = 'step-done';
+                const rel = activeIdx - idx;
+                if (rel <= visiblePrev) {
+                    inlineStyle = 'opacity: 0.35; transform: scale(0.84);';
                 } else {
-                    // idx > activeIdx
-                    const rel = idx - activeIdx;
-                    if (rel > visibleNext) {
-                        inlineStyle = 'display: none;';
-                    } else {
-                        const opacity = Math.max(0.2, 1.0 - (rel - 1) * 0.16);
-                        const scale = Math.max(0.68, 1.0 - (rel - 1) * 0.05);
-                        inlineStyle = `opacity: ${opacity}; transform: scale(${scale});`;
-                    }
+                    inlineStyle = 'opacity: 0; visibility: hidden; pointer-events: none;';
                 }
+            } else if (idx === activeIdx) {
+                if (isCorrectionMode) {
+                    cls = 'step-active';
+                    const undoMove = correctionMoves[0];
+                    const nextMove = correctionMoves.length > 1 ? correctionMoves[1] : (moves[activeIdx] || '');
+                    label = `
+                        <div class="reel-correction-badge">
+                            <span class="reel-correction-undo">${undoMove}</span>
+                            <span class="reel-correction-arrow">➔</span>
+                            <span class="reel-correction-next">${nextMove}</span>
+                        </div>
+                    `;
+                    inlineStyle = 'width: auto; min-width: 90px; padding: 0 0.6rem; opacity: 1;';
+                } else if (isHalfTurn) {
+                    cls = 'step-half-active';
+                    label = remainingOnFace ? `${remainingOnFace} (½)` : `${move} (½)`;
+                    inlineStyle = 'opacity: 1;';
+                } else {
+                    cls = 'step-active';
+                    inlineStyle = 'opacity: 1;';
+                }
+            } else {
+                // idx > activeIdx
+                const rel = idx - activeIdx;
+                if (rel <= visibleNext) {
+                    const opacity = Math.max(0.2, 1.0 - (rel - 1) * 0.16);
+                    const scale = Math.max(0.68, 1.0 - (rel - 1) * 0.05);
+                    inlineStyle = `opacity: ${opacity}; transform: scale(${scale});`;
+                } else {
+                    inlineStyle = 'opacity: 0; visibility: hidden; pointer-events: none;';
+                }
+            }
 
-                trackItemsHtml += `<div class="reel-step-item ${cls} ${colorCls}" style="${inlineStyle}">${label}</div>`;
-            });
-        }
+            trackItemsHtml += `<div class="reel-step-item ${cls} ${colorCls}" style="${inlineStyle}">${label}</div>`;
+        });
 
-        // Calculate horizontal offset
-        const baseItemWidth = 70;
-        const trackOffset = - (activeIdx * baseItemWidth);
+        // Calculate horizontal offset so active item is mathematically at center (left: 50%)
+        const clampedActiveIdx = Math.min(activeIdx, Math.max(0, totalMoves - 1));
+        const trackOffset = - (clampedActiveIdx * 70 + 35);
 
         // Footer progress sub-label
         const completedCount = Math.min(activeIdx, totalMoves);

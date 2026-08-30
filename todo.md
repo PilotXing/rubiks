@@ -506,3 +506,11 @@
     - Updated Service Worker with Cache-First + Stale-While-Revalidate and `ignoreSearch: true` query-string matching, guaranteeing 100% offline styling and instantaneous startup even when the backend is stopped.
 - [x] **Version Upgrade**:
     - Bumped to `v17.0` (sw.js cache `rubiks-timer-v17.0`).
+
+## Scramble Reel Track Mathematical Centering & Zero-Layout-Shift Fix (v17.1)
+- [x] **Scramble Reel Track Math & Zero-Shift Fix (视轨几何居中与零位移修复)**:
+    - Anchored `.scramble-reel-track` to `left: 50%` with exact physical translation `offset = - (activeIdx * 70 + 35)px`.
+    - Replaced `display: none;` on out-of-window steps with `opacity: 0; visibility: hidden; pointer-events: none;`, preventing any flex collapse or double-shift jitter when completing moves.
+    - Active move is mathematically locked in dead center across all 21 steps of the scramble.
+- [x] **Version Upgrade**:
+    - Bumped to `v17.1` (sw.js cache `rubiks-timer-v17.1`).
