@@ -124,24 +124,10 @@ document.addEventListener('DOMContentLoaded', () => {
         modalHelp: document.getElementById('modal-help'),
         modalReconstruct: document.getElementById('modal-reconstruct'),
         modalCustomAlg: document.getElementById('modal-custom-alg'),
-        modalMacAssistant: document.getElementById('modal-mac-assistant'),
         btnCloseSettings: document.getElementById('btn-close-settings'),
         btnCloseHelp: document.getElementById('btn-close-help'),
         btnCloseReconstruct: document.getElementById('btn-close-reconstruct'),
         btnCloseCustomAlg: document.getElementById('btn-close-custom-alg'),
-        btnCloseMacAssistant: document.getElementById('btn-close-mac-assistant'),
-        btnOpenMacAssistant: document.getElementById('btn-open-mac-assistant'),
-        btnOpenMacAssistantFromLog: document.getElementById('btn-open-mac-assistant-from-log'),
-        assistantDeviceName: document.getElementById('assistant-device-name'),
-        assistantProtocolBadge: document.getElementById('assistant-protocol-badge'),
-        assistantDecryptionBanner: document.getElementById('assistant-decryption-banner'),
-        assistantDecryptionText: document.getElementById('assistant-decryption-text'),
-        inputAssistantMac: document.getElementById('input-assistant-mac'),
-        assistantMacSource: document.getElementById('assistant-mac-source'),
-        btnAssistantApplyMac: document.getElementById('btn-assistant-apply-mac'),
-        btnAssistantReconnect: document.getElementById('btn-assistant-reconnect'),
-        assistantMoveStrip: document.getElementById('assistant-move-strip'),
-        assistantTestStatus: document.getElementById('assistant-test-status'),
 
         // Settings Inputs
         inputMacOverride: document.getElementById('input-mac-override'),
@@ -692,9 +678,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Calculate horizontal offset so active item is mathematically at center:
         // Track has margin-left: 50% (placing left edge at 50% viewport).
-        // Then translate left by exactly (clampedActiveIdx * 74 + 37)px!
+        // Then translate left by exactly (clampedActiveIdx * 50 + 25)px!
         const clampedActiveIdx = Math.min(activeIdx, Math.max(0, totalMoves - 1));
-        const offsetPx = - (clampedActiveIdx * 74 + 37);
+        const offsetPx = - (clampedActiveIdx * 50 + 25);
 
         // Footer progress sub-label
         const completedCount = Math.min(activeIdx, totalMoves);
@@ -802,7 +788,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentTrack && existingMoves.length === moves.length && scrambleDisplayStyle !== 'grid') {
                 // In-place fluid update with linear-acceleration spring transition
                 const clampedActiveIdx = Math.min(activeIdx, Math.max(0, moves.length - 1));
-                const offsetPx = - (clampedActiveIdx * 74 + 37);
+                const offsetPx = - (clampedActiveIdx * 50 + 25);
                 currentTrack.style.transition = 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)';
                 currentTrack.style.transform = `translate3d(${offsetPx}px, 0, 0)`;
                 currentTrack.style.setProperty('--track-x', `${offsetPx}px`);
@@ -1514,18 +1500,15 @@ document.addEventListener('DOMContentLoaded', () => {
         appendBtLog('system', `自动提取到魔方 MAC 地址: ${data.mac} (${data.source})`);
         if (elements.btModalMacVal) elements.btModalMacVal.textContent = data.mac;
         if (elements.inputMacOverride) elements.inputMacOverride.value = data.mac;
-        if (elements.inputAssistantMac) elements.inputAssistantMac.value = data.mac.toUpperCase();
-        if (elements.assistantMacSource) elements.assistantMacSource.textContent = `(来源: ${data.source === 'advertising' ? '广播包自动提取' : 'System ID 读取'})`;
-        showToast(`已自动识别魔方 MAC: ${data.mac}`);
+        showToast(`已识别魔方 MAC: ${data.mac}`);
     });
 
     bluetooth.on('mac_invalid', (data) => {
-        appendBtLog('err', `解密失败：MAC (${data.mac}) 与当前魔方不匹配，请配置物理 MAC 地址`);
-        updateAssistantDecryptionStatus(false, data.mac);
+        appendBtLog('err', `解密失败：MAC (${data.mac}) 与当前魔方不匹配，请在设置中配置 MAC 地址`);
     });
 
     bluetooth.on('decryption_valid', (data) => {
-        updateAssistantDecryptionStatus(true, data.mac);
+        appendBtLog('system', `解密成功 (MAC: ${data.mac})`);
     });
 
     bluetooth.on('move', (moveEvent) => {
@@ -1543,8 +1526,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const colorCls = getMoveColorClass(moveEvent.move);
         elements.liveLastMoveBadge.className = `badge ${colorCls}`;
 
-        updateAssistantLiveMove(moveEvent.move);
-
         // Practice Mode Routing
         if (currentView === 'view-practice') {
             handlePracticeCubeMove(moveEvent.move);
@@ -1561,11 +1542,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (physicalCube.isSolved()) {
                 timer.stopTimer();
             }
-        } else if (isAwaitingScrambleTurn || timer.state === 'FINISHED') {
-            // User finished previous solve: first turn creates new scramble starting with this first turn
-            isAwaitingScrambleTurn = false;
-            const newScramble = generateWcaScrambleWithFirstMove(moveEvent.move, 21);
-            setNewScramble(newScramble, false);
         } else {
             // Actively scrambling: Route move directly to scramble tracker!
             const evalResult = tracker.onCubeMove(moveEvent.move);
@@ -1653,8 +1629,9 @@ document.addEventListener('DOMContentLoaded', () => {
             trendChart.setData(session.solves);
         }
 
-        // Requirement: Do not compute next scramble yet. Wait until user turns any face.
-        isAwaitingScrambleTurn = true;
+        // Immediately generate and display a fresh new scramble formula for next solve
+        setNewScramble();
+
         syncAllModuleUIs();
     }
 
@@ -2887,60 +2864,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // -------------------------------------------------------------
     // 10. Settings & Modal Controls
     // -------------------------------------------------------------
-    function updateAssistantDecryptionStatus(isValid, mac) {
-        if (!elements.assistantDecryptionBanner || !elements.assistantDecryptionText) return;
-        if (isValid) {
-            elements.assistantDecryptionBanner.style.background = 'rgba(16, 185, 129, 0.12)';
-            elements.assistantDecryptionBanner.style.borderColor = 'rgba(16, 185, 129, 0.35)';
-            elements.assistantDecryptionBanner.style.color = '#34D399';
-            elements.assistantDecryptionText.textContent = `🟢 密钥匹配成功：魔方数据实时解密正常 (MAC: ${mac || bluetooth.macOverride})`;
-        } else {
-            elements.assistantDecryptionBanner.style.background = 'rgba(239, 68, 68, 0.12)';
-            elements.assistantDecryptionBanner.style.borderColor = 'rgba(239, 68, 68, 0.35)';
-            elements.assistantDecryptionBanner.style.color = '#F87171';
-            elements.assistantDecryptionText.textContent = `⚠️ 解密失败：MAC (${mac || bluetooth.macOverride}) 与新魔方不匹配。请在下方填入正确的物理 MAC 地址。`;
-        }
-    }
-
-    function updateAssistantLiveMove(moveStr) {
-        if (!elements.assistantMoveStrip) return;
-        const colorCls = getMoveColorClass(moveStr);
-        const chip = document.createElement('span');
-        chip.className = `move-token ${colorCls} token-active`;
-        chip.style.fontSize = '0.9rem';
-        chip.style.padding = '0.2rem 0.6rem';
-        chip.style.fontWeight = '800';
-        chip.style.borderRadius = '6px';
-        chip.textContent = moveStr;
-        
-        if (elements.assistantMoveStrip.querySelector('span[style*="italic"]')) {
-            elements.assistantMoveStrip.innerHTML = '';
-        }
-        elements.assistantMoveStrip.appendChild(chip);
-        if (elements.assistantMoveStrip.children.length > 8) {
-            elements.assistantMoveStrip.removeChild(elements.assistantMoveStrip.firstChild);
-        }
-        if (elements.assistantTestStatus) {
-            elements.assistantTestStatus.textContent = '🟢 转动信号接收正常 (解密成功)';
-            elements.assistantTestStatus.style.color = '#10B981';
-        }
-    }
-
-    function openMacAssistantModal() {
-        if (!elements.modalMacAssistant) return;
-        if (elements.assistantDeviceName) {
-            elements.assistantDeviceName.textContent = (bluetooth.device && bluetooth.device.name) ? bluetooth.device.name : (isCubeConnected ? '已连接魔方' : '未连接');
-        }
-        if (elements.assistantProtocolBadge) {
-            elements.assistantProtocolBadge.textContent = `GAN Gen${bluetooth.protocolVersion || 4} (${bluetooth.protocolVersion === 4 ? 'AES-128' : '标准'})`;
-        }
-        if (elements.inputAssistantMac) {
-            elements.inputAssistantMac.value = (bluetooth.macOverride || '0c:3d:5e:be:8e:95').toUpperCase();
-        }
-        updateAssistantDecryptionStatus(bluetooth.decryptionFailCount === 0 && isCubeConnected, bluetooth.macOverride);
-        elements.modalMacAssistant.classList.add('active');
-    }
-
     function formatMacInput(inputEl) {
         if (!inputEl) return;
         inputEl.addEventListener('input', (e) => {
@@ -2950,63 +2873,22 @@ document.addEventListener('DOMContentLoaded', () => {
             e.target.value = formatted;
         });
     }
-    formatMacInput(elements.inputAssistantMac);
     formatMacInput(elements.inputMacOverride);
 
-    if (elements.btnOpenMacAssistant) {
-        elements.btnOpenMacAssistant.addEventListener('click', () => openMacAssistantModal());
+    if (elements.inputMacOverride) {
+        elements.inputMacOverride.value = bluetooth.macOverride;
     }
-    if (elements.btnOpenMacAssistantFromLog) {
-        elements.btnOpenMacAssistantFromLog.addEventListener('click', () => openMacAssistantModal());
-    }
-    if (elements.btnCloseMacAssistant) {
-        elements.btnCloseMacAssistant.addEventListener('click', () => {
-            if (elements.modalMacAssistant) elements.modalMacAssistant.classList.remove('active');
-        });
-    }
-
-    document.querySelectorAll('.preset-mac-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const mac = btn.dataset.mac;
-            if (mac && elements.inputAssistantMac) {
-                elements.inputAssistantMac.value = mac.toUpperCase();
-                bluetooth.setMacOverride(mac);
-                if (elements.inputMacOverride) elements.inputMacOverride.value = mac;
-                showToast(`已应用 MAC: ${mac}`);
-            }
-        });
-    });
-
-    if (elements.btnAssistantApplyMac) {
-        elements.btnAssistantApplyMac.addEventListener('click', () => {
-            const val = elements.inputAssistantMac ? elements.inputAssistantMac.value.trim() : '';
+    if (elements.btnSaveMac) {
+        elements.btnSaveMac.addEventListener('click', () => {
+            const val = elements.inputMacOverride ? elements.inputMacOverride.value.trim() : '';
             if (val) {
                 bluetooth.setMacOverride(val);
-                if (elements.inputMacOverride) elements.inputMacOverride.value = val;
-                showToast(`MAC 地址已更新并应用: ${val}`);
-                appendBtLog('system', `手动设置 MAC 衍生地址: ${val}`);
+                localStorage.setItem('cube_mac_override', val);
+                showToast(`MAC 地址已保存: ${val}`);
+                appendBtLog('system', `已保存 MAC 衍生地址: ${val}`);
             }
         });
     }
-
-    if (elements.btnAssistantReconnect) {
-        elements.btnAssistantReconnect.addEventListener('click', async () => {
-            if (elements.modalMacAssistant) elements.modalMacAssistant.classList.remove('active');
-            try {
-                await bluetooth.connect();
-            } catch (_) {}
-        });
-    }
-
-    elements.inputMacOverride.value = bluetooth.macOverride;
-    elements.btnSaveMac.addEventListener('click', () => {
-        const val = elements.inputMacOverride.value.trim();
-        if (val) {
-            bluetooth.setMacOverride(val);
-            localStorage.setItem('cube_mac_override', val);
-            showToast(`MAC 地址已保存: ${val}`);
-        }
-    });
 
     elements.btnSettings.addEventListener('click', () => {
         elements.inputMacOverride.value = bluetooth.macOverride;
