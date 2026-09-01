@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css?v=17.4">
+    <link rel="stylesheet" href="style.css?v=18.4">
 </head>
 <body class="style-dark color-emerald theme-dark">
 
@@ -34,7 +34,7 @@
                     </svg>
                 </span>
                 <span class="brand-title">Rubik Vision</span>
-                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v17.4</span>
+                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v18.4</span>
             </div>
 
             <div class="header-actions">
@@ -384,6 +384,42 @@
                 </div>
 
                 <canvas id="canvas-trend-main" class="canvas-trend-full"></canvas>
+
+                <!-- Trend Statistics Summary Bar (Phase 4) -->
+                <div id="trend-stats-summary" class="trend-stats-grid">
+                    <div class="trend-stat-card">
+                        <span class="trend-stat-label">Total Solves</span>
+                        <span id="trend-stat-count" class="trend-stat-value">0</span>
+                    </div>
+                    <div class="trend-stat-card">
+                        <span class="trend-stat-label">Best Single</span>
+                        <span id="trend-stat-best" class="trend-stat-value">--</span>
+                    </div>
+                    <div class="trend-stat-card">
+                        <span class="trend-stat-label">Worst Single</span>
+                        <span id="trend-stat-worst" class="trend-stat-value">--</span>
+                    </div>
+                    <div class="trend-stat-card">
+                        <span class="trend-stat-label">Session Mean</span>
+                        <span id="trend-stat-mean" class="trend-stat-value">--</span>
+                    </div>
+                    <div class="trend-stat-card">
+                        <span class="trend-stat-label">Current Ao5</span>
+                        <span id="trend-stat-ao5" class="trend-stat-value">--</span>
+                    </div>
+                    <div class="trend-stat-card">
+                        <span class="trend-stat-label">Current Ao12</span>
+                        <span id="trend-stat-ao12" class="trend-stat-value">--</span>
+                    </div>
+                    <div class="trend-stat-card">
+                        <span class="trend-stat-label">Current AoX</span>
+                        <span id="trend-stat-aox" class="trend-stat-value">--</span>
+                    </div>
+                    <div class="trend-stat-card">
+                        <span class="trend-stat-label">Std Dev (σ)</span>
+                        <span id="trend-stat-sd" class="trend-stat-value">--</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -415,29 +451,65 @@
 
                 <!-- Right: Interactive Practice & Real-Time Match Stage -->
                 <div class="practice-stage-card">
-                    <div style="width: 100%; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
                         <div>
-                            <h3 id="practice-case-name" style="margin: 0; font-size: 1.3rem; font-weight: 700;">Select an algorithm</h3>
+                            <h3 id="practice-case-name" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Select an algorithm</h3>
                             <span id="practice-case-group" class="badge badge-idle" style="margin-top: 0.25rem;">Triggers</span>
                         </div>
-                        <span id="practice-case-moves" style="font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted);">0 moves</span>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span id="practice-case-moves" style="font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted);">0 moves</span>
+                            <button id="btn-reset-practice" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">🔄 Reset</button>
+                        </div>
                     </div>
 
-                    <div id="practice-alg-box" class="practice-alg-display">
-                        Ready to practice
+                    <!-- Main Arena: Timer Upper, Alg Below -->
+                    <div class="practice-arena-top">
+                        <div id="practice-timer-digits" class="practice-timer-digits" style="font-size: clamp(3rem, 10vw, 5.5rem); margin: 0.25rem 0;">
+                            0.00
+                        </div>
+
+                        <div id="practice-alg-box" class="practice-alg-display" style="width: 100%; font-size: 1.45rem; padding: 0.75rem; text-align: center; border-radius: var(--radius-md); background: var(--bg-surface-elevated); margin-bottom: 0.5rem;">
+                            Ready to practice
+                        </div>
                     </div>
 
                     <div id="practice-status-banner" class="practice-status-banner status-idle">
-                        <span>Turn the cube to begin practicing! Sequence matching is state-agnostic.</span>
+                        <span>Turn your cube to start! Sequence matching is orientation-less.</span>
                     </div>
 
-                    <div id="practice-timer-digits" class="practice-timer-digits">
-                        0.00
-                    </div>
-
-                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: center; margin-top: 0.5rem;">
                         <span id="practice-live-tps" class="badge badge-move">0.00 TPS</span>
                         <span id="practice-live-step" class="badge badge-move">Step 0 / 0</span>
+                    </div>
+
+                    <!-- Trend Curve Below Practice Stage -->
+                    <div style="width: 100%; margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
+                            <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-secondary);">Practice Progress Curve</span>
+                            <span id="practice-stat-best" style="font-size: 0.78rem; color: var(--accent-primary); font-family: var(--font-mono); font-weight: 700;">Best: --</span>
+                        </div>
+                        <canvas id="canvas-practice-trend" style="width: 100%; height: 110px; border-radius: var(--radius-sm); background: var(--bg-surface);"></canvas>
+                    </div>
+
+                    <!-- Attempt History List Below Curve -->
+                    <div style="width: 100%; margin-top: 0.75rem;">
+                        <span style="font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 0.35rem;">Recent Case Attempts</span>
+                        <div class="practice-history-list">
+                            <table style="width: 100%; font-size: 0.8rem; border-collapse: collapse; text-align: left;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+                                        <th style="padding: 0.3rem 0.4rem;">#</th>
+                                        <th style="padding: 0.3rem 0.4rem;">Time</th>
+                                        <th style="padding: 0.3rem 0.4rem;">TPS</th>
+                                        <th style="padding: 0.3rem 0.4rem;">Status</th>
+                                        <th style="padding: 0.3rem 0.4rem;">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="practice-history-tbody">
+                                    <tr><td colspan="5" style="padding: 0.75rem; text-align: center; color: var(--text-muted);">No practice attempts yet. Turn your cube to practice!</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -500,11 +572,89 @@
                 </div>
             </div>
             <div class="modal-footer" style="display: flex; align-items: center; justify-content: space-between;">
-                <div style="display: flex; gap: 0.5rem;">
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
                     <button id="btn-modal-disconnect" class="btn btn-danger btn-sm" style="display: none;">断开连接 (Disconnect)</button>
                     <button id="btn-modal-recalibrate" class="btn btn-secondary btn-sm">设为复原态 (Set Solved)</button>
+                    <button id="btn-open-mac-assistant-from-log" class="btn btn-primary btn-sm">🔍 MAC 助手</button>
                 </div>
                 <button class="btn btn-secondary btn-sm" onclick="document.getElementById('modal-bluetooth-log').classList.remove('active')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Smart Cube Bluetooth & MAC Assistant -->
+    <div id="modal-mac-assistant" class="modal-backdrop">
+        <div class="modal-card" style="max-width: 520px;">
+            <div class="modal-header">
+                <h3 class="modal-title" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <svg class="svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                    智能魔方蓝牙 & MAC 助手
+                </h3>
+                <button id="btn-close-mac-assistant" class="btn-icon">
+                    <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 0.85rem;">
+                <!-- Live Device & Decryption Health Card -->
+                <div class="bt-info-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 0;">
+                    <div class="bt-info-card">
+                        <span class="bt-info-label">魔方设备名称</span>
+                        <strong id="assistant-device-name" class="bt-info-val" style="font-size: 0.88rem;">未连接</strong>
+                    </div>
+                    <div class="bt-info-card">
+                        <span class="bt-info-label">协议类型</span>
+                        <span id="assistant-protocol-badge" class="badge" style="background: var(--bg-surface); font-size: 0.75rem;">GAN Gen4 (AES)</span>
+                    </div>
+                </div>
+
+                <!-- Decryption Health Status Banner -->
+                <div id="assistant-decryption-banner" class="alert-box" style="padding: 0.6rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.82rem; display: flex; align-items: center; gap: 0.5rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: #60A5FA;">
+                    <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    <span id="assistant-decryption-text">请连接魔方或输入物理 MAC 地址进行解密验证</span>
+                </div>
+
+                <!-- MAC Configuration Section -->
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="input-assistant-mac" style="font-size: 0.82rem; font-weight: 700; display: flex; justify-content: space-between;">
+                        <span>物理 MAC 地址 (6 组十六进制):</span>
+                        <span id="assistant-mac-source" style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;"></span>
+                    </label>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.3rem;">
+                        <input type="text" id="input-assistant-mac" placeholder="例如: 0C:3D:5E:BE:8E:95" class="form-control" style="font-family: var(--font-mono); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;" maxlength="17">
+                        <button id="btn-assistant-apply-mac" class="btn btn-primary btn-sm" style="white-space: nowrap; padding: 0 0.85rem;">应用并测试</button>
+                    </div>
+                </div>
+
+                <!-- Presets & Quick Actions -->
+                <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-secondary btn-sm preset-mac-btn" data-mac="0c:3d:5e:be:8e:95" style="font-size: 0.72rem; padding: 0.2rem 0.5rem;">标准默认 (0c:3d:5e:be:8e:95)</button>
+                    <button type="button" class="btn btn-secondary btn-sm preset-mac-btn" data-mac="00:00:00:00:00:00" style="font-size: 0.72rem; padding: 0.2rem 0.5rem;">全零 Salt (00:00:00:00:00:00)</button>
+                    <button type="button" id="btn-assistant-reconnect" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 0.2rem 0.5rem; margin-left: auto;">🔍 重新扫描连接</button>
+                </div>
+
+                <!-- Live Physical Turn Test Strip -->
+                <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.6rem 0.75rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                        <span style="font-size: 0.76rem; font-weight: 700; color: var(--text-secondary);">魔方转动实时校验 (Live Move Test):</span>
+                        <span id="assistant-test-status" style="font-size: 0.72rem; color: var(--text-muted);">等待转动...</span>
+                    </div>
+                    <div id="assistant-move-strip" style="display: flex; gap: 0.4rem; min-height: 36px; align-items: center; overflow-x: auto; padding: 0.15rem 0;">
+                        <span style="font-size: 0.78rem; color: var(--text-muted); font-style: italic;">转动魔方任意一面即可在此处看到实时转动反馈</span>
+                    </div>
+                </div>
+
+                <!-- Step-by-step Guide -->
+                <div style="border-top: 1px solid var(--border-color); padding-top: 0.6rem;">
+                    <span style="font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); display: block; margin-bottom: 0.35rem;">💡 如何获取你新魔方的物理 MAC 地址？</span>
+                    <ul style="padding-left: 1.1rem; font-size: 0.76rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.25rem; line-height: 1.4;">
+                        <li><strong>方法 1（外包装条形码）</strong>：查看魔方包装盒底部条形码下方的 12 位字符（例如 <code>0C3D5EBE8E95</code>）。</li>
+                        <li><strong>方法 2（手机 BLE 扫描工具）</strong>：手机安装 <code>nRF Connect</code> 免费工具，转动唤醒魔方，扫描列表中 <code>GANic4_xxxx</code> 下方显示的即为 MAC。</li>
+                        <li><strong>方法 3（自动读取）</strong>：若系统支持，在 Chrome 连接时将自动尝试读取广播包及 System ID 中的 MAC。</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="document.getElementById('modal-mac-assistant').classList.remove('active')">完成 (Done)</button>
             </div>
         </div>
     </div>
@@ -523,8 +673,11 @@
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="input-mac-override">Bluetooth MAC Override (for GAN v4 Key Derivation):</label>
-                    <div style="display: flex; gap: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <label for="input-mac-override" style="margin-bottom: 0;">Bluetooth MAC Override (GAN v4 密钥衍生):</label>
+                        <button id="btn-open-mac-assistant" type="button" class="btn btn-secondary btn-sm" style="font-size: 0.72rem; padding: 0.15rem 0.45rem;">🔍 MAC 助手</button>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem;">
                         <input type="text" id="input-mac-override" placeholder="0c:3d:5e:be:8e:95" value="0c:3d:5e:be:8e:95">
                         <button id="btn-save-mac" class="btn btn-primary btn-sm">Save</button>
                     </div>
@@ -579,6 +732,8 @@
                         <div style="flex: 1;">
                             <label for="select-scramble-visible-next" style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 0.2rem; display: block;">后置可见 (Next):</label>
                             <select id="select-scramble-visible-next" class="form-control">
+                                <option value="1">1 步</option>
+                                <option value="2">2 步</option>
                                 <option value="3">3 步</option>
                                 <option value="4">4 步</option>
                                 <option value="5" selected>5 步 (默认)</option>
@@ -957,20 +1112,20 @@
     </div>
 
     <!-- Scripts -->
-    <script src="aes.js?v=17.4"></script>
-    <script src="min2phase.js?v=17.4"></script>
-    <script src="three.min.js?v=17.4"></script>
-    <script src="echarts.min.js?v=17.4"></script>
-    <script src="cube-engine.js?v=17.4"></script>
-    <script src="alg-database.js?v=17.4"></script>
-    <script src="method-analyzer.js?v=17.4"></script>
-    <script src="chart-engine.js?v=17.4"></script>
-    <script src="gan-bluetooth.js?v=17.4"></script>
-    <script src="audio-synth.js?v=17.4"></script>
-    <script src="renderer-3d.js?v=17.4"></script>
-    <script src="renderer-2d.js?v=17.4"></script>
-    <script src="timer-engine.js?v=17.4"></script>
-    <script src="ui-controller.js?v=17.4"></script>
+    <script src="aes.js?v=18.4"></script>
+    <script src="min2phase.js?v=18.4"></script>
+    <script src="three.min.js?v=18.4"></script>
+    <script src="echarts.min.js?v=18.4"></script>
+    <script src="cube-engine.js?v=18.4"></script>
+    <script src="alg-database.js?v=18.4"></script>
+    <script src="method-analyzer.js?v=18.4"></script>
+    <script src="chart-engine.js?v=18.4"></script>
+    <script src="gan-bluetooth.js?v=18.4"></script>
+    <script src="audio-synth.js?v=18.4"></script>
+    <script src="renderer-3d.js?v=18.4"></script>
+    <script src="renderer-2d.js?v=18.4"></script>
+    <script src="timer-engine.js?v=18.4"></script>
+    <script src="ui-controller.js?v=18.4"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

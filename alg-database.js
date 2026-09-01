@@ -155,50 +155,124 @@
 
         /**
          * Match an ongoing stream of user moves against a target algorithm string.
-         * Pure sequence matching: state-agnostic!
+         * Pure sequence matching: completely orientation-less and stateless!
+         * Checks all 24 3D cube rotations so any holding grip works.
          */
         matchSequence(userMoves, targetAlg) {
             if (!targetAlg) return { isComplete: false, progress: 0, nextExpected: null, isMatch: false };
             
-            const targetArray = targetAlg.trim().split(/\s+/).map(normalizeMove);
+            const rawTargetArray = targetAlg.trim().split(/\s+/).map(normalizeMove).filter(m => !['x', 'y', 'z', "x'", "y'", "z'", 'x2', 'y2', 'z2'].includes(m.toLowerCase()));
             const userArray = (userMoves || []).map(normalizeMove);
+
+            if (rawTargetArray.length === 0) {
+                return { isComplete: true, progress: 1, totalMoves: 0, nextExpected: null, isMatch: true, matchedCount: 0, targetMoves: [] };
+            }
 
             if (userArray.length === 0) {
                 return {
                     isComplete: false,
                     progress: 0,
-                    totalMoves: targetArray.length,
-                    nextExpected: targetArray[0] || null,
+                    totalMoves: rawTargetArray.length,
+                    nextExpected: rawTargetArray[0] || null,
                     isMatch: true,
-                    matchedCount: 0
+                    matchedCount: 0,
+                    targetMoves: rawTargetArray
                 };
             }
 
-            // Check if userArray matches the prefix of targetArray
-            let isMatch = true;
-            let matchedCount = 0;
-            for (let i = 0; i < userArray.length; i++) {
-                if (i >= targetArray.length || userArray[i] !== targetArray[i]) {
-                    isMatch = false;
-                    break;
+            // Generate 24 rotational orientation variants of the target algorithm
+            const allOrientations = getAlgOrientations(rawTargetArray);
+
+            // Find the orientation variant with the highest matching prefix
+            let bestOrientation = rawTargetArray;
+            let maxMatched = 0;
+            let bestIsMatch = false;
+
+            for (const orientAlg of allOrientations) {
+                let matched = 0;
+                let isMatch = true;
+                for (let i = 0; i < userArray.length; i++) {
+                    if (i >= orientAlg.length || userArray[i] !== orientAlg[i]) {
+                        isMatch = false;
+                        break;
+                    }
+                    matched++;
                 }
-                matchedCount++;
+
+                if (isMatch && matched >= maxMatched) {
+                    maxMatched = matched;
+                    bestOrientation = orientAlg;
+                    bestIsMatch = true;
+                } else if (!bestIsMatch && matched > maxMatched) {
+                    maxMatched = matched;
+                    bestOrientation = orientAlg;
+                }
             }
 
-            const isComplete = isMatch && matchedCount === targetArray.length;
-            const nextExpected = (isMatch && matchedCount < targetArray.length) ? targetArray[matchedCount] : null;
-            const progress = targetArray.length > 0 ? Math.min(1.0, matchedCount / targetArray.length) : 0;
+            const isComplete = bestIsMatch && maxMatched === bestOrientation.length;
+            const nextExpected = (bestIsMatch && maxMatched < bestOrientation.length) 
+                ? bestOrientation[maxMatched] 
+                : (bestOrientation[maxMatched] || bestOrientation[0]);
+            const progress = bestOrientation.length > 0 ? Math.min(1.0, maxMatched / bestOrientation.length) : 0;
 
             return {
                 isComplete,
-                isMatch,
+                isMatch: bestIsMatch,
                 progress,
-                matchedCount,
-                totalMoves: targetArray.length,
+                matchedCount: maxMatched,
+                totalMoves: bestOrientation.length,
                 nextExpected,
-                targetMoves: targetArray
+                targetMoves: bestOrientation
             };
         }
+    }
+
+    // 24 Orientation mappings for 3x3 cube
+    const ROTATION_X = { U: 'F', F: 'D', D: 'B', B: 'U', L: 'L', R: 'R' };
+    const ROTATION_Y = { F: 'L', L: 'B', B: 'R', R: 'F', U: 'U', D: 'D' };
+    const ROTATION_Z = { U: 'R', R: 'D', D: 'L', L: 'U', F: 'F', B: 'B' };
+
+    function transformMove(move, map) {
+        if (!move) return '';
+        const face = move.charAt(0).toUpperCase();
+        const suffix = move.slice(1);
+        const mappedFace = map[face] || face;
+        return (move.charAt(0) === move.charAt(0).toLowerCase()) ? mappedFace.toLowerCase() + suffix : mappedFace + suffix;
+    }
+
+    const _cachedOrientations = new Map();
+
+    function getAlgOrientations(algArray) {
+        const key = algArray.join(' ');
+        if (_cachedOrientations.has(key)) return _cachedOrientations.get(key);
+
+        const transformations = [];
+        function multiply(m1, m2) {
+            const res = {};
+            for (const k in m1) res[k] = m2[m1[k]] || m1[k];
+            return res;
+        }
+
+        const identity = { U: 'U', D: 'D', L: 'L', R: 'R', F: 'F', B: 'B' };
+        const visited = new Set();
+
+        function dfs(map) {
+            const id = `U${map.U}D${map.D}L${map.L}R${map.R}F${map.F}B${map.B}`;
+            if (visited.has(id)) return;
+            visited.add(id);
+            transformations.push(map);
+            if (transformations.length >= 24) return;
+
+            dfs(multiply(map, ROTATION_X));
+            dfs(multiply(map, ROTATION_Y));
+            dfs(multiply(map, ROTATION_Z));
+        }
+
+        dfs(identity);
+
+        const result = transformations.map(t => algArray.map(m => transformMove(m, t)));
+        _cachedOrientations.set(key, result);
+        return result;
     }
 
     function normalizeMove(move) {

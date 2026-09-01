@@ -122,10 +122,24 @@ document.addEventListener('DOMContentLoaded', () => {
         modalHelp: document.getElementById('modal-help'),
         modalReconstruct: document.getElementById('modal-reconstruct'),
         modalCustomAlg: document.getElementById('modal-custom-alg'),
+        modalMacAssistant: document.getElementById('modal-mac-assistant'),
         btnCloseSettings: document.getElementById('btn-close-settings'),
         btnCloseHelp: document.getElementById('btn-close-help'),
         btnCloseReconstruct: document.getElementById('btn-close-reconstruct'),
         btnCloseCustomAlg: document.getElementById('btn-close-custom-alg'),
+        btnCloseMacAssistant: document.getElementById('btn-close-mac-assistant'),
+        btnOpenMacAssistant: document.getElementById('btn-open-mac-assistant'),
+        btnOpenMacAssistantFromLog: document.getElementById('btn-open-mac-assistant-from-log'),
+        assistantDeviceName: document.getElementById('assistant-device-name'),
+        assistantProtocolBadge: document.getElementById('assistant-protocol-badge'),
+        assistantDecryptionBanner: document.getElementById('assistant-decryption-banner'),
+        assistantDecryptionText: document.getElementById('assistant-decryption-text'),
+        inputAssistantMac: document.getElementById('input-assistant-mac'),
+        assistantMacSource: document.getElementById('assistant-mac-source'),
+        btnAssistantApplyMac: document.getElementById('btn-assistant-apply-mac'),
+        btnAssistantReconnect: document.getElementById('btn-assistant-reconnect'),
+        assistantMoveStrip: document.getElementById('assistant-move-strip'),
+        assistantTestStatus: document.getElementById('assistant-test-status'),
 
         // Settings Inputs
         inputMacOverride: document.getElementById('input-mac-override'),
@@ -211,7 +225,22 @@ document.addEventListener('DOMContentLoaded', () => {
         inputCustomAlgName: document.getElementById('input-custom-alg-name'),
         inputCustomAlgGroup: document.getElementById('input-custom-alg-group'),
         inputCustomAlgMoves: document.getElementById('input-custom-alg-moves'),
-        inputCustomAlgDesc: document.getElementById('input-custom-alg-desc')
+        inputCustomAlgDesc: document.getElementById('input-custom-alg-desc'),
+
+        // Trend Statistics Summary
+        trendStatCount: document.getElementById('trend-stat-count'),
+        trendStatBest: document.getElementById('trend-stat-best'),
+        trendStatWorst: document.getElementById('trend-stat-worst'),
+        trendStatMean: document.getElementById('trend-stat-mean'),
+        trendStatAo5: document.getElementById('trend-stat-ao5'),
+        trendStatAo12: document.getElementById('trend-stat-ao12'),
+        trendStatAoX: document.getElementById('trend-stat-aox'),
+        trendStatSD: document.getElementById('trend-stat-sd'),
+
+        // Practice Mode Extended
+        canvasPracticeTrend: document.getElementById('canvas-practice-trend'),
+        practiceStatBest: document.getElementById('practice-stat-best'),
+        practiceHistoryTbody: document.getElementById('practice-history-tbody')
     };
 
     // Renderers
@@ -394,10 +423,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.viewAnalytics) elements.viewAnalytics.classList.toggle('active', viewId === 'view-analytics');
         if (elements.viewPractice) elements.viewPractice.classList.toggle('active', viewId === 'view-practice');
 
-        if (viewId === 'view-analytics' && trendChart) {
-            trendChart.setData(session.solves);
+        if (viewId === 'view-analytics') {
+            if (trendChart) trendChart.setData(session.solves);
+            renderTrendStatistics();
         } else if (viewId === 'view-practice') {
             initPracticeView();
+            renderPracticeHistoryAndTrend();
         }
     }
 
@@ -676,6 +707,22 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
 
+        // Overall View Mini Bar (displays all moves with current move highlighted)
+        let overallChipsHtml = '';
+        moves.forEach((move, idx) => {
+            let stCls = 'pending';
+            if (idx < activeIdx) stCls = 'done';
+            else if (idx === activeIdx) stCls = 'active';
+            const colorCls = getMoveColorClass(move);
+            overallChipsHtml += `<span class="overall-move-chip ${stCls} ${colorCls}">${move}</span>`;
+        });
+
+        const overallHtml = `
+            <div class="scramble-overall-container" title="打乱公式全览">
+                ${overallChipsHtml}
+            </div>
+        `;
+
         return `
             <div class="scramble-reel-container">
                 <div class="scramble-reel-viewport">
@@ -684,6 +731,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 ${footerHtml}
+                ${overallHtml}
             </div>
         `;
     }
@@ -745,8 +793,100 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Center Active Card
         if (carouselElements.cardCurrent) {
-            carouselElements.cardCurrent.innerHTML = formatScrambleHTML(currentStr, activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, null, isDeviated);
-            carouselElements.cardCurrent.classList.remove('scramble-empty-hint');
+            const currentTrack = carouselElements.cardCurrent.querySelector('.scramble-reel-track');
+            const existingMoves = carouselElements.cardCurrent.querySelectorAll('.reel-step-item');
+            const moves = (currentStr || '').trim().split(/\s+/).filter(Boolean);
+            
+            if (currentTrack && existingMoves.length === moves.length && scrambleDisplayStyle !== 'grid') {
+                // In-place fluid update with linear-acceleration spring transition
+                const clampedActiveIdx = Math.min(activeIdx, Math.max(0, moves.length - 1));
+                const offsetPx = - (clampedActiveIdx * 74 + 37);
+                currentTrack.style.transition = 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)';
+                currentTrack.style.transform = `translate3d(${offsetPx}px, 0, 0)`;
+                currentTrack.style.setProperty('--track-x', `${offsetPx}px`);
+
+                const visiblePrev = scrambleVisiblePrev;
+                const visibleNext = scrambleVisibleNext;
+                const isCorrectionMode = isDeviated && correctionMoves && correctionMoves.length > 0 && correctionMoves.length <= 2;
+
+                existingMoves.forEach((item, idx) => {
+                    let cls = 'reel-step-item';
+                    const colorCls = getMoveColorClass(moves[idx]);
+                    let inlineStyle = '';
+                    if (idx < activeIdx) {
+                        cls += ' step-done';
+                        const rel = activeIdx - idx;
+                        if (rel <= visiblePrev) {
+                            inlineStyle = 'opacity: 0.35; transform: scale(0.84);';
+                        } else {
+                            inlineStyle = 'opacity: 0; visibility: hidden; pointer-events: none;';
+                        }
+                        item.textContent = moves[idx];
+                    } else if (idx === activeIdx) {
+                        if (isCorrectionMode) {
+                            cls += ' step-active';
+                            const undoMove = correctionMoves[0];
+                            const nextMove = correctionMoves.length > 1 ? correctionMoves[1] : (moves[activeIdx] || '');
+                            item.innerHTML = `
+                                <div class="reel-correction-badge">
+                                    <span class="reel-correction-undo">${undoMove}</span>
+                                    <span class="reel-correction-arrow">➔</span>
+                                    <span class="reel-correction-next">${nextMove}</span>
+                                </div>
+                            `;
+                            inlineStyle = 'width: auto; min-width: 90px; padding: 0 0.6rem; opacity: 1;';
+                        } else if (isHalfTurn) {
+                            cls += ' step-half-active';
+                            item.textContent = remainingOnFace ? `${remainingOnFace} (½)` : `${moves[idx]} (½)`;
+                            inlineStyle = 'opacity: 1;';
+                        } else {
+                            cls += ' step-active';
+                            item.textContent = moves[idx];
+                            inlineStyle = 'opacity: 1;';
+                        }
+                    } else {
+                        cls += ' step-pending';
+                        const rel = idx - activeIdx;
+                        if (rel <= visibleNext) {
+                            const opacity = Math.max(0.28, 0.95 - (rel - 1) * 0.14);
+                            const scale = Math.max(0.72, 1.0 - (rel - 1) * 0.04);
+                            inlineStyle = `opacity: ${opacity}; transform: scale(${scale});`;
+                        } else {
+                            inlineStyle = 'opacity: 0; visibility: hidden; pointer-events: none;';
+                        }
+                        item.textContent = moves[idx];
+                    }
+                    item.className = `${cls} ${colorCls}`;
+                    item.style.cssText = inlineStyle;
+                });
+
+                // Update footer progress text
+                const completedCount = Math.min(activeIdx, moves.length);
+                const remainingCount = Math.max(0, moves.length - completedCount);
+                const pct = Math.round((completedCount / moves.length) * 100);
+                const footerEl = carouselElements.cardCurrent.querySelector('.scramble-reel-footer');
+                if (footerEl) {
+                    footerEl.innerHTML = `
+                        <span>已完成 <strong class="progress-highlight">${completedCount}</strong> 步</span>
+                        <span>·</span>
+                        <span>剩余 <strong class="progress-highlight">${remainingCount}</strong> 步</span>
+                        <span style="opacity: 0.65;">(${pct}%)</span>
+                    `;
+                }
+
+                // Update overall sequence bar chips
+                const overallChips = carouselElements.cardCurrent.querySelectorAll('.overall-move-chip');
+                overallChips.forEach((chip, idx) => {
+                    let stCls = 'pending';
+                    if (idx < activeIdx) stCls = 'done';
+                    else if (idx === activeIdx) stCls = 'active';
+                    const colorCls = getMoveColorClass(moves[idx]);
+                    chip.className = `overall-move-chip ${stCls} ${colorCls}`;
+                });
+            } else {
+                carouselElements.cardCurrent.innerHTML = formatScrambleHTML(currentStr, activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, null, isDeviated);
+                carouselElements.cardCurrent.classList.remove('scramble-empty-hint');
+            }
         }
 
         // Left Previous Card
@@ -795,6 +935,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Pre-calculate next preview for continuous slide-in
         pendingNextScramble = generateWcaScramble(21);
 
+        isAwaitingScrambleTurn = false;
         currentScramble = scrambleStr;
         timer.setScramble(currentScramble);
         tracker.setScramble(currentScramble);
@@ -808,6 +949,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.mainTimerContainer) {
             elements.mainTimerContainer.classList.remove('timer-ready-pulse');
         }
+        timer.setState('SCRAMBLING');
         setArenaMode('SCRAMBLE');
         updateScrambleStatus(evalResult);
     }
@@ -1012,7 +1154,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const banner = elements.scrambleBanner;
         if (banner) banner.className = 'scramble-banner';
 
-        if (!evalResult) {
+        if (!evalResult || evalResult.currentStep === 0) {
+            document.body.classList.remove('is-scrambling');
             if (banner) {
                 banner.innerHTML = `<span>Follow the scramble sequence above on your cube</span>`;
                 banner.classList.add('status-pending');
@@ -1020,11 +1163,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
             renderScrambleDisplay(0);
             wasDeviated = false;
+            if (elements.timerStateBadge) {
+                elements.timerStateBadge.textContent = 'SCRAMBLING';
+                elements.timerStateBadge.className = 'badge badge-scrambling';
+            }
+            if (timer.state !== 'RUNNING' && timer.state !== 'INSPECTION' && timer.state !== 'READY') {
+                timer.setState('SCRAMBLING');
+            }
             setArenaMode('SCRAMBLE');
             return;
         }
 
         if (evalResult.isComplete) {
+            document.body.classList.remove('is-scrambling');
             wasDeviated = false;
             setArenaMode('TIMER');
             if (banner) {
@@ -1039,6 +1190,7 @@ document.addEventListener('DOMContentLoaded', () => {
             timer.setState('READY');
             sound.playScrambleComplete();
         } else if (evalResult.isDeviated) {
+            document.body.classList.add('is-scrambling');
             setArenaMode('SCRAMBLE');
             if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
 
@@ -1315,10 +1467,28 @@ document.addEventListener('DOMContentLoaded', () => {
             if (physicalCube.isSolved()) {
                 timer.stopTimer();
             }
-        } else if (timer.state === 'SCRAMBLING' || timer.state === 'CORRECTION') {
+        } else if (timer.state !== 'READY' && timer.state !== 'INSPECTION' && !isAwaitingScrambleTurn) {
             const evalResult = tracker.setCurrentCubeState(data.cp, data.co, data.ep, data.eo);
             updateScrambleStatus(evalResult);
         }
+    });
+
+    bluetooth.on('mac_discovered', (data) => {
+        appendBtLog('system', `自动提取到魔方 MAC 地址: ${data.mac} (${data.source})`);
+        if (elements.btModalMacVal) elements.btModalMacVal.textContent = data.mac;
+        if (elements.inputMacOverride) elements.inputMacOverride.value = data.mac;
+        if (elements.inputAssistantMac) elements.inputAssistantMac.value = data.mac.toUpperCase();
+        if (elements.assistantMacSource) elements.assistantMacSource.textContent = `(来源: ${data.source === 'advertising' ? '广播包自动提取' : 'System ID 读取'})`;
+        showToast(`已自动识别魔方 MAC: ${data.mac}`);
+    });
+
+    bluetooth.on('mac_invalid', (data) => {
+        appendBtLog('err', `解密失败：MAC (${data.mac}) 与当前魔方不匹配，请配置物理 MAC 地址`);
+        updateAssistantDecryptionStatus(false, data.mac);
+    });
+
+    bluetooth.on('decryption_valid', (data) => {
+        updateAssistantDecryptionStatus(true, data.mac);
     });
 
     bluetooth.on('move', (moveEvent) => {
@@ -1336,6 +1506,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const colorCls = getMoveColorClass(moveEvent.move);
         elements.liveLastMoveBadge.className = `badge ${colorCls}`;
 
+        updateAssistantLiveMove(moveEvent.move);
+
         // Practice Mode Routing
         if (currentView === 'view-practice') {
             handlePracticeCubeMove(moveEvent.move);
@@ -1343,14 +1515,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Standard Timer Engine Routing
-        if (isAwaitingScrambleTurn || timer.state === 'FINISHED' || (timer.state === 'IDLE' && physicalCube.isSolved())) {
-            // User turned any face on the cube: generate new scramble starting with this first turn!
-            isAwaitingScrambleTurn = false;
-            const newScramble = generateWcaScrambleWithFirstMove(moveEvent.move, 21);
-            setNewScramble(newScramble, false);
-            return;
-        }
-
         if (timer.state === 'READY' || timer.state === 'INSPECTION') {
             // First turn begins solve immediately!
             timer.startTimer();
@@ -1360,7 +1524,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (physicalCube.isSolved()) {
                 timer.stopTimer();
             }
-        } else if (timer.state === 'SCRAMBLING' || timer.state === 'CORRECTION') {
+        } else if (isAwaitingScrambleTurn || timer.state === 'FINISHED') {
+            // User finished previous solve: first turn creates new scramble starting with this first turn
+            isAwaitingScrambleTurn = false;
+            const newScramble = generateWcaScrambleWithFirstMove(moveEvent.move, 21);
+            setNewScramble(newScramble, false);
+        } else {
+            // Actively scrambling: Route move directly to scramble tracker!
             const evalResult = tracker.onCubeMove(moveEvent.move);
             updateScrambleStatus(evalResult);
         }
@@ -1376,15 +1546,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (state === 'RUNNING') {
+            document.body.classList.remove('is-scrambling');
+            document.body.classList.add('is-solving');
             elements.mainTimerContainer.classList.remove('timer-ready-pulse');
             elements.mainTimerContainer.classList.add('timer-running');
             elements.liveMovesBadge.parentElement.style.display = 'flex';
             sound.playSolveStart();
         } else if (state === 'FINISHED') {
+            document.body.classList.remove('is-solving');
             elements.mainTimerContainer.classList.remove('timer-running');
             elements.mainTimerContainer.classList.add('timer-finished-flash');
             setTimeout(() => elements.mainTimerContainer.classList.remove('timer-finished-flash'), 1000);
         } else if (state === 'IDLE') {
+            document.body.classList.remove('is-solving');
             elements.mainTimerContainer.classList.remove('timer-running');
             elements.liveMovesBadge.parentElement.style.display = 'none';
         }
@@ -1468,6 +1642,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.statBestAo12) elements.statBestAo12.textContent = stats.bestAo12Formatted;
         if (elements.statMean) elements.statMean.textContent = stats.meanFormatted;
         if (elements.statStdDev) elements.statStdDev.textContent = stats.stdDevFormatted;
+
+        renderTrendStatistics();
 
         let html = '';
         session.solves.forEach((s, idx) => {
@@ -2201,6 +2377,52 @@ document.addEventListener('DOMContentLoaded', () => {
     // -------------------------------------------------------------
     // 8. Data Analysis & Multi-AoX Trends (Phase 4)
     // -------------------------------------------------------------
+    // -------------------------------------------------------------
+    // 8. Data Analysis & Multi-AoX Trends (Phase 4)
+    // -------------------------------------------------------------
+    function renderTrendStatistics() {
+        const solves = session ? session.solves : [];
+        if (!elements.trendStatCount) return;
+
+        if (!solves || solves.length === 0) {
+            elements.trendStatCount.textContent = '0';
+            elements.trendStatBest.textContent = '--';
+            elements.trendStatWorst.textContent = '--';
+            elements.trendStatMean.textContent = '--';
+            elements.trendStatAo5.textContent = '--';
+            elements.trendStatAo12.textContent = '--';
+            elements.trendStatAoX.textContent = '--';
+            elements.trendStatSD.textContent = '--';
+            return;
+        }
+
+        const stats = session.getStats();
+        const validSolves = solves.filter(s => s.penalty !== -1);
+        const times = validSolves.map(s => (s.finalTimeMs > 0 ? s.finalTimeMs : s.rawTimeMs) / 1000);
+
+        elements.trendStatCount.textContent = String(solves.length);
+        elements.trendStatBest.textContent = stats.bestFormatted || '--';
+        
+        let worstTime = 0;
+        times.forEach(t => { if (t > worstTime) worstTime = t; });
+        elements.trendStatWorst.textContent = worstTime > 0 ? worstTime.toFixed(2) : '--';
+        elements.trendStatMean.textContent = stats.meanFormatted || '--';
+        elements.trendStatAo5.textContent = stats.currentAo5Formatted || '--';
+        elements.trendStatAo12.textContent = stats.currentAo12Formatted || '--';
+
+        const customX = parseInt(elements.inputCustomX ? elements.inputCustomX.value : '25', 10) || 25;
+        const currentAoX = session.calculateAoN(customX);
+        elements.trendStatAoX.textContent = currentAoX ? formatTime(currentAoX) : '--';
+
+        if (times.length >= 2) {
+            const avg = times.reduce((a, b) => a + b, 0) / times.length;
+            const variance = times.reduce((sum, t) => sum + Math.pow(t - avg, 2), 0) / times.length;
+            elements.trendStatSD.textContent = Math.sqrt(variance).toFixed(2);
+        } else {
+            elements.trendStatSD.textContent = stats.stdDevFormatted || '--';
+        }
+    }
+
     function updateTrendChartOptions() {
         if (!trendChart) return;
         const customX = parseInt(elements.inputCustomX.value, 10) || 25;
@@ -2238,6 +2460,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.widthSeriesAox) trendChart.options.seriesConfig[3].width = parseFloat(elements.widthSeriesAox.value);
 
         trendChart.render();
+        renderTrendStatistics();
     }
 
     if (elements.btnToggleCurveStyles && elements.trendStylesPanel) {
@@ -2264,6 +2487,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (elements.btnRefreshTrend) elements.btnRefreshTrend.addEventListener('click', () => {
         if (trendChart) trendChart.setData(session.solves);
+        renderTrendStatistics();
     });
 
     [elements.toggleSeriesRaw, elements.toggleSeriesAo5, elements.toggleSeriesAo12, elements.toggleSeriesAox, elements.toggleTrendSmooth].forEach(cb => {
@@ -2279,6 +2503,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let practiceStartTime = 0;
     let practiceTimerInterval = null;
     let practiceState = 'IDLE'; // IDLE, RUNNING, COMPLETED, DEVIATED
+    let practiceMistakeCount = 0;
+    let practiceAttempts = [];
+
+    try {
+        const storedPractice = localStorage.getItem('rubiks_practice_history');
+        practiceAttempts = storedPractice ? JSON.parse(storedPractice) : [];
+    } catch (e) {
+        practiceAttempts = [];
+    }
 
     function initPracticeView() {
         if (!window.AlgDatabase) return;
@@ -2355,6 +2588,121 @@ document.addEventListener('DOMContentLoaded', () => {
 
         resetPracticeAttempt();
         renderPracticeCaseList();
+        renderPracticeHistoryAndTrend();
+    }
+
+    function savePracticeAttempt(attempt) {
+        practiceAttempts.unshift(attempt);
+        if (practiceAttempts.length > 300) practiceAttempts.pop();
+        try {
+            localStorage.setItem('rubiks_practice_history', JSON.stringify(practiceAttempts));
+        } catch (e) {}
+        renderPracticeHistoryAndTrend();
+    }
+
+    function renderPracticeHistoryAndTrend() {
+        if (!elements.practiceHistoryTbody) return;
+        const caseId = activePracticeCase ? activePracticeCase.id : null;
+        const filtered = caseId ? practiceAttempts.filter(a => a.caseId === caseId) : practiceAttempts;
+
+        let bestTime = Infinity;
+        let rowsHtml = '';
+        filtered.forEach((att, idx) => {
+            const num = filtered.length - idx;
+            const timeSec = parseFloat(att.time);
+            if (timeSec < bestTime) bestTime = timeSec;
+            const dateStr = new Date(att.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            rowsHtml += `
+                <tr style="border-bottom: 1px solid var(--border-color);">
+                    <td style="padding: 0.3rem 0.4rem; color: var(--text-muted); font-family: var(--font-mono);">${num}</td>
+                    <td style="padding: 0.3rem 0.4rem; font-weight: 700; color: var(--accent-primary); font-family: var(--font-mono);">${att.time}s</td>
+                    <td style="padding: 0.3rem 0.4rem; font-family: var(--font-mono); color: var(--text-secondary);">${att.tps} TPS</td>
+                    <td style="padding: 0.3rem 0.4rem;"><span class="badge badge-ready" style="font-size: 0.7rem; padding: 0.1rem 0.35rem;">SUCCESS</span></td>
+                    <td style="padding: 0.3rem 0.4rem; color: var(--text-muted);">${dateStr}</td>
+                </tr>
+            `;
+        });
+
+        if (filtered.length === 0) {
+            rowsHtml = `<tr><td colspan="5" style="padding: 0.75rem; text-align: center; color: var(--text-muted);">No practice attempts for this case yet. Turn your cube to practice!</td></tr>`;
+        }
+
+        elements.practiceHistoryTbody.innerHTML = rowsHtml;
+        if (elements.practiceStatBest) {
+            elements.practiceStatBest.textContent = bestTime < Infinity ? `Best: ${bestTime.toFixed(2)}s` : 'Best: --';
+        }
+
+        renderPracticeTrendCanvas(filtered);
+    }
+
+    function renderPracticeTrendCanvas(attempts) {
+        if (!elements.canvasPracticeTrend) return;
+        const canvas = elements.canvasPracticeTrend;
+        const ctx = canvas.getContext('2d');
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const rect = canvas.getBoundingClientRect();
+        const w = rect.width || canvas.clientWidth || 300;
+        const h = 110;
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr, dpr);
+
+        ctx.clearRect(0, 0, w, h);
+
+        if (!attempts || attempts.length < 2) {
+            ctx.fillStyle = '#6B7280';
+            ctx.font = '11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Complete at least 2 attempts to view progress curve', w / 2, h / 2 + 4);
+            return;
+        }
+
+        const data = [...attempts].reverse().map(a => parseFloat(a.time));
+        const maxVal = Math.max(...data) * 1.15;
+        const minVal = Math.max(0, Math.min(...data) * 0.85);
+        const pad = { top: 15, bottom: 20, left: 35, right: 15 };
+        const plotW = w - pad.left - pad.right;
+        const plotH = h - pad.top - pad.bottom;
+
+        // Grid line
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, pad.top);
+        ctx.lineTo(w - pad.right, pad.top);
+        ctx.moveTo(pad.left, h - pad.bottom);
+        ctx.lineTo(w - pad.right, h - pad.bottom);
+        ctx.stroke();
+
+        // Line curve
+        ctx.strokeStyle = '#10B981';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        data.forEach((val, idx) => {
+            const x = pad.left + (idx / (data.length - 1)) * plotW;
+            const y = h - pad.bottom - ((val - minVal) / (maxVal - minVal || 1)) * plotH;
+            if (idx === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+
+        // Points
+        ctx.fillStyle = '#10B981';
+        data.forEach((val, idx) => {
+            const x = pad.left + (idx / (data.length - 1)) * plotW;
+            const y = h - pad.bottom - ((val - minVal) / (maxVal - minVal || 1)) * plotH;
+            ctx.beginPath();
+            ctx.arc(x, y, 3, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        // Min / Max labels
+        ctx.fillStyle = '#9CA3AF';
+        ctx.font = '9px monospace';
+        ctx.textAlign = 'right';
+        ctx.fillText(maxVal.toFixed(1) + 's', pad.left - 4, pad.top + 8);
+        ctx.fillText(minVal.toFixed(1) + 's', pad.left - 4, h - pad.bottom);
     }
 
     if (elements.selectAlgCategory) elements.selectAlgCategory.addEventListener('change', renderPracticeCaseList);
@@ -2367,12 +2715,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         practiceState = 'IDLE';
         practiceMoves = [];
+        practiceMistakeCount = 0;
         practiceStartTime = 0;
         elements.practiceTimerDigits.textContent = '0.00';
         elements.practiceLiveTps.textContent = '0.00 TPS';
         elements.practiceLiveStep.textContent = `Step 0 / ${activePracticeCase ? activePracticeCase.moves : 0}`;
         elements.practiceStatusBanner.className = 'practice-status-banner status-idle';
-        elements.practiceStatusBanner.innerHTML = `<span>Turn your cube to practice! Sequence matching starts on 1st move.</span>`;
+        elements.practiceStatusBanner.innerHTML = `<span>Turn your cube to start! Sequence matching is orientation-less.</span>`;
+        
+        if (activePracticeCase && elements.practiceAlgBox) {
+            const tokens = activePracticeCase.alg.split(/\s+/).map(m => `<span class="move-token ${getMoveColorClass(m)}">${m}</span>`).join(' ');
+            elements.practiceAlgBox.innerHTML = tokens;
+        }
     }
 
     if (elements.btnResetPractice) elements.btnResetPractice.addEventListener('click', resetPracticeAttempt);
@@ -2384,6 +2738,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (practiceState === 'IDLE' || practiceState === 'COMPLETED') {
             practiceState = 'RUNNING';
             practiceMoves = [];
+            practiceMistakeCount = 0;
             practiceStartTime = now;
             elements.practiceStatusBanner.className = 'practice-status-banner status-running';
 
@@ -2402,6 +2757,16 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.practiceLiveTps.textContent = `${instantTps} TPS`;
         elements.practiceLiveStep.textContent = `Step ${matchResult.matchedCount} / ${matchResult.totalMoves}`;
 
+        // Highlight matched tokens in practiceAlgBox
+        const targetMoves = matchResult.targetMoves || activePracticeCase.alg.split(/\s+/);
+        const tokens = targetMoves.map((m, idx) => {
+            let cls = 'move-token ' + getMoveColorClass(m);
+            if (idx < matchResult.matchedCount) cls += ' token-done';
+            else if (idx === matchResult.matchedCount) cls += ' token-active';
+            return `<span class="${cls}">${m}</span>`;
+        }).join(' ');
+        elements.practiceAlgBox.innerHTML = tokens;
+
         if (matchResult.isComplete) {
             // Algorithm Finished!
             if (practiceTimerInterval) {
@@ -2409,21 +2774,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 practiceTimerInterval = null;
             }
             practiceState = 'COMPLETED';
+            practiceMistakeCount = 0;
             const finalSec = ((now - practiceStartTime) / 1000).toFixed(2);
             elements.practiceTimerDigits.textContent = finalSec;
             elements.practiceStatusBanner.className = 'practice-status-banner status-complete';
             elements.practiceStatusBanner.innerHTML = `<span>COMPLETED! Time: <strong>${finalSec}s</strong> @ <strong>${instantTps} TPS</strong></span>`;
             sound.playSolveComplete();
+
+            savePracticeAttempt({
+                id: 'pract_' + Date.now(),
+                caseId: activePracticeCase.id,
+                caseName: activePracticeCase.name,
+                time: finalSec,
+                tps: instantTps,
+                movesCount: practiceMoves.length,
+                timestamp: Date.now()
+            });
         } else if (matchResult.isMatch) {
             // Move matches prefix
+            practiceMistakeCount = 0;
             elements.practiceStatusBanner.className = 'practice-status-banner status-running';
             elements.practiceStatusBanner.innerHTML = `<span>Matching sequence... Next move: <strong>${matchResult.nextExpected}</strong></span>`;
         } else {
             // Wrong move / deviation
-            practiceState = 'DEVIATED';
-            elements.practiceStatusBanner.className = 'practice-status-banner status-warning';
-            elements.practiceStatusBanner.innerHTML = `<span>Wrong move (${moveStr})! Expected <strong>${matchResult.nextExpected}</strong></span>`;
-            sound.playScrambleWarning();
+            practiceMistakeCount++;
+            if (practiceMistakeCount < 3) {
+                practiceState = 'DEVIATED';
+                elements.practiceStatusBanner.className = 'practice-status-banner status-warning';
+                elements.practiceStatusBanner.innerHTML = `<span>Wrong move (${moveStr})! Mistake ${practiceMistakeCount}/3. Expected: <strong>${matchResult.nextExpected}</strong></span>`;
+                sound.playScrambleWarning();
+            } else {
+                // >= 3 Mistakes: Auto Restart Alg
+                resetPracticeAttempt();
+                elements.practiceStatusBanner.className = 'practice-status-banner status-warning';
+                elements.practiceStatusBanner.innerHTML = `<span>3 wrong moves reached. Algorithm automatically restarted!</span>`;
+                sound.playScrambleWarning();
+            }
         }
     }
 
@@ -2464,13 +2850,124 @@ document.addEventListener('DOMContentLoaded', () => {
     // -------------------------------------------------------------
     // 10. Settings & Modal Controls
     // -------------------------------------------------------------
+    function updateAssistantDecryptionStatus(isValid, mac) {
+        if (!elements.assistantDecryptionBanner || !elements.assistantDecryptionText) return;
+        if (isValid) {
+            elements.assistantDecryptionBanner.style.background = 'rgba(16, 185, 129, 0.12)';
+            elements.assistantDecryptionBanner.style.borderColor = 'rgba(16, 185, 129, 0.35)';
+            elements.assistantDecryptionBanner.style.color = '#34D399';
+            elements.assistantDecryptionText.textContent = `🟢 密钥匹配成功：魔方数据实时解密正常 (MAC: ${mac || bluetooth.macOverride})`;
+        } else {
+            elements.assistantDecryptionBanner.style.background = 'rgba(239, 68, 68, 0.12)';
+            elements.assistantDecryptionBanner.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+            elements.assistantDecryptionBanner.style.color = '#F87171';
+            elements.assistantDecryptionText.textContent = `⚠️ 解密失败：MAC (${mac || bluetooth.macOverride}) 与新魔方不匹配。请在下方填入正确的物理 MAC 地址。`;
+        }
+    }
+
+    function updateAssistantLiveMove(moveStr) {
+        if (!elements.assistantMoveStrip) return;
+        const colorCls = getMoveColorClass(moveStr);
+        const chip = document.createElement('span');
+        chip.className = `move-token ${colorCls} token-active`;
+        chip.style.fontSize = '0.9rem';
+        chip.style.padding = '0.2rem 0.6rem';
+        chip.style.fontWeight = '800';
+        chip.style.borderRadius = '6px';
+        chip.textContent = moveStr;
+        
+        if (elements.assistantMoveStrip.querySelector('span[style*="italic"]')) {
+            elements.assistantMoveStrip.innerHTML = '';
+        }
+        elements.assistantMoveStrip.appendChild(chip);
+        if (elements.assistantMoveStrip.children.length > 8) {
+            elements.assistantMoveStrip.removeChild(elements.assistantMoveStrip.firstChild);
+        }
+        if (elements.assistantTestStatus) {
+            elements.assistantTestStatus.textContent = '🟢 转动信号接收正常 (解密成功)';
+            elements.assistantTestStatus.style.color = '#10B981';
+        }
+    }
+
+    function openMacAssistantModal() {
+        if (!elements.modalMacAssistant) return;
+        if (elements.assistantDeviceName) {
+            elements.assistantDeviceName.textContent = (bluetooth.device && bluetooth.device.name) ? bluetooth.device.name : (isCubeConnected ? '已连接魔方' : '未连接');
+        }
+        if (elements.assistantProtocolBadge) {
+            elements.assistantProtocolBadge.textContent = `GAN Gen${bluetooth.protocolVersion || 4} (${bluetooth.protocolVersion === 4 ? 'AES-128' : '标准'})`;
+        }
+        if (elements.inputAssistantMac) {
+            elements.inputAssistantMac.value = (bluetooth.macOverride || '0c:3d:5e:be:8e:95').toUpperCase();
+        }
+        updateAssistantDecryptionStatus(bluetooth.decryptionFailCount === 0 && isCubeConnected, bluetooth.macOverride);
+        elements.modalMacAssistant.classList.add('active');
+    }
+
+    function formatMacInput(inputEl) {
+        if (!inputEl) return;
+        inputEl.addEventListener('input', (e) => {
+            let raw = e.target.value.replace(/[^0-9a-fA-F]/g, '').toUpperCase();
+            if (raw.length > 12) raw = raw.slice(0, 12);
+            const formatted = raw.match(/.{1,2}/g)?.join(':') || raw;
+            e.target.value = formatted;
+        });
+    }
+    formatMacInput(elements.inputAssistantMac);
+    formatMacInput(elements.inputMacOverride);
+
+    if (elements.btnOpenMacAssistant) {
+        elements.btnOpenMacAssistant.addEventListener('click', () => openMacAssistantModal());
+    }
+    if (elements.btnOpenMacAssistantFromLog) {
+        elements.btnOpenMacAssistantFromLog.addEventListener('click', () => openMacAssistantModal());
+    }
+    if (elements.btnCloseMacAssistant) {
+        elements.btnCloseMacAssistant.addEventListener('click', () => {
+            if (elements.modalMacAssistant) elements.modalMacAssistant.classList.remove('active');
+        });
+    }
+
+    document.querySelectorAll('.preset-mac-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const mac = btn.dataset.mac;
+            if (mac && elements.inputAssistantMac) {
+                elements.inputAssistantMac.value = mac.toUpperCase();
+                bluetooth.setMacOverride(mac);
+                if (elements.inputMacOverride) elements.inputMacOverride.value = mac;
+                showToast(`已应用 MAC: ${mac}`);
+            }
+        });
+    });
+
+    if (elements.btnAssistantApplyMac) {
+        elements.btnAssistantApplyMac.addEventListener('click', () => {
+            const val = elements.inputAssistantMac ? elements.inputAssistantMac.value.trim() : '';
+            if (val) {
+                bluetooth.setMacOverride(val);
+                if (elements.inputMacOverride) elements.inputMacOverride.value = val;
+                showToast(`MAC 地址已更新并应用: ${val}`);
+                appendBtLog('system', `手动设置 MAC 衍生地址: ${val}`);
+            }
+        });
+    }
+
+    if (elements.btnAssistantReconnect) {
+        elements.btnAssistantReconnect.addEventListener('click', async () => {
+            if (elements.modalMacAssistant) elements.modalMacAssistant.classList.remove('active');
+            try {
+                await bluetooth.connect();
+            } catch (_) {}
+        });
+    }
+
     elements.inputMacOverride.value = bluetooth.macOverride;
     elements.btnSaveMac.addEventListener('click', () => {
         const val = elements.inputMacOverride.value.trim();
         if (val) {
             bluetooth.setMacOverride(val);
             localStorage.setItem('cube_mac_override', val);
-            alert(`MAC override saved: ${val}`);
+            showToast(`MAC 地址已保存: ${val}`);
         }
     });
 

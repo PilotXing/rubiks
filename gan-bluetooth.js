@@ -176,11 +176,100 @@
     }
 
     /**
+     * Extract MAC address from Manufacturer Specific Data (GAN Advertising packet)
+     */
+    function extractMACFromManufacturerData(manufacturerData) {
+        if (!manufacturerData) return null;
+        let dataView = null;
+        if (manufacturerData instanceof DataView) {
+            dataView = new DataView(manufacturerData.buffer.slice(2, 11));
+        } else if (typeof manufacturerData.has === 'function' && typeof manufacturerData.get === 'function') {
+            for (let i = 0; i < 256; i++) {
+                const cid = (i << 8) | 0x01;
+                if (manufacturerData.has(cid)) {
+                    dataView = new DataView(manufacturerData.get(cid).buffer.slice(0, 9));
+                    break;
+                }
+            }
+            if (!dataView && typeof manufacturerData.entries === 'function') {
+                for (let [_k, v] of manufacturerData.entries()) {
+                    if (v && v.byteLength >= 6) {
+                        dataView = new DataView(v.buffer.slice(0, 9));
+                        break;
+                    }
+                }
+            }
+        }
+        if (dataView && dataView.byteLength >= 6) {
+            const mac = [];
+            for (let i = 1; i <= 6; i++) {
+                mac.push(dataView.getUint8(dataView.byteLength - i).toString(16).toUpperCase().padStart(2, "0"));
+            }
+            return mac.join(":");
+        }
+        return null;
+    }
+
+    /**
+     * Auto-retrieve MAC from Web Bluetooth watchAdvertisements API
+     */
+    async function autoRetrieveMacAddress(device) {
+        if (!device || typeof device.watchAdvertisements !== 'function') {
+            return null;
+        }
+        return new Promise((resolve) => {
+            let done = false;
+            const abortController = typeof AbortController !== 'undefined' ? new AbortController() : null;
+            const finish = (mac) => {
+                if (done) return;
+                done = true;
+                device.removeEventListener("advertisementreceived", onAdvEvent);
+                if (abortController) {
+                    try { abortController.abort(); } catch (_) {}
+                }
+                resolve(mac || null);
+            };
+            const onAdvEvent = (evt) => {
+                const mac = extractMACFromManufacturerData(evt.manufacturerData);
+                finish(mac);
+            };
+            device.addEventListener("advertisementreceived", onAdvEvent);
+            const opts = abortController ? { signal: abortController.signal } : {};
+            device.watchAdvertisements(opts).catch(() => finish(null));
+            setTimeout(() => finish(null), 2500);
+        });
+    }
+
+    /**
+     * Try reading IEEE MAC from Device Information Service (0x180A -> 0x2A23 System ID)
+     */
+    async function tryReadSystemId(server) {
+        try {
+            const devInfoService = await server.getPrimaryService("0000180a-0000-1000-8000-00805f9b34fb");
+            if (devInfoService) {
+                const sysIdChar = await devInfoService.getCharacteristic("00002a23-0000-1000-8000-00805f9b34fb");
+                const val = await sysIdChar.readValue();
+                if (val && val.byteLength >= 8) {
+                    const b = new Uint8Array(val.buffer);
+                    const macParts = [b[0], b[1], b[2], b[5], b[6], b[7]];
+                    const mac = macParts.map(x => x.toString(16).toUpperCase().padStart(2, '0')).join(':');
+                    return mac;
+                }
+            }
+        } catch (_) {}
+        return null;
+    }
+
+    /**
      * Main GAN Bluetooth Adapter
      */
     class GanBluetoothAdapter {
         constructor(options = {}) {
-            this.macOverride = options.macOverride || "0c:3d:5e:be:8e:95";
+            let savedMac = null;
+            try {
+                savedMac = localStorage.getItem('cube_mac_override');
+            } catch (_) {}
+            this.macOverride = (options.macOverride && options.macOverride.trim()) || (savedMac && savedMac.trim()) || "0c:3d:5e:be:8e:95";
             this.device = null;
             this.server = null;
             this.service = null;
@@ -188,6 +277,7 @@
             this.notifyCharacteristic = null;
             this.encrypter = null;
             this.protocolVersion = 4; // default Gen4
+            this.decryptionFailCount = 0;
 
             this.state = 'DISCONNECTED'; // DISCONNECTED, CONNECTING, CONNECTED
             this.listeners = {
@@ -197,7 +287,10 @@
                 status: [],
                 disconnect: [],
                 error: [],
-                raw: []
+                raw: [],
+                mac_discovered: [],
+                mac_invalid: [],
+                decryption_valid: []
             };
 
             // Protocol tracking state
@@ -234,7 +327,27 @@
         }
 
         setMacOverride(mac) {
-            this.macOverride = mac.trim();
+            if (!mac || !mac.trim()) {
+                this.macOverride = "0c:3d:5e:be:8e:95";
+            } else {
+                this.macOverride = mac.trim().toLowerCase();
+            }
+            try {
+                localStorage.setItem('cube_mac_override', this.macOverride);
+            } catch (_) {}
+
+            // Re-derive AES key on the fly if already connected
+            if (this.state === 'CONNECTED' && this.device) {
+                const saltBytes = this.macOverride.split(/[:-\s]+/).map(c => parseInt(c, 16)).reverse();
+                const salt = new Uint8Array(saltBytes);
+                const keyDef = (this.device.name && this.device.name.startsWith('AiCube'))
+                    ? GAN_ENCRYPTION_KEYS[1]
+                    : GAN_ENCRYPTION_KEYS[0];
+                this.encrypter = new GanCubeEncrypter(keyDef.key, keyDef.iv, salt);
+                this.decryptionFailCount = 0;
+                setTimeout(() => this.requestFacelets(), 100);
+                setTimeout(() => this.requestBattery(), 300);
+            }
         }
 
         setState(newState) {
@@ -259,13 +372,27 @@
                     { namePrefix: "AiCube" },
                     { namePrefix: "Moyu" }
                 ],
-                optionalServices: [GAN_GEN4_SERVICE, GAN_GEN3_SERVICE, GAN_GEN2_SERVICE],
+                optionalServices: [
+                    GAN_GEN4_SERVICE,
+                    GAN_GEN3_SERVICE,
+                    GAN_GEN2_SERVICE,
+                    "0000180a-0000-1000-8000-00805f9b34fb"
+                ],
                 optionalManufacturerData: Array(256).fill(undefined).map((_v, i) => (i << 8) | 0x01)
             };
 
             this.setState('CONNECTING');
             this.device = await navigator.bluetooth.requestDevice(ganV4RequestOptions);
             this.device.addEventListener('gattserverdisconnected', () => this.handleDisconnect());
+
+            // Attempt background advertising MAC extraction if supported
+            autoRetrieveMacAddress(this.device).then(advMac => {
+                if (advMac) {
+                    this.setMacOverride(advMac);
+                    this.emit('mac_discovered', { mac: advMac, source: 'advertising' });
+                }
+            }).catch(() => {});
+
             return this.device;
         }
 
@@ -285,6 +412,13 @@
             try {
                 // 1. Connect GATT Server
                 this.server = await this.device.gatt.connect();
+
+                // Try reading IEEE MAC from Device Information Service (System ID) if present
+                const sysIdMac = await tryReadSystemId(this.server);
+                if (sysIdMac) {
+                    this.setMacOverride(sysIdMac);
+                    this.emit('mac_discovered', { mac: sysIdMac, source: 'system_id' });
+                }
 
                 // 2. Discover primary services and determine protocol version
                 const services = await this.server.getPrimaryServices();
@@ -333,6 +467,7 @@
                     : GAN_ENCRYPTION_KEYS[0];
 
                 this.encrypter = new GanCubeEncrypter(keyDef.key, keyDef.iv, salt);
+                this.decryptionFailCount = 0;
 
                 // 4. Start Notifications
                 this.notifyCharacteristic.addEventListener('characteristicvaluechanged', (evt) => {
@@ -405,12 +540,31 @@
                 decrypted = this.encrypter.decrypt(rawBytes);
             } catch (err) {
                 console.error("Decryption error:", err);
+                this.emit('mac_invalid', { mac: this.macOverride, error: err });
                 return;
             }
 
             const nowMs = getMonotonicMs();
 
             if (this.protocolVersion === 4) {
+                const eventType = decrypted[0];
+                const isValidHeader = [0x01, 0xED, 0xEF, 0xD2, 0xDD, 0x02, 0x07].includes(eventType);
+                if (!isValidHeader) {
+                    this.decryptionFailCount = (this.decryptionFailCount || 0) + 1;
+                    if (this.decryptionFailCount >= 3) {
+                        this.emit('mac_invalid', {
+                            mac: this.macOverride,
+                            deviceName: this.device ? this.device.name : 'GAN Gen4 Cube',
+                            protocol: 'GAN Gen4'
+                        });
+                    }
+                    return;
+                } else {
+                    if (this.decryptionFailCount > 0) {
+                        this.decryptionFailCount = 0;
+                    }
+                    this.emit('decryption_valid', { mac: this.macOverride });
+                }
                 this.parseGen4Packet(decrypted, nowMs);
             } else if (this.protocolVersion === 3) {
                 this.parseGen3Packet(decrypted, nowMs);

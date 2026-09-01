@@ -538,3 +538,54 @@
     - Mathematically verified: Step 0 is placed exactly at $W/2$, and each successive step glides into the exact horizontal center without any offset or overflow.
 - [x] **Version Upgrade**:
     - Bumped to `v17.4` (sw.js cache `rubiks-timer-v17.4`).
+
+## 31 AUG Comprehensive Enhancement & Practice Overhaul (v18.0)
+- [x] **Module Button Text Contrast & Visibility Fix (模块胶囊按钮高亮文字可见性彻底修复)**:
+    - Fixed CSS cascade conflict where `.module-chip-btn.active .module-chip-text` inherited identical foreground and background colors.
+    - Applied high-contrast white typography (`#FFFFFF`) and drop shadows across all themes (Apple, Material, Flat, Dark, Light) for **本次分析**, **3D魔方**, **历史**, **切打乱/切计时**.
+- [x] **Mobile Landscape Layout Optimization (横屏布局深度优化)**:
+    - Added dedicated responsive `@media (orientation: landscape) and (max-height: 580px)` styles.
+    - Side-by-side 2-column layout (Arena left, views right) with compressed header height and maximized timer digits.
+- [x] **Scramble Reel Smooth Fluid Motion & Overall View Bar (视轨平滑平移与全览序列微条)**:
+    - Added in-place DOM transform translation with Apple spring physics (`cubic-bezier(0.22, 1, 0.36, 1)`), eliminating step jumps.
+    - Added configurable visible preview options (`1`, `2`, `3`, `4`, `5`, `6`, `7` steps).
+    - Added **Overall View** mini sequence bar below the reel with live step highlighting.
+- [x] **Distraction-Free Focus Modes (打乱与复原沉浸专注模式)**:
+    - `is-scrambling`: Dims non-essential background cards and toolbars during physical scrambling.
+    - `is-solving`: Hides everything except the ultra-large digital timer during solve runs; restores full UI upon completion.
+- [x] **ECharts Stage Tag Staggering & TPS Curve Smoothing (复原分析标签防重叠与 TPS 曲线平滑)**:
+    - Implemented 3-level staggered vertical positioning for method stage tags (`markArea`), eliminating collisions on short stages.
+    - Added rolling moving-average window calculation for TPS curve to remove single-step needle spikes.
+- [x] **Trend Progress Statistics Bar (趋势图下方综合统计面板)**:
+    - Added rich statistics grid below `#canvas-trend-main` displaying Solves Count, Best, Worst, Mean, Ao5, Ao12, AoX, and Standard Deviation ($\sigma$).
+- [x] **Practice Mode Full Overhaul (专项练习模式全功能升级)**:
+    - Restructured Arena UI: Large digital timer on top, colorized alg focus strip below.
+    - Added 24-orientation invariant matching engine (`AlgDatabase.matchSequence`) for stateless, relative move tracking.
+    - Smart mistake handling: $< 3$ wrong moves shows correction and shake; $\ge 3$ wrong moves automatically restarts alg.
+    - Added attempt history tracking in `localStorage`, case attempt progress trend curve, and recent attempts table.
+- [x] **Version Upgrade**:
+    - Bumped to `v18.0` (sw.js cache `rubiks-timer-v18.0`).
+
+## Smart Cube Bluetooth & MAC Assistant Engine (v18.2)
+- [x] **Smart Cube Automatic MAC Extraction & Discovery (智能魔方 MAC 自动提取与发现机制)**:
+    - Implemented Web Bluetooth `watchAdvertisements` API listener capturing GAN Manufacturer Specific Data packets (`[0x0001 ... 0xFF01]`) and extracting the exact 6-byte hardware MAC address.
+    - Added GATT Device Information Service (`0x180A`) System ID (`0x2A23`) IEEE MAC reading.
+- [x] **Decryption Validation & Dynamic Key Re-Salting (解密健康度检测与实时无缝重加密)**:
+    - Automatically checks decrypted packet event headers (`0x01`, `0xED`, `0xEF`, etc.).
+    - When an unmatched MAC is detected, triggers the `mac_invalid` event and notifies user to configure MAC.
+    - Allows changing MAC address on-the-fly without disconnecting Bluetooth.
+- [x] **Smart Cube BLE & MAC Assistant Modal (内置智能魔方蓝牙与 MAC 助手弹窗)**:
+    - Created dedicated `#modal-mac-assistant` with live device info, connection status, decryption health banner, quick preset buttons, auto-formatted MAC input, live physical turn test strip, and illustrated guide.
+- [x] **Version Upgrade**:
+    - Bumped to `v18.2` (sw.js cache `rubiks-timer-v18.2`).
+
+## 01 SEP Bluetooth Recovery & Syntax Fix (v18.4)
+- [x] **Resolved Fatal Bluetooth GATT Connection Syntax Error (修复蓝牙连接致命语法错误)**:
+    - Fixed duplicated catch/closure block in `gan-bluetooth.js` that caused browser JS parse error, unblocking the entire Bluetooth subsystem.
+    - Added automatic MAC discovery through Web Bluetooth `watchAdvertisements` and Device Information Service System ID (`0x2A23`).
+    - Verified all core features: Scramble Reel smooth centering, Practice Mode relative matching, Distraction-Free Focus, Trend Analytics, and Smart Cube MAC Assistant.
+- [x] **Version Upgrade**:
+    - Bumped to `v18.4` (sw.js cache `rubiks-timer-v18.4`).
+
+
+

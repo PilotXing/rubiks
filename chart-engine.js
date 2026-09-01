@@ -596,12 +596,24 @@
             const xData = moves.map((m, i) => `#${i + 1} ${m.move || ''}`);
             const cumulativeSecData = moves.map(m => Number(((m.calibratedElapsedMs || m.elapsedMs || 0) / 1000).toFixed(3)));
             const stepDeltaSecData = moves.map(m => Number(((m.deltaMs || 0) / 1000).toFixed(3)));
-            const instantTpsData = moves.map(m => {
+            
+            // Raw Instant TPS
+            const rawTpsData = moves.map(m => {
                 const sec = (m.deltaMs || 0) / 1000;
-                return sec > 0 ? Number((1 / sec).toFixed(2)) : 0;
+                return sec > 0 ? (1 / sec) : 0;
             });
 
-            // Stage markArea data
+            // Smooth TPS Curve with Configurable Rolling Window (Default 3 moves) to eliminate sharp needle peaks
+            const tpsWindow = Math.max(1, this.options.tpsSmoothingWindow || 3);
+            const smoothedTpsData = rawTpsData.map((val, idx) => {
+                const start = Math.max(0, idx - Math.floor(tpsWindow / 2));
+                const end = Math.min(rawTpsData.length, start + tpsWindow);
+                const slice = rawTpsData.slice(start, end);
+                const avg = slice.reduce((sum, v) => sum + v, 0) / slice.length;
+                return Number(avg.toFixed(2));
+            });
+
+            // Stage markArea data with Multi-Level Staggered Badges to prevent label collision
             const stages = (this.stages && this.stages.length > 0) ? this.stages : (this.options.stages || []);
             const markAreaData = [];
 
@@ -610,6 +622,9 @@
                     const moveCount = stg.moveCount !== undefined ? stg.moveCount : (stg.endIdx - stg.startIdx + 1);
                     const tpsVal = stg.tps !== undefined ? Number(stg.tps).toFixed(1) : (stg.durationMs > 0 ? (moveCount / (stg.durationMs / 1000)).toFixed(1) : '0.0');
                     const stgColor = stg.color || '#3B82F6';
+
+                    // 3-Level Staggered Vertical Offsets to avoid any overlap between short stages
+                    const verticalPos = (sIdx % 3 === 0) ? ['50%', '6px'] : ((sIdx % 3 === 1) ? ['50%', '30px'] : ['50%', '54px']);
 
                     markAreaData.push([
                         {
@@ -621,28 +636,28 @@
                             },
                             label: {
                                 show: this.options.showStageLabels !== false,
-                                position: (sIdx % 2 === 0) ? 'insideTop' : ['50%', '30px'],
-                                distance: 6,
+                                position: verticalPos,
+                                distance: 4,
                                 color: '#FFFFFF',
                                 backgroundColor: 'rgba(15, 23, 42, 0.94)',
                                 borderColor: stgColor,
                                 borderWidth: 1.5,
-                                borderRadius: 5,
-                                padding: [4, 7],
+                                borderRadius: 4,
+                                padding: [3, 6],
                                 shadowColor: 'rgba(0, 0, 0, 0.5)',
                                 shadowBlur: 6,
-                                formatter: `{moves|${moveCount}步}\n{tps|${tpsVal}}`,
+                                formatter: `{moves|${moveCount}步} {tps|${tpsVal}}`,
                                 rich: {
                                     moves: {
-                                        fontSize: 13,
+                                        fontSize: 11,
                                         fontWeight: '800',
                                         fontFamily: 'JetBrains Mono, monospace',
                                         color: '#FFFFFF',
                                         align: 'center',
-                                        lineHeight: 16
+                                        lineHeight: 14
                                     },
                                     tps: {
-                                        fontSize: 11,
+                                        fontSize: 10,
                                         fontWeight: '700',
                                         fontFamily: 'JetBrains Mono, monospace',
                                         color: '#38BDF8',
@@ -729,7 +744,7 @@
                         shadowColor: 'rgba(6, 182, 212, 0.45)',
                         shadowBlur: 8
                     },
-                    data: instantTpsData
+                    data: smoothedTpsData
                 });
             }
 
