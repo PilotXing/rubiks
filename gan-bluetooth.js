@@ -418,8 +418,22 @@
             this.setState('CONNECTING');
 
             try {
-                // 1. Connect GATT Server
-                this.server = await this.device.gatt.connect();
+                // 1. Connect GATT Server (with auto-retry for Android BLE timing)
+                let server = null;
+                for (let attempt = 1; attempt <= 2; attempt++) {
+                    try {
+                        server = await this.device.gatt.connect();
+                        if (server && server.connected) break;
+                    } catch (gattErr) {
+                        if (attempt === 1) {
+                            console.warn("GATT attempt 1 failed, retrying in 400ms...", gattErr);
+                            await new Promise(r => setTimeout(r, 400));
+                        } else {
+                            throw gattErr;
+                        }
+                    }
+                }
+                this.server = server || this.device.gatt;
 
                 // 2. Discover primary services and determine protocol version
                 const services = await this.server.getPrimaryServices();

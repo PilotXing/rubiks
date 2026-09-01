@@ -1362,6 +1362,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.btnModalConnect.textContent = '⏳ 正在连接...';
             }
             appendBtLog('system', '正在启动蓝牙设备扫描 (Web Bluetooth API)...');
+            appendBtLog('system', '💡 [提示] 请在连接时【转动魔方几下】以唤醒魔方蓝牙广播（防止魔方休眠无法建立通信）');
             await bluetooth.connect();
         } catch (err) {
             console.error("Connection failed:", err);
@@ -1371,6 +1372,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (elements.btCapsuleLabel) elements.btCapsuleLabel.textContent = '连接魔方';
             appendBtLog('err', `连接失败: ${err.name || 'Error'}: ${err.message || err}`);
+            if (err.name === 'NetworkError' || (err.message && err.message.includes('Connection attempt failed'))) {
+                appendBtLog('warn', '💡 [原因排查与解决]：');
+                appendBtLog('warn', '  1. 魔方休眠：智能魔方静置约 30 秒会自动关闭蓝牙进入休眠，请转动魔方任意一层几下将其唤醒，然后立即重试连接。');
+                appendBtLog('warn', '  2. 被其他软件占用：请确认手机后台没有开启 CubeStation、微信魔方小程序或其他已连接魔方的软件。');
+                appendBtLog('warn', '  3. 手机蓝牙偶发卡死：若多次超时，请在手机下拉菜单中关闭蓝牙再重新打开。');
+            }
             if (!err.message || (!err.message.includes('User cancelled') && !err.message.includes('cancelled') && err.name !== 'NotFoundError')) {
                 showToast(`蓝牙连接失败: ${err.message || err}`);
                 openBluetoothLogModal();
