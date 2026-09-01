@@ -427,15 +427,6 @@
 
             this.device = device;
             this.device.addEventListener('gattserverdisconnected', () => this.handleDisconnect());
-
-            // Attempt background advertising MAC extraction if supported
-            autoRetrieveMacAddress(this.device).then(advMac => {
-                if (advMac) {
-                    this.setMacOverride(advMac);
-                    this.emit('mac_discovered', { mac: advMac, source: 'advertising' });
-                }
-            }).catch(() => {});
-
             return this.device;
         }
 
@@ -453,14 +444,11 @@
             this.setState('CONNECTING');
 
             try {
-                // 1. Connect GATT Server
-                this.server = await this.device.gatt.connect();
-
-                // Try reading IEEE MAC from Device Information Service (System ID) if present
-                const sysIdMac = await tryReadSystemId(this.server);
-                if (sysIdMac) {
-                    this.setMacOverride(sysIdMac);
-                    this.emit('mac_discovered', { mac: sysIdMac, source: 'system_id' });
+                // 1. Connect GATT Server (support already connected or new connection)
+                if (!this.device.gatt.connected) {
+                    this.server = await this.device.gatt.connect();
+                } else {
+                    this.server = this.device.gatt;
                 }
 
                 // 2. Discover primary services and determine protocol version
