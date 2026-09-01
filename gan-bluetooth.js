@@ -365,24 +365,67 @@
                 throw new Error("Web Bluetooth API is not supported in this browser. Please use Chrome, Edge, or Bluefy.");
             }
 
-            const ganV4RequestOptions = {
-                filters: [
-                    { namePrefix: "GAN" },
-                    { namePrefix: "MG" },
-                    { namePrefix: "AiCube" },
-                    { namePrefix: "Moyu" }
-                ],
-                optionalServices: [
-                    GAN_GEN4_SERVICE,
-                    GAN_GEN3_SERVICE,
-                    GAN_GEN2_SERVICE,
-                    "0000180a-0000-1000-8000-00805f9b34fb"
-                ],
-                optionalManufacturerData: Array(256).fill(undefined).map((_v, i) => (i << 8) | 0x01)
-            };
+            const optionalServices = [
+                GAN_GEN4_SERVICE,
+                GAN_GEN3_SERVICE,
+                GAN_GEN2_SERVICE,
+                "0000180a-0000-1000-8000-00805f9b34fb"
+            ];
+
+            const filters = [
+                { namePrefix: "GAN" },
+                { namePrefix: "gan" },
+                { namePrefix: "Gan" },
+                { namePrefix: "MG" },
+                { namePrefix: "mg" },
+                { namePrefix: "Monster" },
+                { namePrefix: "AiCube" },
+                { namePrefix: "aicube" },
+                { namePrefix: "Moyu" },
+                { namePrefix: "moyu" },
+                { namePrefix: "MY" },
+                { namePrefix: "Smart" },
+                { namePrefix: "smart" },
+                { namePrefix: "Gi" },
+                { namePrefix: "Go" },
+                { namePrefix: "Rubik" }
+            ];
 
             this.setState('CONNECTING');
-            this.device = await navigator.bluetooth.requestDevice(ganV4RequestOptions);
+
+            let device = null;
+            try {
+                // Try 1: with optionalManufacturerData for instant hardware MAC extraction
+                device = await navigator.bluetooth.requestDevice({
+                    filters: filters,
+                    optionalServices: optionalServices,
+                    optionalManufacturerData: Array(256).fill(undefined).map((_v, i) => (i << 8) | 0x01)
+                });
+            } catch (err) {
+                if (err.name === 'NotFoundError' || err.name === 'SecurityError') {
+                    this.setState('DISCONNECTED');
+                    throw err;
+                }
+                try {
+                    // Try 2: standard filters without optionalManufacturerData
+                    device = await navigator.bluetooth.requestDevice({
+                        filters: filters,
+                        optionalServices: optionalServices
+                    });
+                } catch (err2) {
+                    if (err2.name === 'NotFoundError' || err2.name === 'SecurityError') {
+                        this.setState('DISCONNECTED');
+                        throw err2;
+                    }
+                    // Try 3: universal acceptAllDevices fallback
+                    device = await navigator.bluetooth.requestDevice({
+                        acceptAllDevices: true,
+                        optionalServices: optionalServices
+                    });
+                }
+            }
+
+            this.device = device;
             this.device.addEventListener('gattserverdisconnected', () => this.handleDisconnect());
 
             // Attempt background advertising MAC extraction if supported
