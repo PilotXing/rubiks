@@ -142,6 +142,8 @@ document.addEventListener('DOMContentLoaded', () => {
         groupScrambleVisibleSteps: document.getElementById('group-scramble-visible-steps'),
         selectScrambleVisiblePrev: document.getElementById('select-scramble-visible-prev'),
         selectScrambleVisibleNext: document.getElementById('select-scramble-visible-next'),
+        groupScrambleMotionCurve: document.getElementById('group-scramble-motion-curve'),
+        selectReelMotionCurve: document.getElementById('select-reel-motion-curve'),
         selectUiStyle: document.getElementById('select-ui-style'),
         selectAccentColor: document.getElementById('select-accent-color'),
         selectTheme: document.getElementById('select-theme'),
@@ -272,7 +274,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // State Variables: Style & Color Themes (Orthogonal Multi-Switching)
     let currentView = 'view-timer';
     let currentScramble = '';
-    let isAwaitingScrambleTurn = false;
     let currentUiStyle = localStorage.getItem('timer_ui_style') || localStorage.getItem('timer_theme') || 'dark';
     let currentAccentColor = localStorage.getItem('timer_accent_color') || 'emerald';
 
@@ -318,16 +319,62 @@ document.addEventListener('DOMContentLoaded', () => {
     let scrambleVisiblePrev = parseInt(localStorage.getItem('rubiks_scramble_visible_prev') || '1', 10);
     let scrambleVisibleNext = parseInt(localStorage.getItem('rubiks_scramble_visible_next') || '5', 10);
 
+    const REEL_CURVE_PRESETS = {
+        apple: {
+            durationSec: 0.28,
+            curve: 'cubic-bezier(0.22, 1, 0.36, 1)',
+            css: 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)'
+        },
+        snappy: {
+            durationSec: 0.15,
+            curve: 'cubic-bezier(0.18, 0.89, 0.32, 1.25)',
+            css: 'transform 0.15s cubic-bezier(0.18, 0.89, 0.32, 1.25)'
+        },
+        mechanical: {
+            durationSec: 0.20,
+            curve: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
+            css: 'transform 0.20s cubic-bezier(0.25, 0.1, 0.25, 1)'
+        },
+        bouncy: {
+            durationSec: 0.35,
+            curve: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+            css: 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)'
+        },
+        silky: {
+            durationSec: 0.42,
+            curve: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            css: 'transform 0.42s cubic-bezier(0.16, 1, 0.3, 1)'
+        },
+        instant: {
+            durationSec: 0,
+            curve: 'linear',
+            css: 'none'
+        }
+    };
+
+    let reelMotionCurvePreset = localStorage.getItem('rubiks_reel_curve_preset') || 'apple';
+    if (!REEL_CURVE_PRESETS[reelMotionCurvePreset]) reelMotionCurvePreset = 'apple';
+
+    function getReelMotionConfig() {
+        return REEL_CURVE_PRESETS[reelMotionCurvePreset] || REEL_CURVE_PRESETS.apple;
+    }
+
     if (elements.selectScrambleDisplayStyle) {
         elements.selectScrambleDisplayStyle.value = scrambleDisplayStyle;
         if (elements.groupScrambleVisibleSteps) {
             elements.groupScrambleVisibleSteps.style.display = scrambleDisplayStyle === 'reel' ? 'block' : 'none';
+        }
+        if (elements.groupScrambleMotionCurve) {
+            elements.groupScrambleMotionCurve.style.display = scrambleDisplayStyle === 'reel' ? 'block' : 'none';
         }
         elements.selectScrambleDisplayStyle.addEventListener('change', () => {
             scrambleDisplayStyle = elements.selectScrambleDisplayStyle.value;
             localStorage.setItem('rubiks_scramble_display_style', scrambleDisplayStyle);
             if (elements.groupScrambleVisibleSteps) {
                 elements.groupScrambleVisibleSteps.style.display = scrambleDisplayStyle === 'reel' ? 'block' : 'none';
+            }
+            if (elements.groupScrambleMotionCurve) {
+                elements.groupScrambleMotionCurve.style.display = scrambleDisplayStyle === 'reel' ? 'block' : 'none';
             }
             renderScrambleDisplay(tracker ? tracker.currentStep : 0);
         });
@@ -348,6 +395,16 @@ document.addEventListener('DOMContentLoaded', () => {
             scrambleVisibleNext = parseInt(elements.selectScrambleVisibleNext.value, 10);
             localStorage.setItem('rubiks_scramble_visible_next', scrambleVisibleNext);
             renderScrambleDisplay(tracker ? tracker.currentStep : 0);
+        });
+    }
+
+    if (elements.selectReelMotionCurve) {
+        elements.selectReelMotionCurve.value = reelMotionCurvePreset;
+        elements.selectReelMotionCurve.addEventListener('change', () => {
+            reelMotionCurvePreset = elements.selectReelMotionCurve.value;
+            if (!REEL_CURVE_PRESETS[reelMotionCurvePreset]) reelMotionCurvePreset = 'apple';
+            localStorage.setItem('rubiks_reel_curve_preset', reelMotionCurvePreset);
+            showToast(`已切换视轨曲线: ${elements.selectReelMotionCurve.options[elements.selectReelMotionCurve.selectedIndex].text}`);
         });
     }
 
@@ -746,11 +803,14 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    function setTrackPosition(offsetPx, animate = false, durationSec = 0.20, curve = 'cubic-bezier(0.2, 0.9, 0.3, 1)') {
+    function setTrackPosition(offsetPx, animate = false, durationSec = null, curve = null) {
         const track = carouselElements.track || document.getElementById('scramble-carousel-track');
         if (!track) return;
-        if (animate) {
-            track.style.transition = `transform ${durationSec}s ${curve}`;
+        const motionCfg = getReelMotionConfig();
+        const dur = durationSec !== null ? durationSec : motionCfg.durationSec;
+        const crv = curve !== null ? curve : motionCfg.curve;
+        if (animate && dur > 0) {
+            track.style.transition = `transform ${dur}s ${crv}`;
         } else {
             track.style.transition = 'none';
         }
@@ -786,10 +846,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const moves = (currentStr || '').trim().split(/\s+/).filter(Boolean);
             
             if (currentTrack && existingMoves.length === moves.length && scrambleDisplayStyle !== 'grid') {
-                // In-place fluid update with linear-acceleration spring transition
+                // In-place fluid update with customizable motion curve preset
                 const clampedActiveIdx = Math.min(activeIdx, Math.max(0, moves.length - 1));
                 const offsetPx = - (clampedActiveIdx * 50 + 25);
-                currentTrack.style.transition = 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)';
+                const motionCfg = getReelMotionConfig();
+                currentTrack.style.transition = motionCfg.css;
                 currentTrack.style.transform = `translate3d(${offsetPx}px, 0, 0)`;
                 currentTrack.style.setProperty('--track-x', `${offsetPx}px`);
 
@@ -923,7 +984,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Pre-calculate next preview for continuous slide-in
         pendingNextScramble = generateWcaScramble(21);
 
-        isAwaitingScrambleTurn = false;
         currentScramble = scrambleStr;
         timer.setScramble(currentScramble);
         tracker.setScramble(currentScramble);
@@ -1490,7 +1550,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (physicalCube.isSolved()) {
                 timer.stopTimer();
             }
-        } else if (timer.state !== 'READY' && timer.state !== 'INSPECTION' && !isAwaitingScrambleTurn) {
+        } else if (timer.state !== 'READY' && timer.state !== 'INSPECTION') {
             const evalResult = tracker.setCurrentCubeState(data.cp, data.co, data.ep, data.eo);
             updateScrambleStatus(evalResult);
         }

@@ -34,7 +34,7 @@
                     </svg>
                 </span>
                 <span class="brand-title">Rubik Vision</span>
-                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v18.7</span>
+                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v18.8</span>
             </div>
 
             <div class="header-actions">
@@ -672,6 +672,22 @@
                     </div>
                 </div>
 
+                <div class="form-group" id="group-scramble-motion-curve">
+                    <label for="select-reel-motion-curve" style="display: flex; align-items: center; gap: 0.35rem;">
+                        <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12A10 10 0 0 0 12 2v10z"></path><path d="M2 12a10 10 0 0 0 10 10V12z"></path></svg>
+                        <span>打乱视轨移动动画与速度曲线 (Reel Motion Curve):</span>
+                    </label>
+                    <select id="select-reel-motion-curve" class="form-control">
+                        <option value="apple" selected>🍎 苹果流体弹簧 (Apple Fluid Spring - 0.28s 推荐)</option>
+                        <option value="snappy">⚡ 极致疾速 / 极速跟手 (Ultra Snappy - 0.15s)</option>
+                        <option value="mechanical">🎯 纯粹机械 / 干净利落 (Crisp Mechanical - 0.20s)</option>
+                        <option value="bouncy">💫 灵动弹性 / 动感果冻 (Bouncy Jelly - 0.35s)</option>
+                        <option value="silky">🌊 柔和丝滑 / 顺滑阻尼 (Silky Smooth - 0.42s)</option>
+                        <option value="instant">⚡ 零延迟瞬间到位 (Instant Jump - 0s)</option>
+                    </select>
+                    <small style="color: var(--text-muted);">调节转动魔方时视轨卡片横向居中滑动的响应速度与物理加速度曲线。</small>
+                </div>
+
                 <div class="form-group">
                     <label class="form-check">
                         <input type="checkbox" id="toggle-inspection">
@@ -1040,20 +1056,20 @@
     </div>
 
     <!-- Scripts -->
-    <script src="aes.js?v=18.7"></script>
-    <script src="min2phase.js?v=18.7"></script>
-    <script src="three.min.js?v=18.7"></script>
-    <script src="echarts.min.js?v=18.7"></script>
-    <script src="cube-engine.js?v=18.7"></script>
-    <script src="alg-database.js?v=18.7"></script>
-    <script src="method-analyzer.js?v=18.7"></script>
-    <script src="chart-engine.js?v=18.7"></script>
-    <script src="gan-bluetooth.js?v=18.7"></script>
-    <script src="audio-synth.js?v=18.7"></script>
-    <script src="renderer-3d.js?v=18.7"></script>
-    <script src="renderer-2d.js?v=18.7"></script>
-    <script src="timer-engine.js?v=18.7"></script>
-    <script src="ui-controller.js?v=18.7"></script>
+    <script src="aes.js?v=18.8"></script>
+    <script src="min2phase.js?v=18.8"></script>
+    <script src="three.min.js?v=18.8"></script>
+    <script src="echarts.min.js?v=18.8"></script>
+    <script src="cube-engine.js?v=18.8"></script>
+    <script src="alg-database.js?v=18.8"></script>
+    <script src="method-analyzer.js?v=18.8"></script>
+    <script src="chart-engine.js?v=18.8"></script>
+    <script src="gan-bluetooth.js?v=18.8"></script>
+    <script src="audio-synth.js?v=18.8"></script>
+    <script src="renderer-3d.js?v=18.8"></script>
+    <script src="renderer-2d.js?v=18.8"></script>
+    <script src="timer-engine.js?v=18.8"></script>
+    <script src="ui-controller.js?v=18.8"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
