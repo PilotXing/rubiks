@@ -601,7 +601,11 @@
                         <input type="text" id="input-mac-override" placeholder="0c:3d:5e:be:8e:95" value="0c:3d:5e:be:8e:95">
                         <button id="btn-save-mac" class="btn btn-primary btn-sm">Save</button>
                     </div>
-                    <small style="color: var(--text-muted);">Default: <code>0c:3d:5e:be:8e:95</code> for GANic4 devices. 修改并保存后自动记忆保存到本地。</small>
+                    <div style="display: flex; gap: 0.4rem; margin-top: 0.45rem; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-secondary btn-sm btn-mac-preset" data-mac="0c:3d:5e:be:8e:95" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;">🎲 GAN iCarry 4 (0c:3d:5e:be:8e:95)</button>
+                        <button type="button" class="btn btn-secondary btn-sm btn-mac-preset" data-mac="9c:7f:64:50:d4:69" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;">🎲 GANicE3 (9c:7f:64:50:d4:69)</button>
+                    </div>
+                    <small style="color: var(--text-muted); margin-top: 0.35rem; display: block;">默认: <code>0c:3d:5e:be:8e:95</code> (GAN iCarry 4)。点击上方预设按钮可一键切换并保存。</small>
                 </div>
 
                 <div class="form-group" style="padding: 0.65rem 0.85rem; background: var(--bg-tertiary); border-radius: 8px; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;">

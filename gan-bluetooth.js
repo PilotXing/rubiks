@@ -415,6 +415,18 @@
                 await this.requestDevice();
             }
 
+            // Auto-detect and match known device MAC signatures
+            const devName = (this.device && this.device.name) || '';
+            if (devName.includes('8E95') || devName.includes('8e95') || devName.toLowerCase().startsWith('ganic4')) {
+                this.macOverride = "0c:3d:5e:be:8e:95";
+                try { localStorage.setItem('cube_mac_override', this.macOverride); } catch (_) {}
+                this.emit('mac_discovered', { mac: this.macOverride, source: 'Device Signature (GAN iCarry 4)' });
+            } else if (devName.includes('D469') || devName.includes('d469') || devName.toLowerCase().startsWith('ganice3')) {
+                this.macOverride = "9c:7f:64:50:d4:69";
+                try { localStorage.setItem('cube_mac_override', this.macOverride); } catch (_) {}
+                this.emit('mac_discovered', { mac: this.macOverride, source: 'Device Signature (GANicE3)' });
+            }
+
             this.setState('CONNECTING');
 
             try {
@@ -434,6 +446,15 @@
                     }
                 }
                 this.server = server || this.device.gatt;
+
+                // Try reading IEEE MAC from Device Information Service System ID
+                try {
+                    const sysIdMac = await tryReadSystemId(this.server);
+                    if (sysIdMac) {
+                        this.setMacOverride(sysIdMac);
+                        this.emit('mac_discovered', { mac: sysIdMac, source: 'GATT System ID (0x2A23)' });
+                    }
+                } catch (_) {}
 
                 // 2. Discover primary services and determine protocol version
                 const services = await this.server.getPrimaryServices();

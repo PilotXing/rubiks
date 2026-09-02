@@ -587,5 +587,14 @@
 - [x] **Version Upgrade**:
     - Bumped to `v18.4` (sw.js cache `rubiks-timer-v18.4`).
 
+## 02 SEP Multi-Device MAC Presets & Auto Signature Matching (v19.0)
+- [x] **Smart Cube Dual-Device Quick Presets & Auto Matching (多魔方 MAC 预设与设备特征自动识别)**:
+    - Added 1-click MAC preset switcher buttons in Settings for **GAN iCarry 4** (`0c:3d:5e:be:8e:95`) and **GANicE3** (`9c:7f:64:50:d4:69`).
+    - Added intelligent device signature auto-matching: connects automatically to the right hardware MAC based on BLE device name (`GANic4_8E95` vs `GANicE3_D469`).
+    - Integrated GATT Device Information System ID (`0x2A23`) reading for hardware MAC verification.
+    - Updated UI controller with dynamic preset selection, immediate storage persistence, and visual toast feedback.
+- [x] **Version Upgrade**:
+    - Bumped to `v19.0` (sw.js cache `rubiks-timer-v19.0`).
+
 
 

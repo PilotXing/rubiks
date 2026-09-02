@@ -2951,11 +2951,27 @@ document.addEventListener('DOMContentLoaded', () => {
             if (val) {
                 bluetooth.setMacOverride(val);
                 localStorage.setItem('cube_mac_override', val);
+                if (elements.btModalMacVal) elements.btModalMacVal.textContent = val;
                 showToast(`MAC 地址已保存: ${val}`);
                 appendBtLog('system', `已保存 MAC 衍生地址: ${val}`);
             }
         });
     }
+
+    // MAC Quick Preset Switchers
+    document.querySelectorAll('.btn-mac-preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const mac = btn.getAttribute('data-mac');
+            if (mac) {
+                if (elements.inputMacOverride) elements.inputMacOverride.value = mac;
+                if (elements.btModalMacVal) elements.btModalMacVal.textContent = mac;
+                bluetooth.setMacOverride(mac);
+                localStorage.setItem('cube_mac_override', mac);
+                showToast(`已切换 MAC: ${mac}`);
+                appendBtLog('system', `已切换并保存 MAC 衍生地址: ${mac}`);
+            }
+        });
+    });
 
     elements.btnSettings.addEventListener('click', () => {
         elements.inputMacOverride.value = bluetooth.macOverride;
