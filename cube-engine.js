@@ -880,37 +880,38 @@
                 }
             }
 
-            // 5. True deviation: compute remaining moves from currentCube to targetCube and update the active formula in-place
-            this.isDeviated = true;
-            this.isHalfTurn = false;
+            // 5. True deviation: Only repath if already in the middle of scrambling (currentStep > 0)
+            // At step 0, preserve the clean WCA scramble formula unconditionally!
+            if (this.currentStep > 0) {
+                const remainingCorrection = getCorrectionMoves(this.currentCube, this.targetCube);
+                if (remainingCorrection && remainingCorrection.length > 0) {
+                    const completedMoves = this.scrambleMoves.slice(0, this.currentStep);
+                    this.repathRemaining(completedMoves, remainingCorrection);
 
-            const remainingCorrection = getCorrectionMoves(this.currentCube, this.targetCube);
-            if (remainingCorrection && remainingCorrection.length > 0) {
-                const completedMoves = this.scrambleMoves.slice(0, this.currentStep);
-                this.repathRemaining(completedMoves, remainingCorrection);
-
-                return {
-                    isComplete: false,
-                    isDeviated: true,
-                    repathed: true,
-                    currentStep: this.currentStep,
-                    totalSteps: this.scrambleMoves.length,
-                    fullScrambleString: this.scrambleString,
-                    correctionMoves: remainingCorrection,
-                    remainingMoves: remainingCorrection
-                };
+                    return {
+                        isComplete: false,
+                        isDeviated: true,
+                        repathed: true,
+                        currentStep: this.currentStep,
+                        totalSteps: this.scrambleMoves.length,
+                        fullScrambleString: this.scrambleString,
+                        correctionMoves: remainingCorrection,
+                        remainingMoves: remainingCorrection
+                    };
+                }
             }
 
-            this.correctionMoves = getNextStepCorrection(this.currentCube, this.expectedStates, this.currentStep, this.targetCube);
+            this.isDeviated = false;
+            this.isHalfTurn = false;
             return {
                 isComplete: false,
-                isDeviated: true,
-                repathed: false,
+                isDeviated: false,
+                isHalfTurn: false,
                 currentStep: this.currentStep,
                 totalSteps: this.scrambleMoves.length,
                 fullScrambleString: this.scrambleString,
-                correctionMoves: this.correctionMoves,
-                remainingMoves: this.correctionMoves
+                correctionMoves: [],
+                remainingMoves: this.scrambleMoves.slice(this.currentStep)
             };
         }
     }

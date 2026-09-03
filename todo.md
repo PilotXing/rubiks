@@ -635,5 +635,13 @@
 - [x] **Version Upgrade**:
     - Bumped to `v19.5` (sw.js cache `rubiks-timer-v19.5`).
 
+## 03 SEP Automatic Connect-Time Scramble Re-sync & Step-0 Repath Protection (v19.6)
+- [x] **Guarded Step 0 Deviation Repathing (禁止第 0 步破坏性重写公式)**:
+    - Fixed issue where connecting a cube that wasn't previously solved would trigger `getCorrectionMoves` on step 0 and mutate the 21-move WCA scramble into a 28-move repathed sequence. Step 0 now unconditionally preserves the clean WCA scramble.
+- [x] **Auto-sync Scramble on Bluetooth Connection (蓝牙连接成功自动同步)**:
+    - Automatically calls `setNewScramble()` when Bluetooth handshake completes (`bluetooth.on('status', 'CONNECTED')`), guaranteeing that the physical cube and screen formula start in 100% perfect synchronization on initial connection without requiring manual swiping.
+- [x] **Version Upgrade**:
+    - Bumped to `v19.6` (sw.js cache `rubiks-timer-v19.6`).
+
 
 

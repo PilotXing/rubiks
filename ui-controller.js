@@ -1495,7 +1495,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.btnRecalibrate) elements.btnRecalibrate.style.display = 'inline-flex';
             appendBtLog('system', `已建立蓝牙通信握手: ${name}`);
             resetBtInactivityTimer();
-            updateCarouselCards(tracker ? tracker.currentStep : 0);
+            setNewScramble();
         } else if (info.state === 'CONNECTING') {
             if (elements.btnBtCapsule) {
                 elements.btnBtCapsule.className = 'btn btn-icon-square btn-secondary btn-sm connecting';
@@ -1573,8 +1573,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 timer.stopTimer();
             }
         } else if (timer.state !== 'READY' && timer.state !== 'INSPECTION') {
-            const evalResult = tracker.setCurrentCubeState(data.cp, data.co, data.ep, data.eo);
-            updateScrambleStatus(evalResult);
+            if (tracker && tracker.currentStep > 0) {
+                const evalResult = tracker.setCurrentCubeState(data.cp, data.co, data.ep, data.eo);
+                updateScrambleStatus(evalResult);
+            }
         }
     });
 
