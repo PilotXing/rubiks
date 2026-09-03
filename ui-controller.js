@@ -273,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // State Variables: Style & Color Themes (Orthogonal Multi-Switching)
     let currentView = 'view-timer';
-    let currentScramble = '';
+    let currentScramble = generateWcaScramble(21);
     let currentUiStyle = localStorage.getItem('timer_ui_style') || localStorage.getItem('timer_theme') || 'dark';
     let currentAccentColor = localStorage.getItem('timer_accent_color') || 'emerald';
 
@@ -573,9 +573,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // -------------------------------------------------------------
     // 3. Continuous Photo-Album Scramble Carousel & Gesture System
     // -------------------------------------------------------------
-    let scrambleHistory = [];
-    let scrambleHistoryIndex = -1;
-    let pendingNextScramble = null;
+    let scrambleHistory = [currentScramble];
+    let scrambleHistoryIndex = 0;
+    let pendingNextScramble = generateWcaScramble(21);
 
     const carouselElements = {
         viewport: document.getElementById('scramble-box'),
@@ -970,8 +970,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setNewScramble(scrambleStr, isHistorical = false) {
-        if (!scrambleStr) {
-            if (pendingNextScramble) {
+        if (!scrambleStr || typeof scrambleStr !== 'string' || scrambleStr.trim().length === 0) {
+            if (pendingNextScramble && typeof pendingNextScramble === 'string' && pendingNextScramble.trim().length > 0) {
                 scrambleStr = pendingNextScramble;
                 pendingNextScramble = null;
             } else {
@@ -1009,6 +1009,7 @@ document.addEventListener('DOMContentLoaded', () => {
         timer.setState('SCRAMBLING');
         setArenaMode('SCRAMBLE');
         updateScrambleStatus(evalResult);
+        updateCarouselCards(0);
     }
 
     function copyCurrentScramble() {

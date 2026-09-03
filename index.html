@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css?v=19.1">
+    <link rel="stylesheet" href="style.css?v=19.2">
 </head>
 <body class="style-dark color-emerald theme-dark">
 
@@ -34,7 +34,7 @@
                     </svg>
                 </span>
                 <span class="brand-title">Rubik Vision</span>
-                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v19.1</span>
+                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v19.2</span>
             </div>
 
             <div class="header-actions">
@@ -123,7 +123,62 @@
                             
                             <!-- Center Card (Active Current Scramble) -->
                             <div id="scramble-text" class="scramble-card scramble-card-current" title="点击复制公式 | ← 从右往左滑生成下一个 | 从左往右滑返回上一个 →">
-                                Loading scramble...
+                                <div class="scramble-reel-container">
+                                    <div class="scramble-reel-viewport">
+                                        <div class="scramble-reel-track" style="--track-x: -25px; transform: translate3d(-25px, 0, 0);">
+                                            <div class="reel-step-item step-active move-col-r" style="opacity: 1;">R</div>
+                                            <div class="reel-step-item step-pending move-col-u" style="opacity: 0.95;">U'</div>
+                                            <div class="reel-step-item step-pending move-col-r" style="opacity: 0.81;">R</div>
+                                            <div class="reel-step-item step-pending move-col-u" style="opacity: 0.67;">U'</div>
+                                            <div class="reel-step-item step-pending move-col-r" style="opacity: 0.53;">R'</div>
+                                            <div class="reel-step-item step-pending move-col-f" style="opacity: 0.39;">F'</div>
+                                            <div class="reel-step-item step-pending move-col-u" style="opacity: 0.28;">U2</div>
+                                            <div class="reel-step-item step-pending move-col-r" style="opacity: 0; visibility: hidden; pointer-events: none;">R'</div>
+                                            <div class="reel-step-item step-pending move-col-u" style="opacity: 0; visibility: hidden; pointer-events: none;">U</div>
+                                            <div class="reel-step-item step-pending move-col-r" style="opacity: 0; visibility: hidden; pointer-events: none;">R</div>
+                                            <div class="reel-step-item step-pending move-col-d" style="opacity: 0; visibility: hidden; pointer-events: none;">D'</div>
+                                            <div class="reel-step-item step-pending move-col-f" style="opacity: 0; visibility: hidden; pointer-events: none;">F2</div>
+                                            <div class="reel-step-item step-pending move-col-l" style="opacity: 0; visibility: hidden; pointer-events: none;">L</div>
+                                            <div class="reel-step-item step-pending move-col-b" style="opacity: 0; visibility: hidden; pointer-events: none;">B2</div>
+                                            <div class="reel-step-item step-pending move-col-u" style="opacity: 0; visibility: hidden; pointer-events: none;">U</div>
+                                            <div class="reel-step-item step-pending move-col-r" style="opacity: 0; visibility: hidden; pointer-events: none;">R'</div>
+                                            <div class="reel-step-item step-pending move-col-d" style="opacity: 0; visibility: hidden; pointer-events: none;">D2</div>
+                                            <div class="reel-step-item step-pending move-col-f" style="opacity: 0; visibility: hidden; pointer-events: none;">F</div>
+                                            <div class="reel-step-item step-pending move-col-l" style="opacity: 0; visibility: hidden; pointer-events: none;">L2</div>
+                                            <div class="reel-step-item step-pending move-col-b" style="opacity: 0; visibility: hidden; pointer-events: none;">B'</div>
+                                            <div class="reel-step-item step-pending move-col-d" style="opacity: 0; visibility: hidden; pointer-events: none;">D</div>
+                                        </div>
+                                    </div>
+                                    <div class="scramble-reel-footer">
+                                        <span>已完成 <strong class="progress-highlight">0</strong> 步</span>
+                                        <span>·</span>
+                                        <span>剩余 <strong class="progress-highlight">21</strong> 步</span>
+                                        <span style="opacity: 0.65;">(0%)</span>
+                                    </div>
+                                    <div class="scramble-overall-container" title="打乱公式全览">
+                                        <span class="overall-move-chip active move-col-r">R</span>
+                                        <span class="overall-move-chip pending move-col-u">U'</span>
+                                        <span class="overall-move-chip pending move-col-r">R</span>
+                                        <span class="overall-move-chip pending move-col-u">U'</span>
+                                        <span class="overall-move-chip pending move-col-r">R'</span>
+                                        <span class="overall-move-chip pending move-col-f">F'</span>
+                                        <span class="overall-move-chip pending move-col-u">U2</span>
+                                        <span class="overall-move-chip pending move-col-r">R'</span>
+                                        <span class="overall-move-chip pending move-col-u">U</span>
+                                        <span class="overall-move-chip pending move-col-r">R</span>
+                                        <span class="overall-move-chip pending move-col-d">D'</span>
+                                        <span class="overall-move-chip pending move-col-f">F2</span>
+                                        <span class="overall-move-chip pending move-col-l">L</span>
+                                        <span class="overall-move-chip pending move-col-b">B2</span>
+                                        <span class="overall-move-chip pending move-col-u">U</span>
+                                        <span class="overall-move-chip pending move-col-r">R'</span>
+                                        <span class="overall-move-chip pending move-col-d">D2</span>
+                                        <span class="overall-move-chip pending move-col-f">F</span>
+                                        <span class="overall-move-chip pending move-col-l">L2</span>
+                                        <span class="overall-move-chip pending move-col-b">B'</span>
+                                        <span class="overall-move-chip pending move-col-d">D</span>
+                                    </div>
+                                </div>
                             </div>
                             
                             <!-- Right Card (Pre-computed Next / New Scramble) -->
@@ -1060,20 +1115,20 @@
     </div>
 
     <!-- Scripts -->
-    <script src="aes.js?v=19.1"></script>
-    <script src="min2phase.js?v=19.1"></script>
-    <script src="three.min.js?v=19.1"></script>
-    <script src="echarts.min.js?v=19.1"></script>
-    <script src="cube-engine.js?v=19.1"></script>
-    <script src="alg-database.js?v=19.1"></script>
-    <script src="method-analyzer.js?v=19.1"></script>
-    <script src="chart-engine.js?v=19.1"></script>
-    <script src="gan-bluetooth.js?v=19.1"></script>
-    <script src="audio-synth.js?v=19.1"></script>
-    <script src="renderer-3d.js?v=19.1"></script>
-    <script src="renderer-2d.js?v=19.1"></script>
-    <script src="timer-engine.js?v=19.1"></script>
-    <script src="ui-controller.js?v=19.1"></script>
+    <script src="aes.js?v=19.2"></script>
+    <script src="min2phase.js?v=19.2"></script>
+    <script src="three.min.js?v=19.2"></script>
+    <script src="echarts.min.js?v=19.2"></script>
+    <script src="cube-engine.js?v=19.2"></script>
+    <script src="alg-database.js?v=19.2"></script>
+    <script src="method-analyzer.js?v=19.2"></script>
+    <script src="chart-engine.js?v=19.2"></script>
+    <script src="gan-bluetooth.js?v=19.2"></script>
+    <script src="audio-synth.js?v=19.2"></script>
+    <script src="renderer-3d.js?v=19.2"></script>
+    <script src="renderer-2d.js?v=19.2"></script>
+    <script src="timer-engine.js?v=19.2"></script>
+    <script src="ui-controller.js?v=19.2"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

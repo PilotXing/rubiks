@@ -605,5 +605,14 @@
 - [x] **Version Upgrade**:
     - Bumped to `v19.1` (sw.js cache `rubiks-timer-v19.1`).
 
+## 03 SEP Instant Static Scramble Pre-population & min2phase Solver Hardening (v19.2)
+- [x] **Pre-populated Static HTML Scramble Reel (预填充静态打乱公式卡片，彻底消除加载白屏)**:
+    - Pre-rendered a valid 21-move WCA scramble sequence structure directly into `#scramble-text` in `index.html`. The scramble reel is 100% visible on the very first HTML paint before JavaScript even boots.
+    - Initialized `currentScramble`, `scrambleHistory`, and `pendingNextScramble` synchronously at declaration time in `ui-controller.js`.
+    - Hardened `generateWcaScramble` against `min2phase` error returns (`Error 7`, `Error 8`), ensuring strict WCA regex filtering and fallback to pure random non-cancelling moves.
+    - Added immediate `updateCarouselCards(0)` call in `setNewScramble`.
+- [x] **Version Upgrade**:
+    - Bumped to `v19.2` (sw.js cache `rubiks-timer-v19.2`).
+
 
 

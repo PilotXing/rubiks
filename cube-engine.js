@@ -327,18 +327,18 @@
      * Generate standard WCA 3x3 Scramble
      * Uses min2phase random state generator or standard 21-move non-redundant sequence
      */
-    function generateWcaScramble(length = 20) {
+    function generateWcaScramble(length = 21) {
         if (min2phase && typeof min2phase.randomCube === 'function' && typeof min2phase.solve === 'function') {
             try {
                 min2phase.initialize();
                 const rc = min2phase.randomCube();
-                // solve(rc) returns moves to solve the random cube
                 const sol = min2phase.solve(rc);
-                if (sol && sol.length > 5) {
-                    // Scramble is the inverse of the solution to reach that random state
-                    const moves = sol.trim().split(/\s+/);
-                    const scrambleMoves = invertMoves(moves);
-                    return scrambleMoves.join(' ');
+                if (sol && typeof sol === 'string' && !sol.startsWith('Error')) {
+                    const moves = sol.trim().split(/\s+/).map(normalizeMove).filter(m => /^[URFDLB][2']?$/.test(m));
+                    if (moves.length >= 15) {
+                        const scrambleMoves = invertMoves(moves);
+                        return scrambleMoves.join(' ');
+                    }
                 }
             } catch (err) {
                 console.warn("min2phase randomCube fallback:", err);
@@ -357,7 +357,7 @@
             while (true) {
                 faceIdx = Math.floor(Math.random() * 6);
                 axis = Math.floor(faceIdx / 2);
-                if (axis !== lastAxis && !(axis === secondLastAxis && lastAxis === Math.floor(faceIdx / 2) ^ 1)) {
+                if (axis !== lastAxis && !(axis === secondLastAxis && lastAxis === (axis ^ 1))) {
                     break;
                 }
             }

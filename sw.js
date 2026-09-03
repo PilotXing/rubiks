@@ -1,5 +1,5 @@
 // Service Worker for Rubik Vision Bluetooth Timer
-const CACHE_NAME = 'rubiks-timer-v19.1';
+const CACHE_NAME = 'rubiks-timer-v19.2';
 const ASSETS = [
     '/',
     '/index.html',
