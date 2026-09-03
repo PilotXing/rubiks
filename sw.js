@@ -45,7 +45,25 @@ self.addEventListener('activate', (evt) => {
 self.addEventListener('fetch', (evt) => {
     if (evt.request.method !== 'GET') return;
 
-    // Robust offline fallback with ignoreSearch: true (handles query parameters like ?v=17.0)
+    // For HTML navigation requests: Network-First to immediately pick up new versions, fallback to Cache
+    if (evt.request.mode === 'navigate' || evt.request.destination === 'document' || evt.request.url.endsWith('index.html') || evt.request.url.endsWith('/')) {
+        evt.respondWith(
+            fetch(evt.request).then((networkResponse) => {
+                if (networkResponse && networkResponse.status === 200) {
+                    const responseToCache = networkResponse.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(evt.request, responseToCache);
+                    });
+                }
+                return networkResponse;
+            }).catch(() => {
+                return caches.match('/index.html', { ignoreSearch: true }) || caches.match(evt.request, { ignoreSearch: true });
+            })
+        );
+        return;
+    }
+
+    // For other static assets (JS, CSS, images): Stale-While-Revalidate / Cache-First
     evt.respondWith(
         caches.match(evt.request, { ignoreSearch: true }).then((cachedResponse) => {
             const fetchPromise = fetch(evt.request).then((networkResponse) => {
@@ -58,9 +76,6 @@ self.addEventListener('fetch', (evt) => {
                 return networkResponse;
             }).catch(() => {
                 if (cachedResponse) return cachedResponse;
-                if (evt.request.mode === 'navigate') {
-                    return caches.match('/index.html', { ignoreSearch: true });
-                }
             });
 
             return cachedResponse || fetchPromise;
