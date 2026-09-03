@@ -592,7 +592,16 @@
             const sigma = Math.max(0.75, radius / 1.5);
             const twoSigmaSq = 2 * sigma * sigma;
 
-            return moves.map((m, i) => {
+            // Step 0 has no preceding move in the solve (elapsedMs = 0, deltaMs = 0).
+            // Estimate its realistic physical duration from the first valid subsequent moves to prevent a 0ms spike.
+            const validDeltas = moves.slice(1, 5).map(m => m.deltaMs).filter(d => typeof d === 'number' && d >= 40);
+            let initialPaceMs = 240;
+            if (validDeltas.length > 0) {
+                const avgDelta = validDeltas.reduce((a, b) => a + b, 0) / validDeltas.length;
+                initialPaceMs = Math.max(100, Math.min(500, Math.round(avgDelta)));
+            }
+
+            const smoothedData = moves.map((m, i) => {
                 const s = Math.max(0, i - radius);
                 const e = Math.min(n - 1, i + radius);
 
@@ -603,11 +612,12 @@
                     const dist = j - i;
                     const weight = Math.exp(- (dist * dist) / twoSigmaSq);
                     let deltaMs = moves[j].deltaMs;
-                    if (deltaMs === undefined || deltaMs === null || isNaN(deltaMs)) {
-                        deltaMs = 250;
+                    // If move is Step 0 or invalid delta, use realistic initial turning pace
+                    if (j === 0 || deltaMs === undefined || deltaMs === null || isNaN(deltaMs) || deltaMs <= 0) {
+                        deltaMs = initialPaceMs;
                     }
-                    // BLE packet jitter & batching guard: clamp single-move deltaMs to min 35ms
-                    const effectiveDeltaMs = Math.max(35, deltaMs);
+                    // BLE packet jitter & batching guard: clamp single-move deltaMs to min 40ms
+                    const effectiveDeltaMs = Math.max(40, deltaMs);
                     const deltaSec = effectiveDeltaMs / 1000;
 
                     sumWeight += weight;
@@ -621,6 +631,14 @@
                 const clampedTps = Math.min(18.0, Math.max(0, tps));
                 return Number(clampedTps.toFixed(2));
             });
+
+            // Boundary smoothing constraint:
+            // Step 0 is literally 1 turn; solver cannot be turning faster before making move 2 than between moves 1 and 2.
+            if (smoothedData.length > 1 && smoothedData[0] > smoothedData[1]) {
+                smoothedData[0] = smoothedData[1];
+            }
+
+            return smoothedData;
         }
 
         render() {
@@ -841,7 +859,7 @@
                             </div>
                             <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 11px; margin: 2px 0;">
                                 <span style="color: #9CA3AF;">单步耗时:</span>
-                                <b style="color: #60A5FA;">+${deltaMs}ms</b>
+                                <b style="color: #60A5FA;">${stepIdx === 0 ? '起步 (+0ms)' : `+${deltaMs}ms`}</b>
                             </div>
                             <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 11px; margin: 2px 0;">
                                 <span style="color: #9CA3AF;">累计用时:</span>

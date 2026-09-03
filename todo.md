@@ -689,6 +689,17 @@
 - [x] **Version Upgrade**:
     - Bumped to `v20.0` (sw.js cache `rubiks-timer-v20.0`).
 
+## 03 SEP Step 0 Initial Turning Pace Estimation & Boundary Spike Elimination (v20.1)
+- [x] **Eliminate Step 0 Boundary Spike (根除第1步假性零耗时引发的高速尖刺)**:
+    - Root cause: Move 0 has no preceding move in the solve, resulting in `deltaMs = 0` (or ~1ms). In a one-sided window at $i=0$, this near-zero denominator caused Step 1 TPS to spuriously jump to 7~10+ TPS even on slow starts.
+    - Implemented **Initial Pace Estimation (起步速度自适应估计)**: Examines the first valid subsequent turns ($j=1..4$) to estimate the physical turn duration of Step 0, clamped to human boundaries `[100ms, 500ms]`.
+    - Enforced **Physical Boundary Constraint**: Since Step 0 is a single turn before any transitions occur, $\text{TPS}_0$ is strictly capped to not exceed $\text{TPS}_1$ (`result[0] = Math.min(result[0], result[1])`), guaranteeing a flat or smoothly evolving start curve.
+    - Updated chart tooltip to show `单步耗时: 起步 (+0ms)` for Step 0, avoiding confusion.
+    - Synchronized reconstruction table to display the smoothed TPS for all rows, displaying `起步` for Step 0 delta.
+- [x] **Version Upgrade**:
+    - Bumped to `v20.1` (sw.js cache `rubiks-timer-v20.1`).
+
+
 
 
 

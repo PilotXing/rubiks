@@ -2359,18 +2359,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderReconstructionMovesTable(solve) {
         let html = '';
+        const smoothedTpsList = (window.ChartEngine && ChartEngine.SolveMovementChart)
+            ? ChartEngine.SolveMovementChart.calculateSmoothedTps(solve.moves, 5)
+            : [];
         solve.moves.forEach((m, idx) => {
             const timeSec = (m.elapsedMs / 1000).toFixed(2);
             const deltaSec = (m.deltaMs / 1000).toFixed(2);
             const colorCls = getMoveColorClass(m.move);
+            const rowTps = (smoothedTpsList && smoothedTpsList[idx] !== undefined)
+                ? smoothedTpsList[idx]
+                : (m.instantTps || '--');
 
             html += `
                 <tr class="recon-row ${idx + 1 === reconCurrentStep ? 'recon-active-row' : ''}" data-step="${idx + 1}">
                     <td>${idx + 1}</td>
                     <td><span class="badge badge-move ${colorCls}">${m.move}</span></td>
                     <td>+${timeSec}s</td>
-                    <td>${deltaSec}s</td>
-                    <td>${m.instantTps || 0}</td>
+                    <td>${idx === 0 ? '起步' : deltaSec + 's'}</td>
+                    <td>${rowTps}</td>
                 </tr>
             `;
         });
