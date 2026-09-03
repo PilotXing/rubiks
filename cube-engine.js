@@ -617,6 +617,81 @@
             this.lastMovedFace = move.charAt(0);
             this.moveHistory.push(move);
             this.currentCube.applyMove(move);
+
+            // 1. Direct Move-Stream Tracking (High-Responsiveness Primary Driver)
+            if (this.currentStep < this.scrambleMoves.length) {
+                const targetMove = this.scrambleMoves[this.currentStep];
+                const targetFace = targetMove.charAt(0);
+                const isTargetDouble = targetMove.endsWith('2');
+                const moveFace = move.charAt(0);
+                const isMoveDouble = move.endsWith('2');
+
+                if (moveFace === targetFace) {
+                    if (isTargetDouble) {
+                        if (isMoveDouble) {
+                            // Exact 180 turn matched!
+                            this.currentStep++;
+                            this.isHalfTurn = false;
+                            this.halfFace = null;
+                            this.remainingOnFace = null;
+                        } else if (this.isHalfTurn && this.halfFace === targetFace) {
+                            // Second 90 turn on same face completes the 180 turn!
+                            this.currentStep++;
+                            this.isHalfTurn = false;
+                            this.halfFace = null;
+                            this.remainingOnFace = null;
+                        } else {
+                            // First 90 turn of a 180 move
+                            this.isHalfTurn = true;
+                            this.halfFace = targetFace;
+                            this.remainingOnFace = targetFace;
+                        }
+                    } else {
+                        // 90 turn target (e.g. R or R')
+                        if (move === targetMove) {
+                            // Exact match!
+                            this.currentStep++;
+                            this.isHalfTurn = false;
+                            this.halfFace = null;
+                            this.remainingOnFace = null;
+                        } else {
+                            // Wrong direction on target face
+                            this.isHalfTurn = true;
+                            this.halfFace = targetFace;
+                            this.remainingOnFace = targetMove;
+                        }
+                    }
+
+                    if (this.currentStep >= this.scrambleMoves.length) {
+                        this.isComplete = true;
+                        this.isDeviated = false;
+                        this.isHalfTurn = false;
+                        return {
+                            isComplete: true,
+                            isDeviated: false,
+                            isHalfTurn: false,
+                            currentStep: this.scrambleMoves.length,
+                            totalSteps: this.scrambleMoves.length,
+                            correctionMoves: [],
+                            remainingMoves: []
+                        };
+                    }
+
+                    return {
+                        isComplete: false,
+                        isDeviated: false,
+                        isHalfTurn: this.isHalfTurn,
+                        halfFace: this.halfFace,
+                        remainingOnFace: this.remainingOnFace,
+                        currentStep: this.currentStep,
+                        totalSteps: this.scrambleMoves.length,
+                        correctionMoves: [],
+                        remainingMoves: this.scrambleMoves.slice(this.currentStep)
+                    };
+                }
+            }
+
+            // 2. Full State & Deviation Fallback
             return this.evaluateState();
         }
 

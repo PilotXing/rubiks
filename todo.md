@@ -628,5 +628,12 @@
 - [x] **Version Upgrade**:
     - Bumped to `v19.4` (sw.js cache `rubiks-timer-v19.4`).
 
+## 03 SEP Move-Stream Accumulator & Half-turn Status Pass-Through Fix (v19.5)
+- [x] **Implemented Direct Move-Stream Accumulator in `ScrambleProgressTracker.onCubeMove` (实现极速动作流直接累加步进)**:
+    - Added direct step progression driver: matches user physical turns directly against target move (e.g. `B` + `B` = `B2`, or single `R` / `U` turns), advancing `currentStep` immediately.
+    - Fixed critical bug in `updateScrambleStatus` where `if (!evalResult || evalResult.currentStep === 0)` unconditionally swallowed `isHalfTurn` and `isDeviated` at step 0, preventing the first half-turn from rendering.
+- [x] **Version Upgrade**:
+    - Bumped to `v19.5` (sw.js cache `rubiks-timer-v19.5`).
+
 
 

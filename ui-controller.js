@@ -1216,7 +1216,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const banner = elements.scrambleBanner;
         if (banner) banner.className = 'scramble-banner';
 
-        if (!evalResult || evalResult.currentStep === 0) {
+        if (!evalResult || (evalResult.currentStep === 0 && !evalResult.isHalfTurn && !evalResult.isDeviated)) {
             document.body.classList.remove('is-scrambling');
             if (banner) {
                 banner.innerHTML = `<span>Follow the scramble sequence above on your cube</span>`;
