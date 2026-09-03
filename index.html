@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css?v=19.9">
+    <link rel="stylesheet" href="style.css?v=20.0">
 </head>
 <body class="style-dark color-emerald theme-dark">
 
@@ -34,7 +34,7 @@
                     </svg>
                 </span>
                 <span class="brand-title">Rubik Vision</span>
-                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v19.9</span>
+                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v20.0</span>
             </div>
 
             <div class="header-actions">
@@ -241,7 +241,15 @@
                                     <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent-primary);"></span>
                                     阶段步数与 TPS 轨迹曲线
                                 </span>
-                                <div style="display: flex; gap: 0.55rem; font-size: 0.72rem;">
+                                <div style="display: flex; gap: 0.55rem; font-size: 0.72rem; align-items: center; flex-wrap: wrap;">
+                                    <div class="tps-smooth-selector" style="display: inline-flex; align-items: center; gap: 0.25rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); padding: 1px 6px; border-radius: 4px; margin-right: 0.2rem;">
+                                        <span style="font-size: 0.68rem; color: var(--text-tertiary);">平滑:</span>
+                                        <select id="select-tps-smooth-window" style="background: transparent; border: none; color: #38BDF8; font-size: 0.7rem; font-weight: 700; padding: 0; outline: none; cursor: pointer;">
+                                            <option value="3" style="background: #1e293b; color: #fff;">3步(轻度)</option>
+                                            <option value="5" selected style="background: #1e293b; color: #fff;">5步(标准)</option>
+                                            <option value="7" style="background: #1e293b; color: #fff;">7步(深度)</option>
+                                        </select>
+                                    </div>
                                     <label class="form-check"><input type="checkbox" id="toggle-main-cumulative" checked> <span>时间</span></label>
                                     <label class="form-check"><input type="checkbox" id="toggle-main-tps" checked> <span>TPS</span></label>
                                     <label class="form-check"><input type="checkbox" id="toggle-main-derivative" checked> <span>停顿</span></label>
@@ -1130,20 +1138,20 @@
     </div>
 
     <!-- Scripts -->
-    <script src="aes.js?v=19.9"></script>
-    <script src="min2phase.js?v=19.9"></script>
-    <script src="three.min.js?v=19.9"></script>
-    <script src="echarts.min.js?v=19.9"></script>
-    <script src="cube-engine.js?v=19.9"></script>
-    <script src="alg-database.js?v=19.9"></script>
-    <script src="method-analyzer.js?v=19.9"></script>
-    <script src="chart-engine.js?v=19.9"></script>
-    <script src="gan-bluetooth.js?v=19.9"></script>
-    <script src="audio-synth.js?v=19.9"></script>
-    <script src="renderer-3d.js?v=19.9"></script>
-    <script src="renderer-2d.js?v=19.9"></script>
-    <script src="timer-engine.js?v=19.9"></script>
-    <script src="ui-controller.js?v=19.9"></script>
+    <script src="aes.js?v=20.0"></script>
+    <script src="min2phase.js?v=20.0"></script>
+    <script src="three.min.js?v=20.0"></script>
+    <script src="echarts.min.js?v=20.0"></script>
+    <script src="cube-engine.js?v=20.0"></script>
+    <script src="alg-database.js?v=20.0"></script>
+    <script src="method-analyzer.js?v=20.0"></script>
+    <script src="chart-engine.js?v=20.0"></script>
+    <script src="gan-bluetooth.js?v=20.0"></script>
+    <script src="audio-synth.js?v=20.0"></script>
+    <script src="renderer-3d.js?v=20.0"></script>
+    <script src="renderer-2d.js?v=20.0"></script>
+    <script src="timer-engine.js?v=20.0"></script>
+    <script src="ui-controller.js?v=20.0"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

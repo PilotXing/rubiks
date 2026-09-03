@@ -97,6 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleMainCumulative: document.getElementById('toggle-main-cumulative'),
         toggleMainTps: document.getElementById('toggle-main-tps'),
         toggleMainDerivative: document.getElementById('toggle-main-derivative'),
+        selectTpsSmoothWindow: document.getElementById('select-tps-smooth-window'),
         mainProportionalFlow: document.getElementById('main-proportional-flow'),
 
         // 3D & 2D Cube Stages
@@ -2146,6 +2147,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.toggleMainDerivative) {
         elements.toggleMainDerivative.addEventListener('change', (e) => {
             if (mainMovementChart) mainMovementChart.setCurveConfig({ derivativeBars: { enabled: e.target.checked } });
+        });
+    }
+    if (elements.selectTpsSmoothWindow) {
+        elements.selectTpsSmoothWindow.addEventListener('change', (e) => {
+            const w = parseInt(e.target.value, 10) || 5;
+            if (mainMovementChart) mainMovementChart.setSmoothingWindow(w);
+            if (movementChart) movementChart.setSmoothingWindow(w);
         });
     }
 

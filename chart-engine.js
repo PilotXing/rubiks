@@ -486,6 +486,7 @@
                 cumulativeCurve: { enabled: true, color: '#10B981', width: 2.8 },
                 derivativeBars: { enabled: true, color: 'rgba(59, 130, 246, 0.4)' },
                 tpsCurve: { enabled: true, color: '#06B6D4', width: 2.2 },
+                tpsSmoothingWindow: 5,
                 showStageBands: true,
                 showStageDividers: true,
                 showStageLabels: true,
@@ -575,6 +576,53 @@
             this.render();
         }
 
+        setSmoothingWindow(windowSize) {
+            this.options.tpsSmoothingWindow = Math.max(1, parseInt(windowSize, 10) || 5);
+            if (this.solve) {
+                this.render();
+            }
+        }
+
+        static calculateSmoothedTps(moves, smoothingWindow = 5) {
+            if (!moves || moves.length === 0) return [];
+            const n = moves.length;
+            const w = Math.max(1, smoothingWindow || 5);
+            const radius = Math.floor(w / 2);
+            // Gaussian standard deviation: controls bell curve falloff around current move
+            const sigma = Math.max(0.75, radius / 1.5);
+            const twoSigmaSq = 2 * sigma * sigma;
+
+            return moves.map((m, i) => {
+                const s = Math.max(0, i - radius);
+                const e = Math.min(n - 1, i + radius);
+
+                let sumWeight = 0;
+                let sumWeightedTimeSec = 0;
+
+                for (let j = s; j <= e; j++) {
+                    const dist = j - i;
+                    const weight = Math.exp(- (dist * dist) / twoSigmaSq);
+                    let deltaMs = moves[j].deltaMs;
+                    if (deltaMs === undefined || deltaMs === null || isNaN(deltaMs)) {
+                        deltaMs = 250;
+                    }
+                    // BLE packet jitter & batching guard: clamp single-move deltaMs to min 35ms
+                    const effectiveDeltaMs = Math.max(35, deltaMs);
+                    const deltaSec = effectiveDeltaMs / 1000;
+
+                    sumWeight += weight;
+                    sumWeightedTimeSec += weight * deltaSec;
+                }
+
+                if (sumWeightedTimeSec <= 0.001) return 0;
+                // Physical rate = effective moves count / effective time in seconds
+                const tps = sumWeight / sumWeightedTimeSec;
+                // Human speedcubing physical ceiling clamping (18.0 TPS)
+                const clampedTps = Math.min(18.0, Math.max(0, tps));
+                return Number(clampedTps.toFixed(2));
+            });
+        }
+
         render() {
             if (!this.chart) {
                 this.initChart();
@@ -597,21 +645,9 @@
             const cumulativeSecData = moves.map(m => Number(((m.calibratedElapsedMs || m.elapsedMs || 0) / 1000).toFixed(3)));
             const stepDeltaSecData = moves.map(m => Number(((m.deltaMs || 0) / 1000).toFixed(3)));
             
-            // Raw Instant TPS
-            const rawTpsData = moves.map(m => {
-                const sec = (m.deltaMs || 0) / 1000;
-                return sec > 0 ? (1 / sec) : 0;
-            });
-
-            // Smooth TPS Curve with Configurable Rolling Window (Default 3 moves) to eliminate sharp needle peaks
-            const tpsWindow = Math.max(1, this.options.tpsSmoothingWindow || 3);
-            const smoothedTpsData = rawTpsData.map((val, idx) => {
-                const start = Math.max(0, idx - Math.floor(tpsWindow / 2));
-                const end = Math.min(rawTpsData.length, start + tpsWindow);
-                const slice = rawTpsData.slice(start, end);
-                const avg = slice.reduce((sum, v) => sum + v, 0) / slice.length;
-                return Number(avg.toFixed(2));
-            });
+            // Physical Smoothed TPS using Gaussian-weighted time/turn rate
+            const tpsWindow = Math.max(1, this.options.tpsSmoothingWindow || 5);
+            const smoothedTpsData = SolveMovementChart.calculateSmoothedTps(moves, tpsWindow);
 
             // Stage markArea data with Multi-Level Staggered Badges to prevent label collision
             const stages = (this.stages && this.stages.length > 0) ? this.stages : (this.options.stages || []);
@@ -726,15 +762,15 @@
                 });
             }
 
-            // 3. Instant TPS Velocity Spline
+            // 3. Instant / Smoothed TPS Velocity Spline
             if (this.options.tpsCurve && this.options.tpsCurve.enabled) {
                 series.push({
-                    name: '实时 TPS',
+                    name: '平滑 TPS',
                     type: 'line',
                     yAxisIndex: 1,
-                    smooth: 0.3,
-                    symbol: 'diamond',
-                    symbolSize: 4,
+                    smooth: 0.22,
+                    symbol: 'circle',
+                    symbolSize: 3,
                     itemStyle: {
                         color: '#06B6D4'
                     },
@@ -781,22 +817,35 @@
                         const moveObj = moves[stepIdx] || {};
                         const moveName = moveObj.move || '';
                         const timeSec = (moveObj.calibratedElapsedMs || moveObj.elapsedMs || 0) / 1000;
-                        const deltaSec = (moveObj.deltaMs || 0) / 1000;
-                        const tps = deltaSec > 0 ? (1 / deltaSec).toFixed(1) : '0.0';
+                        const deltaMs = Math.round(moveObj.deltaMs || 0);
+                        const curSmoothedTps = (smoothedTpsData && smoothedTpsData[stepIdx] !== undefined)
+                            ? smoothedTpsData[stepIdx]
+                            : (deltaMs > 0 ? (1000 / deltaMs).toFixed(1) : '0.0');
+
+                        let stageBadge = '';
+                        if (stages && stages.length > 0) {
+                            const foundStage = stages.find(s => stepIdx >= s.startIdx && stepIdx <= s.endIdx);
+                            if (foundStage) {
+                                stageBadge = `<span style="background: ${foundStage.color || '#3B82F6'}; color: #fff; padding: 1px 5px; border-radius: 3px; font-size: 10px; margin-left: 6px; font-weight: 600;">${foundStage.name}</span>`;
+                            }
+                        }
 
                         return `
-                            <div style="font-weight: 800; color: #38BDF8; font-size: 12px; margin-bottom: 4px;">Step #${stepIdx + 1}: ${moveName}</div>
+                            <div style="font-weight: 800; color: #38BDF8; font-size: 12px; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+                                <span>Step #${stepIdx + 1}: ${moveName}</span>
+                                ${stageBadge}
+                            </div>
                             <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 11px; margin: 2px 0;">
-                                <span style="color: #9CA3AF;">累计用时:</span>
-                                <b style="color: #10B981;">${timeSec.toFixed(2)}s</b>
+                                <span style="color: #9CA3AF;">平滑 TPS:</span>
+                                <b style="color: #06B6D4; font-size: 12px;">${curSmoothedTps}</b>
                             </div>
                             <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 11px; margin: 2px 0;">
                                 <span style="color: #9CA3AF;">单步耗时:</span>
-                                <b style="color: #60A5FA;">+${deltaSec.toFixed(2)}s</b>
+                                <b style="color: #60A5FA;">+${deltaMs}ms</b>
                             </div>
                             <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 11px; margin: 2px 0;">
-                                <span style="color: #9CA3AF;">瞬时 TPS:</span>
-                                <b style="color: #F59E0B;">${tps}</b>
+                                <span style="color: #9CA3AF;">累计用时:</span>
+                                <b style="color: #10B981;">${timeSec.toFixed(2)}s</b>
                             </div>
                         `;
                     }

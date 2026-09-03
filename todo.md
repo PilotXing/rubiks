@@ -673,6 +673,23 @@
 - [x] **Version Upgrade**:
     - Bumped to `v19.9` (sw.js cache `rubiks-timer-v19.9`).
 
+## 03 SEP Physical Moving-Rate TPS Smoothing & Spike Elimination (v20.0)
+- [x] **Time-Weighted Moving Rate Algorithm (物理跨步时间除法取代倒数算术平均，消除尖刺)**:
+    - Replaced flawed arithmetic average of reciprocal rates ($\frac{1}{N} \sum 1/\Delta t_i$) with rigorous physical time-windowed moving rate: $\text{TPS}_i = \sum w_j / \sum (w_j \cdot \Delta t_j)$.
+    - Fast double-turns (e.g. 40ms) are naturally absorbed into the surrounding window rather than exploding to 25+ TPS.
+- [x] **Gaussian-Weighted Kernel (高斯正态滑动窗口)**:
+    - Applied Gaussian decay $w_j = \exp(- (j - i)^2 / 2\sigma^2)$ across the rolling window, giving highest weight to the current move while smoothly blending surrounding pacing for a silky-smooth, organic velocity curve.
+- [x] **BLE Jitter Guard & Human Velocity Clamping (蓝牙抖动保护与人体极值限幅)**:
+    - Protected against BLE batching/packet jitter by enforcing a minimum 35ms delta guard on individual turns, and clamped physiological speedcubing ceiling at 18.0 TPS.
+- [x] **Interactive Smoothing Selector & Rich Tooltip (平滑窗口切换与富文本提示)**:
+    - Added a smooth level dropdown in the breakdown chart header: `3步(轻度)`, `5步(标准, 默认)`, `7步(深度)`.
+    - Enhanced tooltip: shows formatted step and move with CFOP stage color badge, smoothed TPS in cyan (`#06B6D4`), single step delta in ms, and cumulative elapsed time.
+- [x] **ECharts Spline Overshoot Prevention**:
+    - Adjusted curve interpolation parameter to `smooth: 0.22` with clean circular data points, eliminating spline overshoot loops and artificial peaks.
+- [x] **Version Upgrade**:
+    - Bumped to `v20.0` (sw.js cache `rubiks-timer-v20.0`).
+
+
 
 
 
