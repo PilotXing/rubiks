@@ -793,7 +793,10 @@ document.addEventListener('DOMContentLoaded', () => {
     function getCarouselMetrics() {
         const viewport = carouselElements.viewport || document.getElementById('scramble-box');
         const cardCurrent = carouselElements.cardCurrent || document.getElementById('scramble-text');
-        const width = (cardCurrent && cardCurrent.offsetWidth) ? cardCurrent.offsetWidth : ((viewport ? viewport.clientWidth : 0) || 340);
+        let width = (cardCurrent && cardCurrent.offsetWidth > 0) ? cardCurrent.offsetWidth : ((viewport && viewport.clientWidth > 0) ? viewport.clientWidth : 0);
+        if (width <= 0) {
+            width = (window && window.innerWidth > 0) ? window.innerWidth : 360;
+        }
         const step = width + CAROUSEL_GAP;
         return {
             width,
@@ -814,7 +817,13 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             track.style.transition = 'none';
         }
-        track.style.transform = `translate3d(${offsetPx}px, 0, 0)`;
+        if (offsetPx === null || offsetPx === undefined || offsetPx === 'center') {
+            track.style.transform = 'translate3d(-100%, 0, 0)';
+        } else if (typeof offsetPx === 'string') {
+            track.style.transform = `translate3d(${offsetPx}, 0, 0)`;
+        } else {
+            track.style.transform = `translate3d(${offsetPx}px, 0, 0)`;
+        }
     }
 
     function updateCarouselCards(activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, isDeviated = false) {
@@ -1481,6 +1490,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.btnRecalibrate) elements.btnRecalibrate.style.display = 'inline-flex';
             appendBtLog('system', `已建立蓝牙通信握手: ${name}`);
             resetBtInactivityTimer();
+            updateCarouselCards(tracker ? tracker.currentStep : 0);
         } else if (info.state === 'CONNECTING') {
             if (elements.btnBtCapsule) {
                 elements.btnBtCapsule.className = 'btn btn-icon-square btn-secondary btn-sm connecting';
@@ -3172,4 +3182,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     syncAllModuleUIs();
     setNewScramble();
+    requestAnimationFrame(() => {
+        updateCarouselCards(0);
+    });
 });

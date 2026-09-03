@@ -1411,6 +1411,7 @@ body {
     user-select: none;
     -webkit-user-select: none;
     will-change: transform;
+    transform: translate3d(-100%, 0, 0);
 }
 
 .scramble-card {

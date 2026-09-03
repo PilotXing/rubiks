@@ -596,5 +596,14 @@
 - [x] **Version Upgrade**:
     - Bumped to `v19.0` (sw.js cache `rubiks-timer-v19.0`).
 
+## 03 SEP Initial Bluetooth Scramble Loading & Carousel Track Centering Fix (v19.1)
+- [x] **Fixed Carousel Track Center Alignment on Initial Connection (修复初次连接打乱卡片未居中导致停留在 Loading 的问题)**:
+    - Set default CSS transform to `translate3d(-100%, 0, 0)` on `.scramble-carousel-track` so the active center scramble card is immediately visible on first paint.
+    - Updated `getCarouselMetrics()` and `setTrackPosition()` with robust viewport width fallbacks and CSS percentage handling, preventing 0px offset on initial boot or unmeasured layout states.
+    - Added automatic card refresh and track centering when Bluetooth connection handshake completes (`bluetooth.on('status')`).
+    - Added post-paint frame trigger on boot to guarantee seamless scramble display without requiring manual swipe.
+- [x] **Version Upgrade**:
+    - Bumped to `v19.1` (sw.js cache `rubiks-timer-v19.1`).
+
 
 
