@@ -880,13 +880,55 @@
                 }
             }
 
-            // 5. True deviation: Only repath if already in the middle of scrambling (currentStep > 0)
-            // At step 0, preserve the clean WCA scramble formula unconditionally!
-            if (this.currentStep > 0) {
-                const remainingCorrection = getCorrectionMoves(this.currentCube, this.targetCube);
-                if (remainingCorrection && remainingCorrection.length > 0) {
+            // 5. Deviation & Error Correction Logic
+            // Check distance back to the current scramble track:
+            const targetCurrent = (this.expectedStates && this.currentStep < this.expectedStates.length)
+                ? this.expectedStates[this.currentStep]
+                : null;
+            const targetNext = (this.expectedStates && this.currentStep + 1 < this.expectedStates.length)
+                ? this.expectedStates[this.currentStep + 1]
+                : null;
+
+            const corrToCurrent = targetCurrent ? getCorrectionMoves(this.currentCube, targetCurrent) : [];
+            const corrToNext = targetNext ? getCorrectionMoves(this.currentCube, targetNext) : [];
+
+            let shortestBackToTrack = [];
+            if (corrToNext.length > 0 && (corrToCurrent.length === 0 || corrToNext.length < corrToCurrent.length)) {
+                shortestBackToTrack = corrToNext;
+            } else {
+                shortestBackToTrack = corrToCurrent;
+            }
+
+            // Case A: Deviation within 3 moves (<= 3 moves)
+            // Follow formula correction logic: DO NOT repath; guide user back onto the original formula!
+            if (shortestBackToTrack.length > 0 && shortestBackToTrack.length <= 3) {
+                this.isDeviated = true;
+                this.isHalfTurn = false;
+                this.correctionMoves = shortestBackToTrack;
+                return {
+                    isComplete: false,
+                    isDeviated: true,
+                    repathed: false,
+                    currentStep: this.currentStep,
+                    totalSteps: this.scrambleMoves.length,
+                    fullScrambleString: this.scrambleString, // Original formula unchanged!
+                    correctionMoves: shortestBackToTrack,
+                    remainingMoves: [shortestBackToTrack[0], ...this.scrambleMoves.slice(this.currentStep)]
+                };
+            }
+
+            // Case B: Deviation exceeds 3 moves (> 3 moves)
+            // Directly compute the SHORTEST path from current cube state to the CURRENT SCRAMBLE TARGET (this.targetCube),
+            // NOT generating a brand new scramble!
+            if (this.currentStep > 0 || shortestBackToTrack.length > 3) {
+                const pathToTarget = getCorrectionMoves(this.currentCube, this.targetCube);
+                if (pathToTarget && pathToTarget.length > 0) {
                     const completedMoves = this.scrambleMoves.slice(0, this.currentStep);
-                    this.repathRemaining(completedMoves, remainingCorrection);
+                    this.repathRemaining(completedMoves, pathToTarget);
+
+                    this.isDeviated = true;
+                    this.isHalfTurn = false;
+                    this.correctionMoves = pathToTarget;
 
                     return {
                         isComplete: false,
@@ -894,11 +936,27 @@
                         repathed: true,
                         currentStep: this.currentStep,
                         totalSteps: this.scrambleMoves.length,
-                        fullScrambleString: this.scrambleString,
-                        correctionMoves: remainingCorrection,
-                        remainingMoves: remainingCorrection
+                        fullScrambleString: this.scrambleString, // Updated with shortest path to original target!
+                        correctionMoves: pathToTarget,
+                        remainingMoves: pathToTarget
                     };
                 }
+            }
+
+            // Fallback if cube already reached target
+            if (this.currentCube.equals(this.targetCube)) {
+                this.isComplete = true;
+                this.isDeviated = false;
+                this.isHalfTurn = false;
+                return {
+                    isComplete: true,
+                    isDeviated: false,
+                    isHalfTurn: false,
+                    currentStep: this.scrambleMoves.length,
+                    totalSteps: this.scrambleMoves.length,
+                    correctionMoves: [],
+                    remainingMoves: []
+                };
             }
 
             this.isDeviated = false;

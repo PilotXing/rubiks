@@ -643,5 +643,13 @@
 - [x] **Version Upgrade**:
     - Bumped to `v19.6` (sw.js cache `rubiks-timer-v19.6`).
 
+## 03 SEP Scramble Error Correction (<3 moves Undo vs >3 moves Target Shortest Path) (v19.7)
+- [x] **Follow Scramble Correction Logic (遵循打乱纠错逻辑)**:
+    - When user turns wrong moves within 3 steps (<= 3 moves deviation): Original scramble formula is preserved! Engine computes the 1~3 step undo/recovery path, displays the capsule badge (`undoMove ➔ nextMove`), and banner instructs: `转错了，请转动 [X] 纠错回到打乱步骤`.
+- [x] **Recompute Shortest Path to Current Target (> 3 moves deviation) (超3步重算到原目标最短路径)**:
+    - When user deviates by more than 3 steps: The engine keeps the original scramble target state (`this.targetCube`), computes the shortest solver path from current physical cube state directly to `this.targetCube`, and in-place updates remaining moves. It does NOT generate a brand new random scramble!
+- [x] **Version Upgrade**:
+    - Bumped to `v19.7` (sw.js cache `rubiks-timer-v19.7`).
+
 
 

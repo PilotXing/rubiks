@@ -826,7 +826,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function updateCarouselCards(activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, isDeviated = false) {
+    function updateCarouselCards(activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, isDeviated = false, isRepathed = false) {
         if (!carouselElements.cardCurrent) {
             carouselElements.cardCurrent = document.getElementById('scramble-text');
             carouselElements.cardPrev = document.getElementById('scramble-card-prev');
@@ -865,7 +865,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const visiblePrev = scrambleVisiblePrev;
                 const visibleNext = scrambleVisibleNext;
-                const isCorrectionMode = isDeviated && correctionMoves && correctionMoves.length > 0 && correctionMoves.length <= 2;
+                const isCorrectionMode = isDeviated && !isRepathed && correctionMoves && correctionMoves.length > 0 && correctionMoves.length <= 3;
 
                 existingMoves.forEach((item, idx) => {
                     let cls = 'reel-step-item';
@@ -883,8 +883,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else if (idx === activeIdx) {
                         if (isCorrectionMode) {
                             cls += ' step-active';
-                            const undoMove = correctionMoves[0];
-                            const nextMove = correctionMoves.length > 1 ? correctionMoves[1] : (moves[activeIdx] || '');
+                            const undoMove = correctionMoves.join(' ');
+                            const nextMove = moves[activeIdx] || '';
                             item.innerHTML = `
                                 <div class="reel-correction-badge">
                                     <span class="reel-correction-undo">${undoMove}</span>
@@ -1208,8 +1208,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initScrambleGesture();
 
-    function renderScrambleDisplay(activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, isDeviated = false) {
-        updateCarouselCards(activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, isDeviated);
+    function renderScrambleDisplay(activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, isDeviated = false, isRepathed = false) {
+        updateCarouselCards(activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, isDeviated, isRepathed);
     }
 
     function updateScrambleStatus(evalResult) {
@@ -1256,7 +1256,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setArenaMode('SCRAMBLE');
             if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
 
-            if (evalResult.fullScrambleString && evalResult.fullScrambleString !== currentScramble) {
+            if (evalResult.repathed && evalResult.fullScrambleString && evalResult.fullScrambleString !== currentScramble) {
                 currentScramble = evalResult.fullScrambleString;
                 timer.setScramble(currentScramble);
                 if (scrambleHistory.length > 0 && scrambleHistoryIndex >= 0 && scrambleHistoryIndex < scrambleHistory.length) {
@@ -1264,12 +1264,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            const nextCorrection = (evalResult.remainingMoves && evalResult.remainingMoves.length > 0)
-                ? evalResult.remainingMoves[0]
-                : (evalResult.correctionMoves && evalResult.correctionMoves.length > 0 ? evalResult.correctionMoves[0] : 'Turn cube');
-
             if (banner) {
-                banner.innerHTML = `<span>打乱已自动更新剩余步骤，请继续转动: <strong>${nextCorrection}</strong></span>`;
+                if (evalResult.repathed) {
+                    const nextMove = (evalResult.remainingMoves && evalResult.remainingMoves.length > 0)
+                        ? evalResult.remainingMoves[0]
+                        : (evalResult.correctionMoves && evalResult.correctionMoves.length > 0 ? evalResult.correctionMoves[0] : '');
+                    const remSteps = evalResult.remainingMoves ? evalResult.remainingMoves.length : 0;
+                    banner.innerHTML = `<span>偏离超3步，已重新计算到打乱目标的最短路径: <strong>${nextMove}</strong> (剩余 ${remSteps} 步)</span>`;
+                } else {
+                    const undoText = (evalResult.correctionMoves && evalResult.correctionMoves.length > 0)
+                        ? evalResult.correctionMoves.join(' ')
+                        : '撤回动作';
+                    banner.innerHTML = `<span>转动错误，请转动 <strong>${undoText}</strong> 纠错回到打乱步骤</span>`;
+                }
                 banner.classList.add('status-warning');
             }
             if (elements.timerStateBadge) {
@@ -1297,7 +1304,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             wasDeviated = true;
-            renderScrambleDisplay(evalResult.currentStep, evalResult.correctionMoves || [], false, null, null, true);
+            renderScrambleDisplay(evalResult.currentStep, evalResult.correctionMoves || [], false, null, null, true, !!evalResult.repathed);
         } else if (evalResult.isHalfTurn) {
             setArenaMode('SCRAMBLE');
             wasDeviated = false;
