@@ -64,6 +64,8 @@ document.addEventListener('DOMContentLoaded', () => {
         scrambleBox: document.getElementById('scramble-box'),
         scrambleText: document.getElementById('scramble-text'),
         scrambleBanner: document.getElementById('scramble-banner'),
+        scrambleFullscreenBar: document.getElementById('scramble-fullscreen-bar'),
+        btnExitScrambleFullscreen: document.getElementById('btn-exit-scramble-fullscreen'),
         btnNewScramble: document.getElementById('btn-new-scramble'),
         btnRecalibrate: document.getElementById('btn-recalibrate'),
         btnCopyScramble: document.getElementById('btn-copy-scramble'),
@@ -549,6 +551,39 @@ document.addEventListener('DOMContentLoaded', () => {
         updateArenaToggleBtn(mode);
     }
 
+    function setScrambleFullscreen(active) {
+        if (active) {
+            if (!document.body.classList.contains('is-scrambling')) {
+                document.body.classList.add('is-scrambling');
+                requestAnimationFrame(() => {
+                    if (elements.cube3dContainer && renderer3D) {
+                        const rect = elements.cube3dContainer.getBoundingClientRect();
+                        const sz = Math.min(rect.width || 320, rect.height || 320) || 320;
+                        renderer3D.resize(sz, sz);
+                    }
+                });
+            }
+        } else {
+            if (document.body.classList.contains('is-scrambling')) {
+                document.body.classList.remove('is-scrambling');
+                requestAnimationFrame(() => {
+                    if (elements.cube3dContainer && renderer3D) {
+                        const rect = elements.cube3dContainer.getBoundingClientRect();
+                        const sz = Math.min(rect.width || 180, rect.height || 180) || 180;
+                        renderer3D.resize(sz, sz);
+                    }
+                });
+            }
+        }
+    }
+
+    if (elements.btnExitScrambleFullscreen) {
+        elements.btnExitScrambleFullscreen.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setScrambleFullscreen(false);
+        });
+    }
+
     if (elements.btnSwitchToTimer) {
         elements.btnSwitchToTimer.addEventListener('click', () => {
             setArenaMode('TIMER');
@@ -749,6 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>·</span>
                 <span>剩余 <strong class="progress-highlight">${remainingCount}</strong> 步</span>
                 <span style="opacity: 0.65;">(${pct}%)</span>
+                <button class="btn-enter-scramble-fs" title="进入全屏打乱模式 (Fullscreen Scramble)" type="button">⛶ 全屏</button>
             </div>
         `;
 
@@ -929,6 +965,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <span>·</span>
                         <span>剩余 <strong class="progress-highlight">${remainingCount}</strong> 步</span>
                         <span style="opacity: 0.65;">(${pct}%)</span>
+                        <button class="btn-enter-scramble-fs" title="进入全屏打乱模式 (Fullscreen Scramble)" type="button">⛶ 全屏</button>
                     `;
                 }
 
@@ -1217,7 +1254,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (banner) banner.className = 'scramble-banner';
 
         if (!evalResult || (evalResult.currentStep === 0 && !evalResult.isHalfTurn && !evalResult.isDeviated)) {
-            document.body.classList.remove('is-scrambling');
+            setScrambleFullscreen(false);
             if (banner) {
                 banner.innerHTML = `<span>Follow the scramble sequence above on your cube</span>`;
                 banner.classList.add('status-pending');
@@ -1237,7 +1274,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (evalResult.isComplete) {
-            document.body.classList.remove('is-scrambling');
+            setScrambleFullscreen(false);
             wasDeviated = false;
             setArenaMode('TIMER');
             if (banner) {
@@ -1252,7 +1289,7 @@ document.addEventListener('DOMContentLoaded', () => {
             timer.setState('READY');
             sound.playScrambleComplete();
         } else if (evalResult.isDeviated) {
-            document.body.classList.add('is-scrambling');
+            setScrambleFullscreen(true);
             setArenaMode('SCRAMBLE');
             if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
 
@@ -1306,6 +1343,7 @@ document.addEventListener('DOMContentLoaded', () => {
             wasDeviated = true;
             renderScrambleDisplay(evalResult.currentStep, evalResult.correctionMoves || [], false, null, null, true, !!evalResult.repathed);
         } else if (evalResult.isHalfTurn) {
+            setScrambleFullscreen(true);
             setArenaMode('SCRAMBLE');
             wasDeviated = false;
             if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
@@ -1321,6 +1359,7 @@ document.addEventListener('DOMContentLoaded', () => {
             timer.setState('SCRAMBLING');
             renderScrambleDisplay(evalResult.currentStep, [], true, evalResult.halfFace, evalResult.remainingOnFace, false);
         } else {
+            setScrambleFullscreen(true);
             setArenaMode('SCRAMBLE');
             wasDeviated = false;
             if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
@@ -1340,6 +1379,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (elements.btnNewScramble) elements.btnNewScramble.addEventListener('click', () => setNewScramble());
     if (elements.btnCopyScramble) elements.btnCopyScramble.addEventListener('click', () => copyCurrentScramble());
+
+    document.addEventListener('click', (e) => {
+        const btnFs = e.target.closest('.btn-enter-scramble-fs');
+        if (btnFs) {
+            e.stopPropagation();
+            setScrambleFullscreen(true);
+        }
+    });
 
     // -------------------------------------------------------------
     // 4. Bluetooth Integration, Event Routing & Diagnostics Log
@@ -3180,11 +3227,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 resetPracticeAttempt();
             }
         } else if (e.code === 'Escape') {
+            if (document.body.classList.contains('is-scrambling')) {
+                setScrambleFullscreen(false);
+            }
             if (elements.modalSettings.classList.contains('active')) elements.modalSettings.classList.remove('active');
             if (elements.modalHelp.classList.contains('active')) elements.modalHelp.classList.remove('active');
             if (elements.modalReconstruct.classList.contains('active')) elements.modalReconstruct.classList.remove('active');
             if (elements.modalCustomAlg && elements.modalCustomAlg.classList.contains('active')) elements.modalCustomAlg.classList.remove('active');
             timer.resetTimer();
+        } else if (e.key === 'f' || e.key === 'F') {
+            if (currentView === 'view-timer') {
+                setScrambleFullscreen(!document.body.classList.contains('is-scrambling'));
+            }
         } else if (e.key === 'n' || e.key === 'N') {
             if (currentView === 'view-timer') setNewScramble();
         } else if (e.key === 'r' || e.key === 'R') {

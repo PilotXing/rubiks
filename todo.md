@@ -662,6 +662,18 @@
 - [x] **Version Upgrade**:
     - Bumped to `v19.8` (sw.js cache `rubiks-timer-v19.8`).
 
+## 03 SEP Scramble Full-Screen Focus Mode with Live 3D Cube (v19.9)
+- [x] **Full-Screen Scramble UI (开始打乱时全屏显示打乱公式与3D魔方，隐藏无关信息)**:
+    - Automatically activates immersive full-screen mode (`body.is-scrambling`) when user starts scrambling (`evalResult.currentStep > 0`, `isHalfTurn`, or `isDeviated`).
+    - **Top Area**: Prominent scramble carousel reel, active step highlight, remaining steps counter, full formula chips bar, and deviation guidance banner.
+    - **Bottom Area**: Interactive 3D WebGL cube rendered cleanly directly below the scramble box, responding in real-time to physical turns.
+    - **Hide Irrelevant Info**: Completely hides header bar, tab navigation, module toggle toolbar, solve breakdown card, session history table, and 2D net view.
+    - **Controls & Accessibility**: Includes a top floating bar with live scramble sync indicator and `[ ✕ 退出全屏 ]` button, a `[ ⛶ 全屏 ]` button on the scramble card for manual entry, and keyboard shortcuts (`Escape` to exit, `F` to toggle).
+    - **Auto-Exit**: Automatically exits full-screen scramble mode upon completing all scramble steps (`isComplete`), transitioning seamlessly to `READY` state.
+- [x] **Version Upgrade**:
+    - Bumped to `v19.9` (sw.js cache `rubiks-timer-v19.9`).
+
+
 
 
 
