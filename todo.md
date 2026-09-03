@@ -711,6 +711,15 @@
 - [x] **Version Upgrade**:
     - Bumped to `v20.2` (sw.js cache `rubiks-timer-v20.2`).
 
+## 03 SEP Remove Redundant Module Toggle Dock Bar (v20.3)
+- [x] **Remove Module Toggle Toolbar (移除顶部“本次分析 / 3D魔方 / 历史 / 切计时”冗余导航栏)**:
+    - Completely removed the `.module-toggle-toolbar` dock bar from the top of the timer stage section in `index.html`.
+    - Maximized vertical screen space on mobile and desktop: the central scramble and timer arena now immediately follows the main navigation bar.
+    - Cleaned up obsolete event listener references in `ui-controller.js`.
+- [x] **Version Upgrade**:
+    - Bumped to `v20.3` (sw.js cache `rubiks-timer-v20.3`).
+
+
 
 
 
