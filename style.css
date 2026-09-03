@@ -1130,6 +1130,7 @@ body {
 
 .bt-log-system { color: #60A5FA; }
 .bt-log-move { color: #34D399; }
+.bt-log-scramble { color: #A78BFA; }
 .bt-log-warn { color: #FBBF24; }
 .bt-log-err { color: #F87171; }
 
