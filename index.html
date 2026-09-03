@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css?v=20.1">
+    <link rel="stylesheet" href="style.css?v=20.2">
 </head>
 <body class="style-dark color-emerald theme-dark">
 
@@ -34,7 +34,7 @@
                     </svg>
                 </span>
                 <span class="brand-title">Rubik Vision</span>
-                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v20.1</span>
+                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v20.2</span>
             </div>
 
             <div class="header-actions">
@@ -102,7 +102,7 @@
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
                         <span class="module-chip-text">3D魔方</span>
                     </button>
-                    <button class="module-chip-btn active" data-target="card-history-table" title="成绩历史列表 (Session History Table)" aria-label="成绩历史">
+                    <button class="module-chip-btn" id="btn-goto-history-trend" title="在趋势中查看成绩历史 (Session History in Trends)" aria-label="成绩历史">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                         <span class="module-chip-text">历史</span>
                     </button>
@@ -302,55 +302,7 @@
                 </div>
 
             </section>
-
-            <!-- Sidebar Section: Statistics & Solve History (Minimizable) -->
-            <aside class="sidebar-section">
-
-                <!-- Solve History Card (Minimizable) -->
-                <div id="card-history-table" class="card-collapsible">
-                    <div class="collapsible-header">
-                        <span class="collapsible-title">
-                            <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                            Session History
-                        </span>
-                        <div style="display: flex; align-items: center; gap: 0.35rem;">
-                            <button id="btn-clear-session" class="btn btn-secondary btn-sm" title="Clear all solves">Clear</button>
-                            <button class="btn-panel-toggle" data-target="card-history-table" title="折叠/展开">
-                                <svg class="svg-icon svg-chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                                <span class="toggle-text">收起</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="collapsible-body collapsible-body-flush">
-                        <div class="history-table-wrapper">
-                            <table class="history-table">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Time</th>
-                                        <th>Moves</th>
-                                        <th>Scramble</th>
-                                        <th>Date</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="history-tbody">
-                                    <!-- Dynamic solve rows -->
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="history-footer">
-                            <button id="btn-export-json" class="btn btn-secondary btn-sm">Export JSON</button>
-                            <button id="btn-export-csv" class="btn btn-secondary btn-sm">Export CSV</button>
-                            <button id="btn-export-cstimer" class="btn btn-secondary btn-sm">csTimer Export</button>
-                        </div>
-                    </div>
-                </div>
-
-            </aside>
-            </div> <!-- End of view-timer -->
+        </div> <!-- End of view-timer -->
 
         <!-- VIEW 2: Data Analysis & Multi-AoX Trends (Phase 4) -->
         <div id="view-analytics" class="view-section" style="width: 100%; max-width: 1200px; margin: 0 auto;">
@@ -496,6 +448,49 @@
                     <div class="trend-stat-card">
                         <span class="trend-stat-label">Std Dev (σ)</span>
                         <span id="trend-stat-sd" class="trend-stat-value">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Solve History Card (Moved into 趋势 / Analytics View) -->
+            <div id="card-history-table" class="card-collapsible" style="margin-top: 1rem; width: 100%;">
+                <div class="collapsible-header">
+                    <span class="collapsible-title">
+                        <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        Session History (成绩历史列表)
+                    </span>
+                    <div style="display: flex; align-items: center; gap: 0.35rem;">
+                        <button id="btn-clear-session" class="btn btn-secondary btn-sm" title="Clear all solves">Clear</button>
+                        <button class="btn-panel-toggle" data-target="card-history-table" title="折叠/展开">
+                            <svg class="svg-icon svg-chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            <span class="toggle-text">收起</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="collapsible-body collapsible-body-flush">
+                    <div class="history-table-wrapper">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Time</th>
+                                    <th>Moves</th>
+                                    <th>Scramble</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-tbody">
+                                <!-- Dynamic solve rows -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="history-footer">
+                        <button id="btn-export-json" class="btn btn-secondary btn-sm">Export JSON</button>
+                        <button id="btn-export-csv" class="btn btn-secondary btn-sm">Export CSV</button>
+                        <button id="btn-export-cstimer" class="btn btn-secondary btn-sm">csTimer Export</button>
                     </div>
                 </div>
             </div>
@@ -1138,20 +1133,20 @@
     </div>
 
     <!-- Scripts -->
-    <script src="aes.js?v=20.1"></script>
-    <script src="min2phase.js?v=20.1"></script>
-    <script src="three.min.js?v=20.1"></script>
-    <script src="echarts.min.js?v=20.1"></script>
-    <script src="cube-engine.js?v=20.1"></script>
-    <script src="alg-database.js?v=20.1"></script>
-    <script src="method-analyzer.js?v=20.1"></script>
-    <script src="chart-engine.js?v=20.1"></script>
-    <script src="gan-bluetooth.js?v=20.1"></script>
-    <script src="audio-synth.js?v=20.1"></script>
-    <script src="renderer-3d.js?v=20.1"></script>
-    <script src="renderer-2d.js?v=20.1"></script>
-    <script src="timer-engine.js?v=20.1"></script>
-    <script src="ui-controller.js?v=20.1"></script>
+    <script src="aes.js?v=20.2"></script>
+    <script src="min2phase.js?v=20.2"></script>
+    <script src="three.min.js?v=20.2"></script>
+    <script src="echarts.min.js?v=20.2"></script>
+    <script src="cube-engine.js?v=20.2"></script>
+    <script src="alg-database.js?v=20.2"></script>
+    <script src="method-analyzer.js?v=20.2"></script>
+    <script src="chart-engine.js?v=20.2"></script>
+    <script src="gan-bluetooth.js?v=20.2"></script>
+    <script src="audio-synth.js?v=20.2"></script>
+    <script src="renderer-3d.js?v=20.2"></script>
+    <script src="renderer-2d.js?v=20.2"></script>
+    <script src="timer-engine.js?v=20.2"></script>
+    <script src="ui-controller.js?v=20.2"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

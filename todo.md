@@ -699,6 +699,19 @@
 - [x] **Version Upgrade**:
     - Bumped to `v20.1` (sw.js cache `rubiks-timer-v20.1`).
 
+## 03 SEP Move Session History into Trends (趋势) View (v20.2)
+- [x] **Relocate Session History to Trends Tab (成绩历史迁移至趋势视图)**:
+    - Moved `#card-history-table` (`Session History`) out of `view-timer` and placed it directly inside `#view-analytics` (趋势) underneath the main trend chart and statistics summary.
+    - Expanded history table container to full view width, providing spacious, unclipped visibility for solve times, move counts, TPS, scrambles, dates, and actions (+2, DNF, delete, reconstruction).
+    - Added responsive scrolling height (`max-height: 540px`) to comfortably display comprehensive session history.
+- [x] **Clean Centered Timer Stage Layout (计时主界面居中聚焦)**:
+    - Removed redundant right sidebar layout from `view-timer`. Main solve stage (`stage-section`) is now cleanly centered with `max-width: 820px`, creating a distraction-free, balanced solving environment.
+    - Updated `历史` dock chip in timer toolbar to `id="btn-goto-history-trend"`, which smoothly switches to `趋势` view and auto-scrolls to the session history card.
+    - Added `renderStatsAndHistory()` execution whenever user switches to the `趋势` tab to ensure the history table is always up to date.
+- [x] **Version Upgrade**:
+    - Bumped to `v20.2` (sw.js cache `rubiks-timer-v20.2`).
+
+
 
 
 

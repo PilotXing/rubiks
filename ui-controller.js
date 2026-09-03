@@ -474,6 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (viewId === 'view-analytics') {
             if (trendChart) trendChart.setData(session.solves);
             renderTrendStatistics();
+            renderStatsAndHistory();
         } else if (viewId === 'view-practice') {
             initPracticeView();
             renderPracticeHistoryAndTrend();
@@ -483,6 +484,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.tabTimer) elements.tabTimer.addEventListener('click', () => switchView('view-timer'));
     if (elements.tabAnalytics) elements.tabAnalytics.addEventListener('click', () => switchView('view-analytics'));
     if (elements.tabPractice) elements.tabPractice.addEventListener('click', () => switchView('view-practice'));
+
+    const btnGotoHistory = document.getElementById('btn-goto-history-trend');
+    if (btnGotoHistory) {
+        btnGotoHistory.addEventListener('click', () => {
+            switchView('view-analytics');
+            setTimeout(() => {
+                const historyCard = document.getElementById('card-history-table');
+                if (historyCard) {
+                    historyCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 60);
+        });
+    }
 
     // -------------------------------------------------------------
     // -------------------------------------------------------------
