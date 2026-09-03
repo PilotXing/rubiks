@@ -920,7 +920,7 @@
             // Case B: Deviation exceeds 3 moves (> 3 moves)
             // Directly compute the SHORTEST path from current cube state to the CURRENT SCRAMBLE TARGET (this.targetCube),
             // NOT generating a brand new scramble!
-            if (this.currentStep > 0 || shortestBackToTrack.length > 3) {
+            if (shortestBackToTrack.length > 3 && (this.currentStep > 0 || (this.moveHistory && this.moveHistory.length > 0))) {
                 const pathToTarget = getCorrectionMoves(this.currentCube, this.targetCube);
                 if (pathToTarget && pathToTarget.length > 0) {
                     const completedMoves = this.scrambleMoves.slice(0, this.currentStep);

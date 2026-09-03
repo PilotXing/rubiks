@@ -651,5 +651,17 @@
 - [x] **Version Upgrade**:
     - Bumped to `v19.7` (sw.js cache `rubiks-timer-v19.7`).
 
+## 03 SEP Solve Completion Scramble Refresh & calculateAoN Exception Fix (v19.8)
+- [x] **Fix Solve-Finish Scramble Transition (修复复原后未生成新打乱保留43步打乱的核心缺陷)**:
+    - Root cause: `session.calculateAoN` was invoked in `renderTrendStatistics()` without being implemented on `SolveSession`, throwing an uncaught `TypeError: session.calculateAoN is not a function`. This aborted `handleSolveFinishedUI` before reaching `setNewScramble()`, leaving the UI frozen on the old 43-step repathed scramble from the previous attempt.
+    - Added full implementation of `calculateAoN(n)` on `SolveSession` using WCA trimmed average algorithm.
+    - Added defensive type-check and try-catch fallback in `renderTrendStatistics()`.
+    - Added defensive try-catch wrappers around `renderMainSolveBreakdown`, `renderStatsAndHistory`, and `setNewScramble` in `handleSolveFinishedUI` and page boot, guaranteeing that a fresh 21-move WCA scramble is ALWAYS generated and rendered on solve completion.
+- [x] **Strict Step 0 Repath Guard (严格限制第0步禁止触发目标重算)**:
+    - Updated Case B condition in `cube-engine.js` so that repathing to `this.targetCube` strictly requires moves to have been turned (`shortestBackToTrack.length > 3 && (this.currentStep > 0 || this.moveHistory.length > 0)`), preventing false repathing on step 0.
+- [x] **Version Upgrade**:
+    - Bumped to `v19.8` (sw.js cache `rubiks-timer-v19.8`).
+
+
 
 

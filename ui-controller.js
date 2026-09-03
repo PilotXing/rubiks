@@ -1715,15 +1715,30 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        renderMainSolveBreakdown(solve);
-        renderStatsAndHistory();
+        try {
+            renderMainSolveBreakdown(solve);
+        } catch (e) {
+            console.error('renderMainSolveBreakdown error:', e);
+        }
+
+        try {
+            renderStatsAndHistory();
+        } catch (e) {
+            console.error('renderStatsAndHistory error:', e);
+        }
 
         if (trendChart && currentView === 'view-analytics') {
-            trendChart.setData(session.solves);
+            try {
+                trendChart.setData(session.solves);
+            } catch (_) {}
         }
 
         // Immediately generate and display a fresh new scramble formula for next solve
-        setNewScramble();
+        try {
+            setNewScramble();
+        } catch (e) {
+            console.error('setNewScramble error:', e);
+        }
 
         syncAllModuleUIs();
     }
@@ -2518,7 +2533,12 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.trendStatAo12.textContent = stats.currentAo12Formatted || '--';
 
         const customX = parseInt(elements.inputCustomX ? elements.inputCustomX.value : '25', 10) || 25;
-        const currentAoX = session.calculateAoN(customX);
+        let currentAoX = null;
+        try {
+            if (session && typeof session.calculateAoN === 'function') {
+                currentAoX = session.calculateAoN(customX);
+            }
+        } catch (_) {}
         elements.trendStatAoX.textContent = currentAoX ? formatTime(currentAoX) : '--';
 
         if (times.length >= 2) {
@@ -3192,13 +3212,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // 11. Initial Application Boot
     // -------------------------------------------------------------
     initModuleToggles();
-    renderStatsAndHistory();
+    try {
+        renderStatsAndHistory();
+    } catch (e) {
+        console.error('Initial renderStatsAndHistory error:', e);
+    }
     if (session.solves && session.solves.length > 0) {
-        renderMainSolveBreakdown(session.solves[0]);
+        try {
+            renderMainSolveBreakdown(session.solves[0]);
+        } catch (e) {
+            console.error('Initial renderMainSolveBreakdown error:', e);
+        }
     }
     syncAllModuleUIs();
-    setNewScramble();
+    try {
+        setNewScramble();
+    } catch (e) {
+        console.error('Initial setNewScramble error:', e);
+    }
     requestAnimationFrame(() => {
-        updateCarouselCards(0);
+        try {
+            updateCarouselCards(0);
+        } catch (_) {}
     });
 });

@@ -246,6 +246,13 @@
             };
         }
 
+        calculateAoN(n) {
+            if (!n || typeof n !== 'number' || n <= 0) return null;
+            if (!this.solves || this.solves.length < n) return null;
+            const times = this.solves.slice(0, n).map(s => s.finalTimeMs);
+            return calcAverage(times);
+        }
+
         exportJSON() {
             return JSON.stringify({
                 version: 1,
