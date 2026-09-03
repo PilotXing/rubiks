@@ -939,6 +939,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (idx < activeIdx) stCls = 'done';
                     else if (idx === activeIdx) stCls = 'active';
                     const colorCls = getMoveColorClass(moves[idx]);
+                    chip.textContent = moves[idx];
                     chip.className = `overall-move-chip ${stCls} ${colorCls}`;
                 });
             } else {
@@ -1008,6 +1009,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         timer.setState('SCRAMBLING');
         setArenaMode('SCRAMBLE');
+        if (carouselElements.cardCurrent) {
+            carouselElements.cardCurrent.innerHTML = formatScrambleHTML(currentScramble, 0);
+        }
         updateScrambleStatus(evalResult);
         updateCarouselCards(0);
     }

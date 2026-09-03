@@ -614,5 +614,12 @@
 - [x] **Version Upgrade**:
     - Bumped to `v19.2` (sw.js cache `rubiks-timer-v19.2`).
 
+## 03 SEP Scramble Reel & Overall Sequence Synchronization Fix (v19.3)
+- [x] **Synchronized Overall Sequence Chips Bar with Scramble Reel (同步打乱轮盘与全局公式栏)**:
+    - Fixed bug where `overallChips.forEach` only updated CSS classes but forgot to assign `chip.textContent = moves[idx]`, causing the mini sequence bar to display outdated initial moves while the reel had already updated.
+    - Updated `setNewScramble` to explicitly rebuild `cardCurrent.innerHTML` with `formatScrambleHTML(currentScramble, 0)` so the entire reel, footer, and full sequence chips bar are 100% in sync on every new scramble.
+- [x] **Version Upgrade**:
+    - Bumped to `v19.3` (sw.js cache `rubiks-timer-v19.3`).
+
 
 
