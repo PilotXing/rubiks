@@ -1216,23 +1216,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const banner = elements.scrambleBanner;
         if (banner) banner.className = 'scramble-banner';
 
-        if (!evalResult || evalResult.currentStep === 0) {
+        if (!evalResult) {
             document.body.classList.remove('is-scrambling');
-            if (banner) {
-                banner.innerHTML = `<span>Follow the scramble sequence above on your cube</span>`;
-                banner.classList.add('status-pending');
-            }
             if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
             renderScrambleDisplay(0);
-            wasDeviated = false;
-            if (elements.timerStateBadge) {
-                elements.timerStateBadge.textContent = 'SCRAMBLING';
-                elements.timerStateBadge.className = 'badge badge-scrambling';
-            }
-            if (timer.state !== 'RUNNING' && timer.state !== 'INSPECTION' && timer.state !== 'READY') {
-                timer.setState('SCRAMBLING');
-            }
-            setArenaMode('SCRAMBLE');
             return;
         }
 
@@ -1313,6 +1300,23 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             timer.setState('SCRAMBLING');
             renderScrambleDisplay(evalResult.currentStep, [], true, evalResult.halfFace, evalResult.remainingOnFace, false);
+        } else if (evalResult.currentStep === 0) {
+            document.body.classList.remove('is-scrambling');
+            if (banner) {
+                banner.innerHTML = `<span>Follow the scramble sequence above on your cube</span>`;
+                banner.classList.add('status-pending');
+            }
+            if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
+            renderScrambleDisplay(0);
+            wasDeviated = false;
+            if (elements.timerStateBadge) {
+                elements.timerStateBadge.textContent = 'SCRAMBLING';
+                elements.timerStateBadge.className = 'badge badge-scrambling';
+            }
+            if (timer.state !== 'RUNNING' && timer.state !== 'INSPECTION' && timer.state !== 'READY') {
+                timer.setState('SCRAMBLING');
+            }
+            setArenaMode('SCRAMBLE');
         } else {
             setArenaMode('SCRAMBLE');
             wasDeviated = false;

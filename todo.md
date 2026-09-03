@@ -621,5 +621,12 @@
 - [x] **Version Upgrade**:
     - Bumped to `v19.3` (sw.js cache `rubiks-timer-v19.3`).
 
+## 03 SEP Scramble Evaluation Step 0 Intercept & Progression Fix (v19.4)
+- [x] **Fixed Scramble Reel Not Advancing from Step 0 (修复打乱未跟随转动、停留在第一步的逻辑拦截问题)**:
+    - Fixed a critical control-flow bug in `updateScrambleStatus()` where `if (!evalResult || evalResult.currentStep === 0)` was checked first, prematurely intercepting half-turns (`isHalfTurn`), deviations (`isDeviated`), and intermediate state transitions occurring on the first move.
+    - Re-ordered the branching to check `isComplete`, `isDeviated`, and `isHalfTurn` first, allowing the first step (`currentStep === 0`) to properly render real-time half-turn progress (`F (½)`) and smoothly transition to step 1 upon completing moves like `F2` or single turns.
+- [x] **Version Upgrade**:
+    - Bumped to `v19.4` (sw.js cache `rubiks-timer-v19.4`).
+
 
 
