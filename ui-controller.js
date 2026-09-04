@@ -301,6 +301,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.swatch-btn[data-color]').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.color === color);
         });
+
+        if (typeof mainMovementChart !== 'undefined' && mainMovementChart && typeof mainMovementChart.render === 'function') {
+            mainMovementChart.render();
+        }
     }
 
     applyThemeAndStyle(currentUiStyle, currentAccentColor);
@@ -2225,7 +2229,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (elements.canvasMainSolveGraph && window.ChartEngine && typeof ChartEngine.SolveMovementChart === 'function') {
         mainMovementChart = new ChartEngine.SolveMovementChart(elements.canvasMainSolveGraph, {
-            cumulativeCurve: { enabled: true, color: '#10B981', width: 2.5, opacity: 1.0 },
+            cumulativeCurve: { enabled: true, width: 2.5, opacity: 1.0 },
             derivativeBars: { enabled: true, color: 'rgba(59, 130, 246, 0.35)', activeColor: '#F59E0B' },
             tpsCurve: { enabled: true, color: '#06B6D4', width: 2.0, opacity: 0.85 },
             showStageBands: true,

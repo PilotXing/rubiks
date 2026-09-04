@@ -764,6 +764,9 @@
                 });
             }
 
+            // Dynamic Accent Theme Color
+            const accentColor = (typeof window !== 'undefined' && getComputedStyle(document.body).getPropertyValue('--accent-primary').trim()) || (this.options.cumulativeCurve && this.options.cumulativeCurve.color) || '#10B981';
+
             // 2. Cumulative Solve Time Spline Curve
             if (this.options.cumulativeCurve && this.options.cumulativeCurve.enabled) {
                 series.push({
@@ -774,18 +777,18 @@
                     symbol: 'circle',
                     symbolSize: 4,
                     itemStyle: {
-                        color: '#10B981'
+                        color: accentColor
                     },
                     lineStyle: {
-                        color: '#10B981',
+                        color: accentColor,
                         width: 2.8,
-                        shadowColor: 'rgba(16, 185, 129, 0.6)',
-                        shadowBlur: 10
+                        shadowColor: accentColor + '66',
+                        shadowBlur: 8
                     },
                     areaStyle: {
                         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                            { offset: 0, color: 'rgba(16, 185, 129, 0.28)' },
-                            { offset: 1, color: 'rgba(16, 185, 129, 0.0)' }
+                            { offset: 0, color: accentColor + '33' },
+                            { offset: 1, color: accentColor + '00' }
                         ])
                     },
                     markArea: markAreaData.length > 0 ? {
@@ -886,7 +889,7 @@
                             </div>
                             <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 11px; margin: 2px 0;">
                                 <span style="color: ${labelColor};">累计用时:</span>
-                                <b style="color: #10B981;">${timeSec.toFixed(2)}s</b>
+                                <b style="color: ${accentColor};">${timeSec.toFixed(2)}s</b>
                             </div>
                         `;
                     }
@@ -906,7 +909,7 @@
                         type: 'value',
                         name: '时间 (s)',
                         nameTextStyle: {
-                            color: '#10B981',
+                            color: accentColor,
                             fontFamily: 'JetBrains Mono',
                             fontSize: 10,
                             fontWeight: 'bold',
@@ -917,7 +920,7 @@
                             lineStyle: { color: isLight ? 'rgba(15, 23, 42, 0.05)' : 'rgba(255, 255, 255, 0.06)' }
                         },
                         axisLabel: {
-                            color: '#10B981',
+                            color: accentColor,
                             fontFamily: 'JetBrains Mono',
                             fontSize: 9.5,
                             formatter: '{value}s'

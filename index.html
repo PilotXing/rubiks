@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css?v=20.9">
+    <link rel="stylesheet" href="style.css?v=20.10">
 </head>
 <body class="style-dark color-emerald theme-dark">
 
@@ -34,7 +34,7 @@
                     </svg>
                 </span>
                 <span class="brand-title">Rubik Vision</span>
-                <span id="app-version-badge" class="badge app-version-badge">v20.9</span>
+                <span id="app-version-badge" class="badge app-version-badge">v20.10</span>
             </div>
 
             <div class="header-actions">
@@ -206,12 +206,12 @@
                                     阶段步数与 TPS 轨迹曲线
                                 </span>
                                 <div style="display: flex; gap: 0.55rem; font-size: 0.72rem; align-items: center; flex-wrap: wrap;">
-                                    <div class="tps-smooth-selector" style="display: inline-flex; align-items: center; gap: 0.25rem; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); padding: 1px 6px; border-radius: 4px; margin-right: 0.2rem;">
+                                    <div class="tps-smooth-selector">
                                         <span style="font-size: 0.68rem; color: var(--text-tertiary);">平滑:</span>
-                                        <select id="select-tps-smooth-window" style="background: transparent; border: none; color: #38BDF8; font-size: 0.7rem; font-weight: 700; padding: 0; outline: none; cursor: pointer;">
-                                            <option value="3" style="background: #1e293b; color: #fff;">3步(轻度)</option>
-                                            <option value="5" selected style="background: #1e293b; color: #fff;">5步(标准)</option>
-                                            <option value="7" style="background: #1e293b; color: #fff;">7步(深度)</option>
+                                        <select id="select-tps-smooth-window">
+                                            <option value="3">3步(轻度)</option>
+                                            <option value="5" selected>5步(标准)</option>
+                                            <option value="7">7步(深度)</option>
                                         </select>
                                     </div>
                                     <label class="form-check"><input type="checkbox" id="toggle-main-cumulative" checked> <span>时间</span></label>
