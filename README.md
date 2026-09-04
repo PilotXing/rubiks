@@ -77,11 +77,25 @@ Open your browser at `http://localhost:8080` (or `http://127.0.0.1:8080`).
 
 - **Core Engine**: Pure Modern Vanilla JavaScript (ES6+), Web Bluetooth API, Web Audio API, Web Vibration API.
 - **3D Graphics**: Three.js WebGL Renderer.
+- **Charts & Data**: Apache ECharts.
 - **Math & Solvers**: `min2phase` Two-Phase WCA Scrambler & State Solver.
 - **Encryption**: AES-128 Client-side Cryptography.
 
 ---
 
+## 💖 Acknowledgments & Third-Party Credits
+
+Rubik Vision builds upon and is deeply grateful to the open-source speedcubing and graphics community:
+
+- **[Three.js](https://github.com/mrdoob/three.js)** (MIT License) - Exceptional 3D WebGL rendering engine by Ricardo Cabello (Mr.doob) and contributors.
+- **[Apache ECharts](https://github.com/apache/echarts)** (Apache-2.0 License) - Powerful, interactive charting and visualization library by the Apache Software Foundation.
+- **[min2phase](https://github.com/cs0x7f/min2phase)** (GPL-3.0 / MIT License) - Ultra-fast two-phase Rubik's Cube scrambler and solver by Shuang Chen (`cs0x7f`).
+- **[aes-js](https://github.com/ricmoo/aes-js)** (MIT License) - Pure JavaScript implementation of the AES block cipher and common modes of operation by Richard Moore (`ricmoo`).
+- **[gan-web-bluetooth](https://github.com/afedotov/gan-web-bluetooth)** (MIT License) - Pioneering Web Bluetooth protocol reverse-engineering for GAN smart cubes by Andrew Fedotov (`afedotov`) and the open-source cubing community.
+
+---
+
 ## 📄 License
 
-MIT License. Crafted with precision for the global speedcubing community.
+This project is licensed under the [MIT License](LICENSE). Crafted with precision for the global speedcubing community.
+
