@@ -319,12 +319,27 @@
             };
 
             // 2. Draw Grid Lines & Y-Axis Labels
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.07)';
+            const isLight = typeof document !== 'undefined' && (document.body.classList.contains('style-light') || document.body.classList.contains('theme-light'));
+            ctx.strokeStyle = isLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.07)';
             ctx.lineWidth = 1;
-            ctx.fillStyle = '#9CA3AF';
+            ctx.fillStyle = isLight ? '#64748B' : '#9CA3AF';
             ctx.font = '10px JetBrains Mono, monospace';
             ctx.textAlign = 'right';
 
+            // Vertical grid lines
+            const xGridCount = Math.min(8, visibleSpan);
+            if (xGridCount > 1) {
+                for (let k = 0; k <= xGridCount; k++) {
+                    const idx = Math.round(startIdx + (k / xGridCount) * visibleSpan);
+                    const gx = getX(idx);
+                    ctx.beginPath();
+                    ctx.moveTo(gx, pad.top);
+                    ctx.lineTo(gx, pad.top + plotH);
+                    ctx.stroke();
+                }
+            }
+
+            // Horizontal grid lines
             const gridSteps = 5;
             for (let i = 0; i <= gridSteps; i++) {
                 const val = minVal + (i / gridSteps) * (maxVal - minVal);
@@ -337,7 +352,7 @@
             }
 
             // Draw Y-Axis Range Badge Mode & Zoom Indicator
-            ctx.fillStyle = '#646A7E';
+            ctx.fillStyle = isLight ? '#475569' : '#646A7E';
             ctx.font = '9px Inter, sans-serif';
             ctx.textAlign = 'left';
             let modeText = this.options.yRangeMode === 'auto90'
@@ -670,6 +685,7 @@
             // Stage markArea data with Multi-Level Staggered Badges to prevent label collision
             const stages = (this.stages && this.stages.length > 0) ? this.stages : (this.options.stages || []);
             const markAreaData = [];
+            const isLight = typeof document !== 'undefined' && (document.body.classList.contains('style-light') || document.body.classList.contains('theme-light'));
 
             if (this.options.showStageBands && stages.length > 0) {
                 stages.forEach((stg, sIdx) => {
@@ -686,27 +702,27 @@
                             xAxis: Math.max(0, stg.startIdx),
                             itemStyle: {
                                 color: stgColor,
-                                opacity: 0.12
+                                opacity: isLight ? 0.06 : 0.09
                             },
                             label: {
                                 show: this.options.showStageLabels !== false,
                                 position: verticalPos,
                                 distance: 4,
-                                color: '#FFFFFF',
-                                backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                                color: isLight ? '#0F172A' : '#FFFFFF',
+                                backgroundColor: isLight ? 'rgba(255, 255, 255, 0.95)' : 'rgba(15, 23, 42, 0.94)',
                                 borderColor: stgColor,
-                                borderWidth: 1.5,
+                                borderWidth: 1.2,
                                 borderRadius: 4,
                                 padding: [3, 6],
-                                shadowColor: 'rgba(0, 0, 0, 0.5)',
-                                shadowBlur: 6,
+                                shadowColor: isLight ? 'rgba(0, 0, 0, 0.12)' : 'rgba(0, 0, 0, 0.5)',
+                                shadowBlur: 5,
                                 formatter: `{moves|${moveCount}步} {tps|${tpsVal}}`,
                                 rich: {
                                     moves: {
                                         fontSize: 11,
                                         fontWeight: '800',
                                         fontFamily: 'JetBrains Mono, monospace',
-                                        color: '#FFFFFF',
+                                        color: isLight ? '#0F172A' : '#FFFFFF',
                                         align: 'center',
                                         lineHeight: 14
                                     },
@@ -714,7 +730,7 @@
                                         fontSize: 10,
                                         fontWeight: '700',
                                         fontFamily: 'JetBrains Mono, monospace',
-                                        color: '#38BDF8',
+                                        color: isLight ? '#0284C7' : '#38BDF8',
                                         align: 'center',
                                         lineHeight: 14
                                     }
@@ -817,15 +833,17 @@
                     trigger: 'axis',
                     axisPointer: {
                         type: 'cross',
-                        lineStyle: { color: 'rgba(255, 255, 255, 0.4)', type: 'dashed' },
-                        crossStyle: { color: 'rgba(255, 255, 255, 0.3)' }
+                        lineStyle: { color: isLight ? 'rgba(15, 23, 42, 0.3)' : 'rgba(255, 255, 255, 0.4)', type: 'dashed' },
+                        crossStyle: { color: isLight ? 'rgba(15, 23, 42, 0.2)' : 'rgba(255, 255, 255, 0.3)' }
                     },
-                    backgroundColor: 'rgba(15, 23, 42, 0.94)',
-                    borderColor: 'rgba(255, 255, 255, 0.15)',
+                    backgroundColor: isLight ? 'rgba(255, 255, 255, 0.96)' : 'rgba(15, 23, 42, 0.94)',
+                    borderColor: isLight ? '#E2E8F0' : 'rgba(255, 255, 255, 0.15)',
                     borderWidth: 1,
                     padding: [8, 12],
+                    shadowColor: isLight ? 'rgba(0, 0, 0, 0.08)' : 'rgba(0, 0, 0, 0.4)',
+                    shadowBlur: 8,
                     textStyle: {
-                        color: '#F3F4F6',
+                        color: isLight ? '#0F172A' : '#F3F4F6',
                         fontFamily: 'JetBrains Mono, monospace',
                         fontSize: 11
                     },
@@ -848,21 +866,26 @@
                             }
                         }
 
+                        const labelColor = isLight ? '#64748B' : '#9CA3AF';
+                        const titleColor = isLight ? '#0284C7' : '#38BDF8';
+                        const deltaColor = isLight ? '#2563EB' : '#60A5FA';
+                        const tpsColor = isLight ? '#0891B2' : '#06B6D4';
+
                         return `
-                            <div style="font-weight: 800; color: #38BDF8; font-size: 12px; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
+                            <div style="font-weight: 800; color: ${titleColor}; font-size: 12px; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between;">
                                 <span>Step #${stepIdx + 1}: ${moveName}</span>
                                 ${stageBadge}
                             </div>
                             <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 11px; margin: 2px 0;">
-                                <span style="color: #9CA3AF;">平滑 TPS:</span>
-                                <b style="color: #06B6D4; font-size: 12px;">${curSmoothedTps}</b>
+                                <span style="color: ${labelColor};">平滑 TPS:</span>
+                                <b style="color: ${tpsColor}; font-size: 12px;">${curSmoothedTps}</b>
                             </div>
                             <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 11px; margin: 2px 0;">
-                                <span style="color: #9CA3AF;">单步耗时:</span>
-                                <b style="color: #60A5FA;">${stepIdx === 0 ? '起步 (+0ms)' : `+${deltaMs}ms`}</b>
+                                <span style="color: ${labelColor};">单步耗时:</span>
+                                <b style="color: ${deltaColor};">${stepIdx === 0 ? '起步 (+0ms)' : `+${deltaMs}ms`}</b>
                             </div>
                             <div style="display: flex; justify-content: space-between; gap: 12px; font-size: 11px; margin: 2px 0;">
-                                <span style="color: #9CA3AF;">累计用时:</span>
+                                <span style="color: ${labelColor};">累计用时:</span>
                                 <b style="color: #10B981;">${timeSec.toFixed(2)}s</b>
                             </div>
                         `;
@@ -872,7 +895,7 @@
                     type: 'category',
                     boundaryGap: false,
                     data: xData,
-                    axisLine: { lineStyle: { color: 'rgba(255, 255, 255, 0.15)' } },
+                    axisLine: { lineStyle: { color: isLight ? 'rgba(15, 23, 42, 0.12)' : 'rgba(255, 255, 255, 0.15)' } },
                     axisTick: { show: false },
                     axisLabel: {
                         show: false
@@ -891,7 +914,7 @@
                         },
                         position: 'left',
                         splitLine: {
-                            lineStyle: { color: 'rgba(255, 255, 255, 0.06)' }
+                            lineStyle: { color: isLight ? 'rgba(15, 23, 42, 0.05)' : 'rgba(255, 255, 255, 0.06)' }
                         },
                         axisLabel: {
                             color: '#10B981',
@@ -904,7 +927,7 @@
                         type: 'value',
                         name: 'TPS',
                         nameTextStyle: {
-                            color: '#06B6D4',
+                            color: isLight ? '#0891B2' : '#06B6D4',
                             fontFamily: 'JetBrains Mono',
                             fontSize: 10,
                             fontWeight: 'bold',
@@ -913,7 +936,7 @@
                         position: 'right',
                         splitLine: { show: false },
                         axisLabel: {
-                            color: '#06B6D4',
+                            color: isLight ? '#0891B2' : '#06B6D4',
                             fontFamily: 'JetBrains Mono',
                             fontSize: 9.5,
                             formatter: '{value}'
