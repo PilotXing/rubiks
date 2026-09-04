@@ -5,18 +5,36 @@
 
 (function(root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define(['gan-bluetooth'], factory);
+        define(['../bluetooth/gan-bluetooth'], factory);
     } else if (typeof module === 'object' && module.exports) {
-        module.exports = factory(require('./gan-bluetooth'));
+        let gb = null;
+        try {
+            gb = require('../bluetooth/gan-bluetooth');
+        } catch (e) {}
+        module.exports = factory(gb);
     } else {
         root.TimerEngine = factory(root.GanBluetooth);
     }
 }(typeof self !== 'undefined' ? self : this, function(GanBluetooth) {
     'use strict';
 
+    const Penalty = Object.freeze({
+        NONE: 0,
+        PLUS_TWO: 2000,
+        DNF: -1
+    });
+
     const getNowMs = () => (typeof performance !== 'undefined' && typeof performance.now === 'function')
         ? performance.now()
         : Date.now();
+
+    const raf = typeof requestAnimationFrame === 'function'
+        ? requestAnimationFrame
+        : (cb => setTimeout(cb, 16));
+
+    const caf = typeof cancelAnimationFrame === 'function'
+        ? cancelAnimationFrame
+        : (id => clearTimeout(id));
 
     /**
      * Format milliseconds into standard speedcubing time display (e.g. 9.42, 1:12.35)
@@ -49,31 +67,46 @@
     }
 
     /**
-     * Calculate WCA Average of N (trim fastest and slowest, average the rest)
+     * Calculate WCA Mean of 3 (untrimmed arithmetic mean)
+     * WCA Rule 9f1: For 3 solves, no times are trimmed.
+     * Any DNF results in a DNF mean.
+     */
+    function calcMo3(timesArray) {
+        if (!timesArray || timesArray.length !== 3) return null;
+        if (timesArray.some(t => t < 0)) return -1;
+        const sum = timesArray.reduce((a, b) => a + b, 0);
+        return sum / 3;
+    }
+
+    /**
+     * Calculate WCA Average of N (Ao5, Ao12, etc.)
      */
     function calcAverage(timesArray) {
         if (!timesArray || timesArray.length === 0) return null;
-        const validSolves = timesArray.filter(t => t > 0);
-        const dnfCount = timesArray.filter(t => t < 0).length;
 
-        // More than 1 DNF in ao5 or more than allowed means DNF
+        if (timesArray.length < 3) {
+            if (timesArray.some(t => t < 0)) return -1;
+            const sum = timesArray.reduce((a, b) => a + b, 0);
+            return sum / timesArray.length;
+        }
+
+        if (timesArray.length === 3) {
+            return calcMo3(timesArray);
+        }
+
+        const dnfCount = timesArray.filter(t => t < 0).length;
+        // WCA rules: 1 DNF allowed in Ao5 and Ao12 (counts as slowest, trimmed out)
         const maxDnfs = timesArray.length >= 5 ? 1 : 0;
         if (dnfCount > maxDnfs) return -1; // DNF
 
-        if (timesArray.length < 3) {
-            // Mean
-            const sum = validSolves.reduce((a, b) => a + b, 0);
-            return sum / validSolves.length;
-        }
-
-        // For ao5 and ao12: sort times, drop highest and lowest
+        // Sort times, treating DNF (< 0) as largest
         const sorted = timesArray.slice().sort((a, b) => {
-            if (a < 0) return 1; // DNF is largest
+            if (a < 0) return 1;
             if (b < 0) return -1;
             return a - b;
         });
 
-        // Remove 1 best and 1 worst (for ao5), or 1 best & 1 worst for ao12 (or Math.ceil(0.05*n))
+        // Trim 1 fastest and 1 slowest (standard Ao5 and Ao12)
         const trimCount = 1;
         const trimmed = sorted.slice(trimCount, sorted.length - trimCount);
 
@@ -87,29 +120,34 @@
      * Session Storage & Statistics Manager
      */
     class SolveSession {
-        constructor(storageKey = 'rubiks_timer_session_v1') {
+        constructor(storageKey = 'rubiks_timer_session_v1', storageEngine = null) {
             this.storageKey = storageKey;
+            this.storage = storageEngine || (typeof window !== 'undefined' && window.localStorage ? window.localStorage : null);
             this.solves = [];
             this.load();
         }
 
         load() {
             try {
-                const saved = localStorage.getItem(this.storageKey);
-                if (saved) {
-                    this.solves = JSON.parse(saved);
+                if (this.storage) {
+                    const saved = this.storage.getItem(this.storageKey);
+                    if (saved) {
+                        this.solves = JSON.parse(saved);
+                    }
                 }
             } catch (e) {
-                console.warn("Failed to load session from localStorage:", e);
+                console.warn("Failed to load session:", e);
                 this.solves = [];
             }
         }
 
         save() {
             try {
-                localStorage.setItem(this.storageKey, JSON.stringify(this.solves));
+                if (this.storage) {
+                    this.storage.setItem(this.storageKey, JSON.stringify(this.solves));
+                }
             } catch (e) {
-                console.warn("Failed to save session to localStorage:", e);
+                console.warn("Failed to save session:", e);
             }
         }
 
@@ -129,25 +167,36 @@
             const solve = this.solves.find(s => s.id === solveId);
             if (!solve) return;
 
+            const baseTime = (typeof solve.baseTimeMs === 'number' && solve.baseTimeMs > 0)
+                ? solve.baseTimeMs
+                : ((typeof solve.rawTimeMs === 'number' && solve.rawTimeMs > 0)
+                    ? solve.rawTimeMs
+                    : (solve.penalty === Penalty.PLUS_TWO ? solve.finalTimeMs - 2000 : solve.finalTimeMs));
+
             if (penaltyType === '+2') {
-                if (solve.penalty === 2000) {
-                    solve.penalty = 0;
-                    solve.finalTimeMs = solve.rawTimeMs;
+                if (solve.penalty === Penalty.PLUS_TWO) {
+                    solve.penalty = Penalty.NONE;
+                    solve.finalTimeMs = baseTime;
+                    solve.formattedTime = formatTime(baseTime);
                 } else {
-                    solve.penalty = 2000;
-                    solve.finalTimeMs = solve.rawTimeMs + 2000;
+                    solve.penalty = Penalty.PLUS_TWO;
+                    solve.finalTimeMs = baseTime + 2000;
+                    solve.formattedTime = formatTime(baseTime + 2000) + '+';
                 }
             } else if (penaltyType === 'DNF') {
-                if (solve.penalty === -1) {
-                    solve.penalty = 0;
-                    solve.finalTimeMs = solve.rawTimeMs;
+                if (solve.penalty === Penalty.DNF) {
+                    solve.penalty = Penalty.NONE;
+                    solve.finalTimeMs = baseTime;
+                    solve.formattedTime = formatTime(baseTime);
                 } else {
-                    solve.penalty = -1;
-                    solve.finalTimeMs = -1;
+                    solve.penalty = Penalty.DNF;
+                    solve.finalTimeMs = Penalty.DNF;
+                    solve.formattedTime = 'DNF';
                 }
             } else {
-                solve.penalty = 0;
-                solve.finalTimeMs = solve.rawTimeMs;
+                solve.penalty = Penalty.NONE;
+                solve.finalTimeMs = baseTime;
+                solve.formattedTime = formatTime(baseTime);
             }
             this.save();
         }
@@ -163,13 +212,25 @@
                 return {
                     count: 0,
                     best: null,
+                    bestFormatted: '--',
                     worst: null,
+                    worstFormatted: '--',
+                    currentAo3: null,
+                    currentAo3Formatted: '--',
+                    bestAo3: null,
+                    bestAo3Formatted: '--',
                     currentAo5: null,
+                    currentAo5Formatted: '--',
                     bestAo5: null,
+                    bestAo5Formatted: '--',
                     currentAo12: null,
+                    currentAo12Formatted: '--',
                     bestAo12: null,
+                    bestAo12Formatted: '--',
                     mean: null,
-                    stdDev: null
+                    meanFormatted: '--',
+                    stdDev: null,
+                    stdDevFormatted: '--'
                 };
             }
 
@@ -209,7 +270,6 @@
             let bestAo5 = null;
             if (count >= 5) {
                 currentAo5 = calcAverage(times.slice(0, 5));
-                // Calculate all ao5 in history for best ao5
                 for (let i = 0; i <= count - 5; i++) {
                     const avg = calcAverage(times.slice(i, i + 5));
                     if (avg > 0) {
@@ -231,18 +291,34 @@
                 }
             }
 
+            const fmt = (val) => {
+                if (val === null || val === undefined) return '--';
+                if (val < 0) return 'DNF';
+                return formatTime(val);
+            };
+
             return {
                 count,
                 best,
+                bestFormatted: fmt(best),
                 worst,
+                worstFormatted: fmt(worst),
                 currentAo3,
+                currentAo3Formatted: fmt(currentAo3),
                 bestAo3,
+                bestAo3Formatted: fmt(bestAo3),
                 currentAo5,
+                currentAo5Formatted: fmt(currentAo5),
                 bestAo5,
+                bestAo5Formatted: fmt(bestAo5),
                 currentAo12,
+                currentAo12Formatted: fmt(currentAo12),
                 bestAo12,
+                bestAo12Formatted: fmt(bestAo12),
                 mean,
-                stdDev
+                meanFormatted: fmt(mean),
+                stdDev,
+                stdDevFormatted: stdDev !== null ? (stdDev / 1000).toFixed(2) : '--'
             };
         }
 
@@ -265,7 +341,7 @@
             let csv = "Index,Time(s),Formatted,Penalty,MoveCount,TPS,Scramble,Date\n";
             this.solves.forEach((s, idx) => {
                 const timeSec = s.finalTimeMs > 0 ? (s.finalTimeMs / 1000).toFixed(2) : 'DNF';
-                const penaltyStr = s.penalty === 2000 ? '+2' : (s.penalty === -1 ? 'DNF' : 'OK');
+                const penaltyStr = s.penalty === Penalty.PLUS_TWO ? '+2' : (s.penalty === Penalty.DNF ? 'DNF' : 'OK');
                 const dateStr = new Date(s.timestamp).toLocaleString().replace(/,/g, '');
                 const scrambleEscaped = `"${(s.scramble || '').replace(/"/g, '""')}"`;
                 csv += `${this.solves.length - idx},${timeSec},${s.formattedTime},${penaltyStr},${s.moveCount || 0},${s.tps || 0},${scrambleEscaped},${dateStr}\n`;
@@ -274,15 +350,15 @@
         }
 
         exportCsTimerJSON() {
-            // csTimer JSON structure: { "session1": [ [ [penalty, timeInCentiSec], scramble, comment, timestamp ] ] }
+            // csTimer JSON structure: { "session1": [ [ [penalty, timeInMs], scramble, comment, timestamp ] ] }
             const sessionData = this.solves.map(s => {
-                const centi = s.finalTimeMs > 0 ? Math.round(s.finalTimeMs / 10) : -1;
-                const penaltyFlag = s.penalty === 2000 ? 2000 : (s.penalty === -1 ? -1 : 0);
+                const timeVal = s.finalTimeMs > 0 ? Math.round(s.finalTimeMs) : -1;
+                const penaltyFlag = s.penalty === Penalty.PLUS_TWO ? 2000 : (s.penalty === Penalty.DNF ? -1 : 0);
                 return [
-                    [penaltyFlag, centi],
+                    [penaltyFlag, timeVal],
                     s.scramble || "",
                     `Moves: ${s.moveCount || 0}, TPS: ${s.tps || 0}`,
-                    Math.floor(s.timestamp / 1000)
+                    Math.floor((s.timestamp || Date.now()) / 1000)
                 ];
             });
 
@@ -309,12 +385,15 @@
             this.inspectionDurationSec = 15;
             this.inspectionPassed8 = false;
             this.inspectionPassed12 = false;
+            this.inspectionPenalty = Penalty.NONE;
+            this.currentPenalty = Penalty.NONE;
 
             this.currentMoves = []; // Moves recorded during current RUNNING solve
             this.lastMoveTimestamp = 0;
 
             this.currentScramble = '';
             this.session = new SolveSession();
+            this.bluetoothDriver = null;
 
             this.listeners = {
                 stateChange: [],
@@ -353,6 +432,7 @@
             this.inspectionStartMs = getNowMs();
             this.inspectionPassed8 = false;
             this.inspectionPassed12 = false;
+            this.inspectionPenalty = Penalty.NONE;
             this.tickInspection();
         }
 
@@ -371,19 +451,27 @@
                 this.emit('inspectionTick', { secondsLeft: 3, callout: 12 });
             }
 
-            this.emit('inspectionTick', { secondsLeft: remainingSec, elapsedSec });
+            if (elapsedSec >= 15 && elapsedSec < 17) {
+                this.inspectionPenalty = Penalty.PLUS_TWO;
+            }
+
+            this.emit('inspectionTick', { secondsLeft: remainingSec, elapsedSec, penalty: this.inspectionPenalty });
 
             if (elapsedSec >= 17) {
                 // Inspection expired (+2 at 15s, DNF at 17s)
+                this.inspectionPenalty = Penalty.DNF;
                 this.stopTimerWithDNF();
                 return;
             }
 
-            requestAnimationFrame(() => this.tickInspection());
+            raf(() => this.tickInspection());
         }
 
         startTimer() {
             if (this.state === 'RUNNING') return;
+
+            this.currentPenalty = this.inspectionPenalty || Penalty.NONE;
+            this.inspectionPenalty = Penalty.NONE;
 
             this.startTimeMs = getNowMs();
             this.stopTimeMs = 0;
@@ -410,7 +498,7 @@
                 tps: tps
             });
 
-            this.animationFrameId = requestAnimationFrame(() => this.tick());
+            this.animationFrameId = raf(() => this.tick());
         }
 
         onCubeMove(moveEvent) {
@@ -448,40 +536,65 @@
             }
         }
 
-        stopTimer() {
+        stopTimer(stopTimestampMs = null) {
             if (this.state !== 'RUNNING') return null;
 
-            this.stopTimeMs = getNowMs();
+            this.stopTimeMs = stopTimestampMs || this.stopTimeMs || getNowMs();
             if (this.animationFrameId) {
-                cancelAnimationFrame(this.animationFrameId);
+                caf(this.animationFrameId);
                 this.animationFrameId = null;
             }
 
             const rawDurationMs = Math.round(this.stopTimeMs - this.startTimeMs);
-            let finalTimeMs = rawDurationMs;
+            let baseTimeMs = rawDurationMs;
+            let calibratedTimeMs = rawDurationMs;
 
             // Hardware linear regression calibration if hardware timestamps available
-            let calibratedTimeMs = rawDurationMs;
-            if (GanBluetooth && typeof GanBluetooth.cubeTimestampLinearFit === 'function') {
+            const driver = this.bluetoothDriver
+                || GanBluetooth
+                || (typeof window !== 'undefined' && window.GanBluetooth ? window.GanBluetooth : null)
+                || (typeof global !== 'undefined' && global.GanBluetooth ? global.GanBluetooth : null);
+
+            if (driver && typeof driver.cubeTimestampLinearFit === 'function') {
                 const hasHardwareTimestamps = this.currentMoves.some(m => m.cubeTimestamp != null);
-                if (hasHardwareTimestamps && this.currentMoves.length >= 2) {
-                    const fittedMoves = GanBluetooth.cubeTimestampLinearFit(this.currentMoves);
-                    const lastFitted = fittedMoves[fittedMoves.length - 1];
-                    if (lastFitted && lastFitted.calibratedElapsedMs > 0) {
-                        calibratedTimeMs = lastFitted.calibratedElapsedMs;
-                        // Replace move timestamps with fitted timestamps
-                        fittedMoves.forEach((fm, idx) => {
-                            if (this.currentMoves[idx]) {
-                                this.currentMoves[idx].calibratedElapsedMs = fm.calibratedElapsedMs;
-                            }
-                        });
+                if (hasHardwareTimestamps && this.currentMoves.length >= 4) {
+                    const fittedMoves = driver.cubeTimestampLinearFit(this.currentMoves);
+                    const lastFitted = fittedMoves && fittedMoves[fittedMoves.length - 1];
+                    if (lastFitted && typeof lastFitted.calibratedElapsedMs === 'number' && lastFitted.calibratedElapsedMs > 0) {
+                        const candidateMs = Math.round(lastFitted.calibratedElapsedMs);
+                        // Hardware calibration validity gate: sampleCount >= 4 and abs deviation <= 300ms
+                        if (Math.abs(candidateMs - rawDurationMs) <= 300) {
+                            calibratedTimeMs = candidateMs;
+                            baseTimeMs = candidateMs;
+                            // Replace move timestamps with fitted timestamps
+                            fittedMoves.forEach((fm, idx) => {
+                                if (this.currentMoves[idx] && fm.calibratedElapsedMs != null) {
+                                    this.currentMoves[idx].calibratedElapsedMs = fm.calibratedElapsedMs;
+                                }
+                            });
+                        }
                     }
                 }
             }
 
+            const penalty = this.currentPenalty || Penalty.NONE;
+            this.currentPenalty = Penalty.NONE;
+
+            let finalTimeMs = baseTimeMs;
+            let formatted = formatTime(baseTimeMs);
+
+            if (penalty === Penalty.PLUS_TWO) {
+                finalTimeMs = baseTimeMs + 2000;
+                formatted = formatTime(finalTimeMs) + '+';
+            } else if (penalty === Penalty.DNF) {
+                finalTimeMs = Penalty.DNF;
+                formatted = 'DNF';
+            }
+
             const totalMoves = this.currentMoves.length;
-            const overallTps = rawDurationMs > 0
-                ? ((totalMoves / (rawDurationMs / 1000))).toFixed(2)
+            const timeForTps = baseTimeMs > 0 ? baseTimeMs : rawDurationMs;
+            const overallTps = timeForTps > 0
+                ? ((totalMoves / (timeForTps / 1000))).toFixed(2)
                 : 0.00;
 
             const solveRecord = {
@@ -489,13 +602,14 @@
                 timestamp: Date.now(),
                 rawTimeMs: rawDurationMs,
                 calibratedTimeMs: calibratedTimeMs,
-                finalTimeMs: rawDurationMs,
-                formattedTime: formatTime(rawDurationMs),
+                baseTimeMs: baseTimeMs,
+                finalTimeMs: finalTimeMs,
+                formattedTime: formatted,
                 scramble: this.currentScramble,
                 moveCount: totalMoves,
                 tps: parseFloat(overallTps),
                 moves: this.currentMoves.slice(),
-                penalty: 0
+                penalty: penalty
             };
 
             this.session.addSolve(solveRecord);
@@ -506,31 +620,39 @@
         }
 
         stopTimerWithDNF() {
-            if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
+            if (this.animationFrameId) {
+                caf(this.animationFrameId);
+                this.animationFrameId = null;
+            }
             this.setState('FINISHED');
 
             const solveRecord = {
-                id: 'solve_' + Date.now(),
+                id: 'solve_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
                 timestamp: Date.now(),
                 rawTimeMs: 0,
-                finalTimeMs: -1,
+                calibratedTimeMs: 0,
+                baseTimeMs: 0,
+                finalTimeMs: Penalty.DNF,
                 formattedTime: 'DNF',
                 scramble: this.currentScramble,
                 moveCount: this.currentMoves.length,
                 tps: 0,
                 moves: this.currentMoves.slice(),
-                penalty: -1
+                penalty: Penalty.DNF
             };
             this.session.addSolve(solveRecord);
             this.emit('solveFinished', solveRecord);
+            return solveRecord;
         }
 
         resetTimer() {
             if (this.animationFrameId) {
-                cancelAnimationFrame(this.animationFrameId);
+                caf(this.animationFrameId);
                 this.animationFrameId = null;
             }
             this.elapsedMs = 0;
+            this.inspectionPenalty = Penalty.NONE;
+            this.currentPenalty = Penalty.NONE;
             this.currentMoves = [];
             this.setState('IDLE');
         }
@@ -540,6 +662,9 @@
         TimerController,
         SolveSession,
         formatTime,
-        calcAverage
+        calcAverage,
+        calcMo3,
+        Penalty,
+        getNowMs
     };
 }));
