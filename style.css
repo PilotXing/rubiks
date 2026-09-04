@@ -483,6 +483,581 @@ body.style-flat .badge-disconnected {
     color: #2C3E50;
 }
 
+/* 1.7 Windows 98 Classic (经典复古灰风格) */
+body.style-win98, body.theme-win98 {
+    --bg-primary: #008080; /* Win98 Classic Teal Desktop */
+    --bg-surface: #C0C0C0; /* Win98 Dialog / Window Gray */
+    --bg-surface-elevated: #D4D0C8; /* Surface Light Gray */
+    --bg-surface-hover: #DCD8D0;
+    --border-color: #808080;
+    --border-subtle: #DFDFDF;
+
+    --text-primary: #000000;
+    --text-secondary: #222222;
+    --text-muted: #555555;
+
+    --font-sans: 'Tahoma', 'MS Sans Serif', 'Segoe UI', Arial, sans-serif;
+    --font-mono: 'Lucida Console', 'Consolas', 'Courier New', monospace;
+
+    --radius-sm: 0px;
+    --radius-md: 0px;
+    --radius-lg: 0px;
+    --shadow-subtle: none;
+}
+
+body.style-win98,
+body.theme-win98 {
+    background-color: #008080;
+    font-family: var(--font-sans);
+    color: #000000;
+}
+
+/* Win98 Window Containers */
+body.style-win98 .card-collapsible,
+body.style-win98 .arena-card,
+body.style-win98 .modal-card,
+body.theme-win98 .card-collapsible,
+body.theme-win98 .arena-card,
+body.theme-win98 .modal-card {
+    background-color: #C0C0C0;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf, inset -2px -2px #808080, inset 2px 2px #ffffff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 3px !important;
+}
+
+body.style-win98 .app-header,
+body.theme-win98 .app-header {
+    background-color: #C0C0C0;
+    border: none !important;
+    border-bottom: 2px solid #808080 !important;
+    border-radius: 0 !important;
+    box-shadow: inset 1px 1px 0 #ffffff !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+body.style-win98 .brand-title,
+body.theme-win98 .brand-title {
+    color: #000000;
+    font-weight: 700;
+}
+
+/* Win98 Blue Gradient Titlebars */
+body.style-win98 .collapsible-header,
+body.style-win98 .modal-header,
+body.theme-win98 .collapsible-header,
+body.theme-win98 .modal-header {
+    background: linear-gradient(90deg, #000080 0%, #1084D0 100%) !important;
+    color: #FFFFFF !important;
+    min-height: 28px !important;
+    padding: 3px 6px !important;
+    border: none !important;
+    border-radius: 0 !important;
+}
+
+body.style-win98 .collapsible-title,
+body.style-win98 .modal-title,
+body.theme-win98 .collapsible-title,
+body.theme-win98 .modal-title {
+    color: #FFFFFF !important;
+    font-family: var(--font-sans) !important;
+    font-weight: 700 !important;
+    font-size: 0.82rem !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+}
+
+body.style-win98 .collapsible-title svg,
+body.style-win98 .modal-header svg,
+body.theme-win98 .collapsible-title svg,
+body.theme-win98 .modal-header svg {
+    stroke: #FFFFFF !important;
+    color: #FFFFFF !important;
+    filter: none !important;
+}
+
+/* Inactive Window Titlebar (Collapsed) */
+body.style-win98 .card-collapsible.collapsed .collapsible-header,
+body.theme-win98 .card-collapsible.collapsed .collapsible-header {
+    background: linear-gradient(90deg, #808080 0%, #B5B5B5 100%) !important;
+}
+
+/* Win98 Titlebar & Header Buttons */
+body.style-win98 .btn-panel-toggle,
+body.theme-win98 .btn-panel-toggle {
+    background-color: #C0C0C0 !important;
+    color: #000000 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf !important;
+    font-family: var(--font-sans) !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    min-height: 20px !important;
+    padding: 1px 6px !important;
+    line-height: 1 !important;
+}
+
+body.style-win98 .card-collapsible.collapsed .btn-panel-toggle,
+body.theme-win98 .card-collapsible.collapsed .btn-panel-toggle {
+    background-color: #C0C0C0 !important;
+    color: #000000 !important;
+    border: none !important;
+}
+
+body.style-win98 .modal-header button,
+body.style-win98 .modal-header .btn-icon-square,
+body.theme-win98 .modal-header button,
+body.theme-win98 .modal-header .btn-icon-square {
+    background-color: #C0C0C0 !important;
+    color: #000000 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    width: 20px !important;
+    height: 20px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 700 !important;
+}
+
+body.style-win98 .modal-header button svg,
+body.style-win98 .modal-header .btn-icon-square svg,
+body.theme-win98 .modal-header button svg,
+body.theme-win98 .modal-header .btn-icon-square svg {
+    stroke: #000000 !important;
+    width: 12px !important;
+    height: 12px !important;
+}
+
+/* Win98 Property Sheet Tabs */
+body.style-win98 .app-nav-tabs,
+body.theme-win98 .app-nav-tabs {
+    background-color: #C0C0C0;
+    border: none;
+    border-bottom: 2px solid #808080;
+    border-radius: 0;
+    padding: 3px 4px 0 4px;
+    gap: 3px;
+    box-shadow: none;
+}
+
+body.style-win98 .nav-tab-btn,
+body.theme-win98 .nav-tab-btn {
+    background-color: #C0C0C0;
+    color: #000000;
+    border: none;
+    border-radius: 0;
+    box-shadow: inset -1px 0 #0a0a0a, inset 1px 1px #ffffff, inset -2px 0 #808080, inset 2px 2px #dfdfdf;
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    font-weight: 400;
+    padding: 4px 10px;
+    margin-bottom: -1px;
+    transition: none;
+}
+
+body.style-win98 .nav-tab-btn:hover,
+body.theme-win98 .nav-tab-btn:hover {
+    color: #000000;
+    background-color: #D4D0C8;
+}
+
+body.style-win98 .nav-tab-btn.active,
+body.theme-win98 .nav-tab-btn.active {
+    background-color: #C0C0C0 !important;
+    color: #000000 !important;
+    font-weight: 700 !important;
+    box-shadow: inset -1px 0 #0a0a0a, inset 1px 1px #ffffff, inset -2px 0 #808080, inset 2px 2px #dfdfdf !important;
+    border-bottom: 2px solid #C0C0C0 !important;
+    margin-top: -2px;
+    padding-top: 6px;
+    z-index: 2;
+}
+
+body.style-win98 .nav-tab-btn.active svg,
+body.theme-win98 .nav-tab-btn.active svg {
+    stroke: #000080 !important;
+}
+
+/* Win98 Module Toggle Toolbar */
+body.style-win98 .module-toggle-toolbar,
+body.theme-win98 .module-toggle-toolbar {
+    background-color: #C0C0C0;
+    border: none;
+    border-radius: 0;
+    box-shadow: inset -1px -1px #ffffff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a;
+    padding: 3px;
+    gap: 3px;
+}
+
+body.style-win98 .module-chip-btn,
+body.theme-win98 .module-chip-btn {
+    background-color: #C0C0C0;
+    color: #000000;
+    border: none;
+    border-radius: 0;
+    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+    font-family: var(--font-sans);
+    font-size: 0.74rem;
+    font-weight: 700;
+    transition: none;
+    transform: none;
+}
+
+body.style-win98 .module-chip-btn:hover,
+body.theme-win98 .module-chip-btn:hover {
+    background-color: #D4D0C8;
+}
+
+body.style-win98 .module-chip-btn.active,
+body.theme-win98 .module-chip-btn.active {
+    background-color: #D4D0C8 !important;
+    color: #000080 !important;
+    box-shadow: inset -1px -1px #ffffff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px #808080 !important;
+    transform: translate(1px, 1px);
+}
+
+body.style-win98 .module-chip-btn.active svg,
+body.theme-win98 .module-chip-btn.active svg {
+    stroke: #000080 !important;
+    filter: none !important;
+}
+
+body.style-win98 .module-chip-btn.active .module-chip-text,
+body.theme-win98 .module-chip-btn.active .module-chip-text {
+    color: #000080 !important;
+    font-weight: 700 !important;
+}
+
+/* Win98 Buttons */
+body.style-win98 .btn,
+body.theme-win98 .btn {
+    background-color: #C0C0C0;
+    color: #000000;
+    border: none;
+    border-radius: 0;
+    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+    font-family: var(--font-sans);
+    font-size: 0.78rem;
+    font-weight: 400;
+    padding: 4px 12px;
+    min-height: 24px;
+    cursor: pointer;
+    transition: none;
+    box-sizing: border-box;
+}
+
+body.style-win98 .btn:hover,
+body.theme-win98 .btn:hover {
+    filter: none;
+}
+
+body.style-win98 .btn:active,
+body.style-win98 .btn.active,
+body.style-win98 .btn-icon-square:active,
+body.style-win98 .btn-panel-toggle:active,
+body.style-win98 .modal-header button:active,
+body.theme-win98 .btn:active,
+body.theme-win98 .btn.active,
+body.theme-win98 .btn-icon-square:active,
+body.theme-win98 .btn-panel-toggle:active,
+body.theme-win98 .modal-header button:active {
+    box-shadow: inset -1px -1px #ffffff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px #808080 !important;
+    transform: translate(1px, 1px) !important;
+}
+
+body.style-win98 .btn:focus-visible,
+body.theme-win98 .btn:focus-visible {
+    outline: 1px dotted #000000;
+    outline-offset: -4px;
+}
+
+body.style-win98 .btn-primary,
+body.theme-win98 .btn-primary {
+    background-color: #C0C0C0;
+    color: #000000;
+    font-weight: 700;
+    border: 1px solid #000000;
+    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+}
+
+body.style-win98 .btn-secondary,
+body.theme-win98 .btn-secondary {
+    background-color: #C0C0C0;
+    color: #000000;
+}
+
+body.style-win98 .btn-danger,
+body.theme-win98 .btn-danger {
+    background-color: #C0C0C0;
+    color: #800000;
+    font-weight: 700;
+}
+
+body.style-win98 .btn-icon-square,
+body.theme-win98 .btn-icon-square {
+    border-radius: 0;
+    border: none;
+    background-color: #C0C0C0;
+    color: #000000;
+    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+}
+
+/* Win98 Sunken Inputs & Dropdowns */
+body.style-win98 input[type="text"],
+body.style-win98 input[type="number"],
+body.style-win98 select,
+body.style-win98 textarea,
+body.theme-win98 input[type="text"],
+body.theme-win98 input[type="number"],
+body.theme-win98 select,
+body.theme-win98 textarea {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: inset -1px -1px #ffffff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a !important;
+    font-family: var(--font-sans) !important;
+    font-size: 0.8rem;
+    padding: 3px 6px;
+}
+
+/* Win98 Sunken Displays (Timer & Scramble) */
+body.style-win98 #main-timer-container,
+body.theme-win98 #main-timer-container {
+    background-color: #000000 !important;
+    box-shadow: inset -1px -1px #ffffff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a !important;
+    border-radius: 0 !important;
+    margin: 4px;
+    padding: 1.25rem 0.5rem !important;
+}
+
+body.style-win98 .timer-digits,
+body.theme-win98 .timer-digits {
+    color: var(--accent-primary, #10B981) !important;
+    text-shadow: 0 0 6px var(--accent-glow, rgba(16, 185, 129, 0.4)) !important;
+    font-family: var(--font-mono) !important;
+    font-weight: 700;
+}
+
+body.style-win98 .timer-running .timer-digits,
+body.theme-win98 .timer-running .timer-digits {
+    color: var(--accent-primary, #10B981) !important;
+}
+
+body.style-win98 #scramble-box,
+body.theme-win98 #scramble-box {
+    background-color: #FFFFFF !important;
+    box-shadow: inset -1px -1px #ffffff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a !important;
+    border-radius: 0 !important;
+    margin: 4px;
+    padding: 0.5rem !important;
+}
+
+body.style-win98 .scramble-reel-viewport,
+body.theme-win98 .scramble-reel-viewport {
+    background-color: #FFFFFF !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+}
+
+body.style-win98 .scramble-card,
+body.theme-win98 .scramble-card {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+}
+
+body.style-win98 .scramble-reel-footer,
+body.theme-win98 .scramble-reel-footer {
+    color: #444444 !important;
+}
+
+body.style-win98 .scramble-reel-footer .progress-highlight,
+body.theme-win98 .scramble-reel-footer .progress-highlight {
+    color: #000080 !important;
+    font-weight: 700 !important;
+}
+
+body.style-win98 .overall-move-chip,
+body.theme-win98 .overall-move-chip {
+    border-radius: 0 !important;
+    border: 1px solid #808080 !important;
+    background-color: #D4D0C8 !important;
+    color: #000000 !important;
+}
+
+body.style-win98 .overall-move-chip.active,
+body.theme-win98 .overall-move-chip.active {
+    background-color: #000080 !important;
+    color: #FFFFFF !important;
+    border-color: #000080 !important;
+}
+
+body.style-win98 .stat-card,
+body.theme-win98 .stat-card {
+    background-color: #FFFFFF;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: inset -1px -1px #ffffff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a !important;
+}
+
+body.style-win98 .stat-label,
+body.theme-win98 .stat-label {
+    color: #555555 !important;
+    font-weight: 700;
+}
+
+body.style-win98 .stat-val,
+body.theme-win98 .stat-val {
+    color: #000000 !important;
+}
+
+body.style-win98 .cube-view-card,
+body.theme-win98 .cube-view-card {
+    background-color: #FFFFFF;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: inset -1px -1px #ffffff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a !important;
+}
+
+/* Win98 History Table */
+body.style-win98 .history-table-wrapper,
+body.theme-win98 .history-table-wrapper {
+    background-color: #FFFFFF;
+    box-shadow: inset -1px -1px #ffffff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a !important;
+    border: none !important;
+    border-radius: 0 !important;
+}
+
+body.style-win98 .history-table,
+body.theme-win98 .history-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    border: none;
+    background-color: #FFFFFF;
+}
+
+body.style-win98 .history-table th,
+body.theme-win98 .history-table th {
+    background-color: #C0C0C0 !important;
+    color: #000000 !important;
+    border: none !important;
+    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf !important;
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
+    padding: 3px 6px;
+}
+
+body.style-win98 .history-table td,
+body.theme-win98 .history-table td {
+    border: 1px solid #EFEFEF;
+    color: #000000;
+    font-size: 0.78rem;
+    padding: 2px 4px;
+}
+
+body.style-win98 .history-table tr:hover,
+body.theme-win98 .history-table tr:hover {
+    background-color: #000080 !important;
+    color: #FFFFFF !important;
+}
+
+body.style-win98 .history-table tr:hover td,
+body.style-win98 .history-table tr:hover .col-num,
+body.style-win98 .history-table tr:hover strong,
+body.theme-win98 .history-table tr:hover td,
+body.theme-win98 .history-table tr:hover .col-num,
+body.theme-win98 .history-table tr:hover strong {
+    color: #FFFFFF !important;
+}
+
+/* Win98 Badges */
+body.style-win98 .badge,
+body.theme-win98 .badge {
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: inset -1px -1px #ffffff, inset 1px 1px #808080, inset -2px -2px #dfdfdf, inset 2px 2px #0a0a0a !important;
+    font-weight: 700;
+    font-size: 0.72rem;
+    padding: 2px 6px;
+}
+
+body.style-win98 .badge-connected,
+body.theme-win98 .badge-connected {
+    background-color: #008000 !important;
+    color: #FFFFFF !important;
+}
+
+body.style-win98 .badge-disconnected,
+body.theme-win98 .badge-disconnected {
+    background-color: #C0C0C0 !important;
+    color: #555555 !important;
+}
+
+body.style-win98 .app-version-badge,
+body.theme-win98 .app-version-badge {
+    background-color: #D4D0C8;
+    color: #000000;
+    border: none;
+    box-shadow: inset -1px -1px #ffffff, inset 1px 1px #808080;
+}
+
+/* Win98 Fullscreen Scramble Bar */
+body.style-win98 .scramble-fullscreen-bar,
+body.theme-win98 .scramble-fullscreen-bar {
+    background: linear-gradient(90deg, #000080 0%, #1084D0 100%) !important;
+    color: #FFFFFF !important;
+    border-radius: 0 !important;
+    border: none !important;
+}
+
+body.style-win98 .scramble-fullscreen-bar span,
+body.theme-win98 .scramble-fullscreen-bar span {
+    color: #FFFFFF !important;
+}
+
+body.style-win98 .btn-exit-scramble-fs,
+body.theme-win98 .btn-exit-scramble-fs {
+    background-color: #C0C0C0 !important;
+    color: #000000 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf !important;
+}
+
+/* Win98 Scrollbars */
+body.style-win98 ::-webkit-scrollbar,
+body.theme-win98 ::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+}
+
+body.style-win98 ::-webkit-scrollbar-track,
+body.theme-win98 ::-webkit-scrollbar-track {
+    background: #E0DFE3;
+    box-shadow: inset 1px 1px 0 #FFFFFF;
+}
+
+body.style-win98 ::-webkit-scrollbar-thumb,
+body.theme-win98 ::-webkit-scrollbar-thumb {
+    background: #C0C0C0;
+    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf;
+    border: none;
+}
+
 /* ==========================================================================
    2. Accent Color Palettes (强调主题色 - 自由正交切换)
    ========================================================================== */

@@ -1,4 +1,4 @@
-# Rubik Vision (v20.18)
+# Rubik Vision (v20.19)
 
 > Next-generation Bluetooth smart cube timer, reconstruction engine, and speedcubing analytics platform.
 
@@ -21,13 +21,15 @@ Rubik Vision is an offline-first Web application engineered for speedcubers. It 
 - **Distraction-Free Mode**: Focused layout optimized for competition and practice.
 
 ### 3. Multi-Style & Multi-Color Matrix
-- **5 Independent Visual Styles**:
-  1. `Apple Liquid Glass`: OLED black background, frosted glass blurring, specular highlights, and iOS-style segmented controls.
-  2. `Material Design 3 (M3)`: Material You tonal surfaces and pill components.
-  3. `Precision Dark`: High-contrast dark cards and technical typography.
-  4. `Cyber Neon`: HUD-style glowing borders and neon accents.
-  5. `Clean Light`: Minimalist day mode.
-- **7 Accent Colors**: Emerald Green, Apple Blue, Electric Violet, Cyber Cyan, Sunset Amber, Crimson Red, Sakura Rose.
+- **7 Independent Visual Styles**:
+  1. `Precision Dark`: High-contrast dark cards and technical typography.
+  2. `Designmodo Flat UI`: Iconic flat colors, 2D solid buttons, and zero gradient minimalism.
+  3. `Windows 98`: Authentic retro desktop teal (`#008080`), dialog gray (`#C0C0C0`), blue gradient titlebars, 3D beveled outset/inset borders, and mechanical push buttons.
+  4. `Apple Liquid Glass`: OLED black background, frosted glass blurring, specular highlights, and iOS-style segmented controls.
+  5. `Material Design 3 (M3)`: Material You tonal surfaces and pill components.
+  6. `Cyber Neon`: HUD-style glowing borders and neon accents.
+  7. `Clean Light`: Minimalist day mode.
+- **8 Accent Colors**: Emerald Green, Flat Turquoise, Apple Blue, Electric Violet, Cyber Cyan, Sunset Amber, Crimson Red, Sakura Rose.
 
 ### 4. Multi-Method Solve Reconstruction & Analytics
 - **CFOP Breakdown**: Automatic Cross detection (color neutral), F2L Pairs (1st to 4th pair), OLL, PLL split times, move counts, and phase TPS.
