@@ -73,6 +73,50 @@ Open your browser at `http://localhost:8080` (or `http://127.0.0.1:8080`).
 
 ---
 
+## 📂 Project Architecture
+
+Rubik Vision is designed as a modular, zero-build, offline-first Web application:
+
+```text
+rubiks/
+├── index.html                   # Application entry point
+├── manifest.json                # PWA web app manifest
+├── sw.js                        # Root-scoped Service Worker (offline cache)
+├── style.css                    # Unified design system & responsive styling
+├── server.py / start.sh         # Local HTTPS/HTTP server & 1-click launcher
+│
+├── src/                         # Core Application Source Code
+│   ├── core/                    # Rubik's state machine, timer & reconstruction
+│   │   ├── cube-engine.js       # Cube facelet state & turn mechanics
+│   │   ├── timer-engine.js      # Millisecond timing & inspection engine
+│   │   ├── method-analyzer.js   # CFOP, Roux, and LBL phase solver
+│   │   └── alg-database.js      # OLL/PLL/F2L standard algorithms
+│   ├── bluetooth/               # Hardware BLE Drivers
+│   │   └── gan-bluetooth.js     # Web Bluetooth driver for GAN Gen2/Gen3/Gen4
+│   ├── audio/                   # Sound Synthesis
+│   │   └── audio-synth.js       # Web Audio API polyphonic sound generator
+│   ├── renderers/               # Visualizers
+│   │   ├── renderer-2d.js       # 2D Net unfolded facelet visualizer
+│   │   └── renderer-3d.js       # Three.js 3D WebGL interactive cube
+│   └── ui/                      # UI Controller & Visual Analytics
+│       ├── ui-controller.js     # Event orchestration, modal & settings binding
+│       └── chart-engine.js      # ECharts TPS curves & solve statistics
+│
+├── lib/                         # Third-Party Vendor Libraries
+│   ├── three.min.js             # Three.js WebGL graphics
+│   ├── echarts.min.js           # Apache ECharts
+│   ├── aes.js                  # AES-128 client-side cryptography
+│   └── min2phase.js             # WCA Two-Phase scrambler & solver
+│
+└── docs/                        # Specifications & Developer Documentation
+    ├── specs/                   # Protocol type definitions & reference code
+    ├── bluetooth-cube-timer-integration.md
+    ├── OFFLINE_MANUAL.md
+    └── todo.md
+```
+
+---
+
 ## 🛠️ Tech Stack
 
 - **Core Engine**: Pure Modern Vanilla JavaScript (ES6+), Web Bluetooth API, Web Audio API, Web Vibration API.
@@ -80,6 +124,13 @@ Open your browser at `http://localhost:8080` (or `http://127.0.0.1:8080`).
 - **Charts & Data**: Apache ECharts.
 - **Math & Solvers**: `min2phase` Two-Phase WCA Scrambler & State Solver.
 - **Encryption**: AES-128 Client-side Cryptography.
+
+---
+
+## 👥 Authors & Maintainers
+
+- **PilotXing** - Project Initiator & Creator
+- **Antigravity (Google DeepMind)** - Autonomous Pair-Programming Architect, Core Engine & UI Engineer
 
 ---
 
@@ -98,4 +149,5 @@ Rubik Vision builds upon and is deeply grateful to the open-source speedcubing a
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE). Crafted with precision for the global speedcubing community.
+
 

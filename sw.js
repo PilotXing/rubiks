@@ -1,26 +1,29 @@
 // Service Worker for Rubik Vision Bluetooth Timer
-const CACHE_NAME = 'rubiks-timer-v20.16';
+const CACHE_NAME = 'rubiks-timer-v20.17';
 const ASSETS = [
     '/',
     '/index.html',
     '/style.css',
     '/manifest.json',
     '/icon.svg',
-    '/aes.js',
-    '/min2phase.js',
-    '/three.min.js',
-    '/echarts.min.js',
-    '/cube-engine.js',
-    '/alg-database.js',
-    '/method-analyzer.js',
-    '/chart-engine.js',
-    '/gan-bluetooth.js',
-    '/audio-synth.js',
-    '/renderer-3d.js',
-    '/renderer-2d.js',
-    '/timer-engine.js',
-    '/ui-controller.js'
+    '/icon-192.png',
+    '/icon-512.png',
+    '/lib/aes.js?v=20.17',
+    '/lib/min2phase.js?v=20.17',
+    '/lib/three.min.js?v=20.17',
+    '/lib/echarts.min.js?v=20.17',
+    '/src/core/cube-engine.js?v=20.17',
+    '/src/core/alg-database.js?v=20.17',
+    '/src/core/method-analyzer.js?v=20.17',
+    '/src/core/timer-engine.js?v=20.17',
+    '/src/bluetooth/gan-bluetooth.js?v=20.17',
+    '/src/audio/audio-synth.js?v=20.17',
+    '/src/renderers/renderer-3d.js?v=20.17',
+    '/src/renderers/renderer-2d.js?v=20.17',
+    '/src/ui/chart-engine.js?v=20.17',
+    '/src/ui/ui-controller.js?v=20.17'
 ];
+
 
 self.addEventListener('install', (evt) => {
     evt.waitUntil(
