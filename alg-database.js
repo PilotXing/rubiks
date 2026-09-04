@@ -154,37 +154,67 @@
         }
 
         /**
+         * Compiles an algorithm containing wide moves (r, Rw, etc.), slice moves (M),
+         * and whole-cube rotations (x, y, z) into hardware-detectable single-layer moves
+         * while tracking physical cube reorientation.
+         * Returns an array of compiled step objects:
+         * { displayMove: string, physicalMoves: string[] }
+         */
+        compileAlgorithm(algStr) {
+            return compileAlgorithmWithRotations(algStr);
+        }
+
+        /**
          * Match an ongoing stream of user moves against a target algorithm string.
-         * Pure sequence matching: completely orientation-less and stateless!
-         * Checks all 24 3D cube rotations so any holding grip works.
+         * Sequence matching: completely orientation-less and stateless across all 24 orientations!
+         * Wide-moves & rotations are pre-compiled to single-layer physical moves,
+         * while returning original WCA displayMove tokens for the UI Reel.
          */
         matchSequence(userMoves, targetAlg) {
             if (!targetAlg) return { isComplete: false, progress: 0, nextExpected: null, isMatch: false };
             
-            const rawTargetArray = targetAlg.trim().split(/\s+/).map(normalizeMove).filter(m => !['x', 'y', 'z', "x'", "y'", "z'", 'x2', 'y2', 'z2'].includes(m.toLowerCase()));
-            const userArray = (userMoves || []).map(normalizeMove);
-
-            if (rawTargetArray.length === 0) {
-                return { isComplete: true, progress: 1, totalMoves: 0, nextExpected: null, isMatch: true, matchedCount: 0, targetMoves: [] };
+            const compiledSteps = compileAlgorithmWithRotations(targetAlg);
+            if (compiledSteps.length === 0) {
+                return { isComplete: true, progress: 1, totalMoves: 0, nextExpected: null, isMatch: true, matchedCount: 0, targetMoves: [], compiledSteps: [] };
             }
+
+            // Flatten physical target moves while tracking step associations
+            const flatPhysicalTarget = [];
+            compiledSteps.forEach((step, sIdx) => {
+                step.physicalMoves.forEach((pm, subIdx) => {
+                    flatPhysicalTarget.push({
+                        physicalMove: normalizeMove(pm),
+                        stepIdx: sIdx,
+                        subIdx: subIdx,
+                        displayMove: step.displayMove,
+                        isLastSub: subIdx === step.physicalMoves.length - 1
+                    });
+                });
+            });
+
+            const rawPhysicalArray = flatPhysicalTarget.map(p => p.physicalMove);
+            const userArray = (userMoves || []).map(normalizeMove);
 
             if (userArray.length === 0) {
                 return {
                     isComplete: false,
                     progress: 0,
-                    totalMoves: rawTargetArray.length,
-                    nextExpected: rawTargetArray[0] || null,
+                    totalMoves: compiledSteps.length,
+                    totalPhysicalMoves: rawPhysicalArray.length,
+                    nextExpected: compiledSteps[0].displayMove || rawPhysicalArray[0] || null,
+                    nextExpectedPhysical: rawPhysicalArray[0] || null,
                     isMatch: true,
                     matchedCount: 0,
-                    targetMoves: rawTargetArray
+                    matchedPhysicalCount: 0,
+                    targetMoves: compiledSteps.map(s => s.displayMove),
+                    compiledSteps: compiledSteps
                 };
             }
 
-            // Generate 24 rotational orientation variants of the target algorithm
-            const allOrientations = getAlgOrientations(rawTargetArray);
+            // Generate 24 rotational orientation variants of the physical target sequence
+            const allOrientations = getAlgOrientations(rawPhysicalArray);
 
-            // Find the orientation variant with the highest matching prefix
-            let bestOrientation = rawTargetArray;
+            let bestOrientation = rawPhysicalArray;
             let maxMatched = 0;
             let bestIsMatch = false;
 
@@ -209,28 +239,148 @@
                 }
             }
 
+            // Calculate which high-level display step we are on
+            let displayMatchedCount = 0;
+            if (maxMatched > 0) {
+                const lastMatchedItem = flatPhysicalTarget[maxMatched - 1];
+                displayMatchedCount = lastMatchedItem ? (lastMatchedItem.isLastSub ? lastMatchedItem.stepIdx + 1 : lastMatchedItem.stepIdx) : 0;
+            }
+
             const isComplete = bestIsMatch && maxMatched === bestOrientation.length;
-            const nextExpected = (bestIsMatch && maxMatched < bestOrientation.length) 
-                ? bestOrientation[maxMatched] 
-                : (bestOrientation[maxMatched] || bestOrientation[0]);
-            const progress = bestOrientation.length > 0 ? Math.min(1.0, maxMatched / bestOrientation.length) : 0;
+            const nextExpectedStepIdx = Math.min(displayMatchedCount, compiledSteps.length - 1);
+            const nextExpected = (bestIsMatch && !isComplete)
+                ? (compiledSteps[nextExpectedStepIdx] ? compiledSteps[nextExpectedStepIdx].displayMove : bestOrientation[maxMatched])
+                : (compiledSteps[nextExpectedStepIdx] ? compiledSteps[nextExpectedStepIdx].displayMove : bestOrientation[0]);
+
+            const progress = compiledSteps.length > 0 ? Math.min(1.0, displayMatchedCount / compiledSteps.length) : 0;
 
             return {
                 isComplete,
                 isMatch: bestIsMatch,
                 progress,
-                matchedCount: maxMatched,
-                totalMoves: bestOrientation.length,
+                matchedCount: displayMatchedCount,
+                matchedPhysicalCount: maxMatched,
+                totalMoves: compiledSteps.length,
+                totalPhysicalMoves: bestOrientation.length,
                 nextExpected,
-                targetMoves: bestOrientation
+                nextExpectedPhysical: (bestIsMatch && maxMatched < bestOrientation.length) ? bestOrientation[maxMatched] : null,
+                targetMoves: compiledSteps.map(s => s.displayMove),
+                compiledSteps: compiledSteps
             };
         }
     }
 
     // 24 Orientation mappings for 3x3 cube
     const ROTATION_X = { U: 'F', F: 'D', D: 'B', B: 'U', L: 'L', R: 'R' };
-    const ROTATION_Y = { F: 'L', L: 'B', B: 'R', R: 'F', U: 'U', D: 'D' };
+    const ROTATION_Y = { F: 'R', R: 'B', B: 'L', L: 'F', U: 'U', D: 'D' };
     const ROTATION_Z = { U: 'R', R: 'D', D: 'L', L: 'U', F: 'F', B: 'B' };
+
+    const ROTATIONS = {
+        x: { U: 'F', F: 'D', D: 'B', B: 'U', L: 'L', R: 'R' },
+        "x'": { U: 'B', B: 'D', D: 'F', F: 'U', L: 'L', R: 'R' },
+        x2: { U: 'D', D: 'U', F: 'B', B: 'F', L: 'L', R: 'R' },
+        y: { F: 'R', R: 'B', B: 'L', L: 'F', U: 'U', D: 'D' },
+        "y'": { F: 'L', L: 'B', B: 'R', R: 'F', U: 'U', D: 'D' },
+        y2: { F: 'B', B: 'F', L: 'R', R: 'L', U: 'U', D: 'D' },
+        z: { U: 'R', R: 'D', D: 'L', L: 'U', F: 'F', B: 'B' },
+        "z'": { U: 'L', L: 'U', D: 'R', R: 'D', F: 'F', B: 'B' },
+        z2: { U: 'D', D: 'U', L: 'R', R: 'L', F: 'F', B: 'B' }
+    };
+
+    const WIDE_MAP = {
+        r: { face: 'L', rot: 'x' },
+        l: { face: 'R', rot: "x'" },
+        u: { face: 'D', rot: 'y' },
+        d: { face: 'U', rot: "y'" },
+        f: { face: 'B', rot: 'z' },
+        b: { face: 'F', rot: "z'" }
+    };
+
+    function applyRotation(currentMap, rotKey) {
+        const rot = ROTATIONS[rotKey];
+        if (!rot) return currentMap;
+        const newMap = {};
+        for (const perceived in currentMap) {
+            newMap[perceived] = currentMap[rot[perceived]];
+        }
+        return newMap;
+    }
+
+    function compileAlgorithmWithRotations(algStr) {
+        let currentMap = { U: 'U', D: 'D', L: 'L', R: 'R', F: 'F', B: 'B' };
+        const rawTokens = (algStr || '').trim().split(/\s+/).filter(Boolean);
+        const steps = [];
+
+        rawTokens.forEach(tok => {
+            let base = tok.charAt(0);
+            let lower = tok.toLowerCase();
+
+            // M slice moves: M = r' R (or Rw' R), M' = r R', M2 = r2 R2
+            if (base === 'M' || base === 'm') {
+                let sfx = tok.slice(1);
+                let rMove = sfx === "'" ? "r" : (sfx === '2' ? "r2" : "r'");
+                let RMove = sfx === "'" ? "R'" : (sfx === '2' ? "R2" : "R");
+                let sub = compileAlgorithmWithRotations(rMove + ' ' + RMove);
+                steps.push({ displayMove: tok, physicalMoves: sub.map(s => s.physicalMoves[0]) });
+                return;
+            }
+
+            let isWide = (base >= 'a' && base <= 'z') || lower.startsWith('rw') || lower.startsWith('lw') ||
+                         lower.startsWith('uw') || lower.startsWith('dw') ||
+                         lower.startsWith('fw') || lower.startsWith('bw');
+            
+            let suffix = tok.slice(isWide && tok.length > 1 && tok.charAt(1).toLowerCase() === 'w' ? 2 : 1);
+            if (suffix === '’') suffix = "'";
+
+            // Pure rotation: x, y, z
+            if (['x', 'y', 'z'].includes(lower.charAt(0)) && !lower.includes('w')) {
+                const rotKey = lower.charAt(0) + (suffix || '');
+                currentMap = applyRotation(currentMap, rotKey);
+                return;
+            }
+
+            if (isWide) {
+                const wideKey = (lower.startsWith('rw') ? 'r' :
+                                lower.startsWith('lw') ? 'l' :
+                                lower.startsWith('uw') ? 'u' :
+                                lower.startsWith('dw') ? 'd' :
+                                lower.startsWith('fw') ? 'f' :
+                                lower.startsWith('bw') ? 'b' : lower.charAt(0));
+                const wideDef = WIDE_MAP[wideKey];
+                if (wideDef) {
+                    let rotKey = wideDef.rot;
+                    if (suffix === "'") {
+                        rotKey = rotKey.endsWith("'") ? rotKey.slice(0, -1) : rotKey + "'";
+                    } else if (suffix === '2') {
+                        rotKey = rotKey.charAt(0) + '2';
+                    }
+
+                    const physFace = currentMap[wideDef.face];
+                    const physMove = physFace + (suffix || '');
+
+                    steps.push({
+                        displayMove: tok,
+                        physicalMoves: [physMove]
+                    });
+
+                    currentMap = applyRotation(currentMap, rotKey);
+                    return;
+                }
+            }
+
+            // Standard outer face turn
+            const faceUpper = base.toUpperCase();
+            const physFace = currentMap[faceUpper] || faceUpper;
+            const physMove = physFace + (suffix || '');
+
+            steps.push({
+                displayMove: tok,
+                physicalMoves: [physMove]
+            });
+        });
+
+        return steps;
+    }
 
     function transformMove(move, map) {
         if (!move) return '';

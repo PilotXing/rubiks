@@ -516,6 +516,14 @@
                 // 5. Send initial queries (Request facelets state and battery)
                 setTimeout(() => this.requestFacelets(), 200);
                 setTimeout(() => this.requestBattery(), 600);
+                setTimeout(() => this.requestBattery(), 1500);
+
+                if (this.batteryPollTimer) clearInterval(this.batteryPollTimer);
+                this.batteryPollTimer = setInterval(() => {
+                    if (this.state === 'CONNECTED') {
+                        this.requestBattery();
+                    }
+                }, 30000);
 
                 return true;
             } catch (err) {
@@ -766,7 +774,15 @@
             }
         }
 
+        async queryBattery() {
+            return this.requestBattery();
+        }
+
         handleDisconnect() {
+            if (this.batteryPollTimer) {
+                clearInterval(this.batteryPollTimer);
+                this.batteryPollTimer = null;
+            }
             this.server = null;
             this.service = null;
             this.writeCharacteristic = null;

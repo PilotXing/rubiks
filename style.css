@@ -801,6 +801,11 @@ body {
     background: rgba(16, 185, 129, 0.15);
     border-color: rgba(16, 185, 129, 0.6);
     color: #10B981;
+    width: auto !important;
+    min-width: 38px !important;
+    max-width: 80px !important;
+    padding: 0 0.5rem !important;
+    gap: 0.35rem;
 }
 
 .btn-icon-square.connected .bt-icon-connected {
@@ -811,12 +816,20 @@ body {
     display: none !important;
 }
 
+.header-battery-val {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
 .bt-connected-dot {
     position: absolute;
     top: 4px;
     right: 4px;
-    width: 7px;
-    height: 7px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background-color: #10B981;
     box-shadow: 0 0 5px rgba(16, 185, 129, 0.9);
@@ -2061,6 +2074,7 @@ body {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.8rem;
+    border: 1px solid var(--border-color);
 }
 
 .history-table th {
@@ -2071,7 +2085,7 @@ body {
     text-transform: uppercase;
     font-weight: 700;
     letter-spacing: 0.04em;
-    border-bottom: 1px solid var(--border-color);
+    border: 1px solid var(--border-color);
     position: sticky;
     top: 0;
     background-color: var(--bg-surface-elevated);
@@ -2086,10 +2100,14 @@ body {
 
 .history-table td {
     padding: 0.4rem 0.4rem;
-    border-bottom: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-subtle);
     vertical-align: middle;
     text-align: center;
     font-size: 0.78rem;
+}
+
+.history-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.035);
 }
 
 .history-table td.col-time,
@@ -2875,33 +2893,115 @@ body {
    Algorithm Practice Mode (Phase 5)
    ========================================================================== */
 .practice-grid {
-    display: grid;
-    grid-template-columns: 290px 1fr;
-    gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    width: 100%;
 }
 
-@media (max-width: 860px) {
-    .practice-grid {
-        grid-template-columns: 1fr;
-    }
+.practice-stage-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.5rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Practice Reel Components (Borrowing Scramble Reel Track) */
+.practice-reel-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 0.25rem 0;
+    user-select: none;
+    -webkit-user-select: none;
+    box-sizing: border-box;
+}
+
+.practice-reel-viewport {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    height: 76px;
+    mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 5%, rgba(0,0,0,1) 95%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 5%, rgba(0,0,0,1) 95%, transparent 100%);
+}
+
+.practice-reel-track {
+    display: inline-flex;
+    align-items: center;
+    position: relative;
+    left: 0;
+    top: 0;
+    margin: 0;
+    padding: 0;
+    width: max-content;
+    height: 100%;
+    white-space: nowrap;
+    will-change: transform;
+    transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.practice-reel-track.error-shake {
+    animation: scramble-error-shake 0.44s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.practice-reel-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    margin-top: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    user-select: none;
+}
+
+.practice-overall-container {
+    width: 100%;
+    margin-top: 0.45rem;
+    padding: 0.35rem 0.55rem;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem 0.38rem;
+    box-sizing: border-box;
 }
 
 .case-list-card {
     background-color: var(--bg-surface);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    padding: 1rem;
+    padding: 1.25rem;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .case-list-wrapper {
     max-height: 480px;
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.5rem;
 }
 
 .case-item {
@@ -2924,18 +3024,6 @@ body {
 .case-item.active {
     border-color: var(--accent-primary);
     background-color: rgba(16, 185, 129, 0.15);
-}
-
-.practice-stage-card {
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    align-items: center;
-    text-align: center;
 }
 
 .practice-alg-display {

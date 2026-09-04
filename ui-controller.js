@@ -41,6 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Bluetooth Capsule & Header
         btnBtCapsule: document.getElementById('btn-bluetooth-capsule'),
         btCapsuleLabel: document.getElementById('bt-capsule-label'),
+        headerBatteryVal: document.getElementById('header-battery-val'),
+        btBatteryFillRect: document.getElementById('bt-battery-fill-rect'),
         cubeStatusBadge: document.getElementById('cube-status-badge'),
         cubeBatteryBadge: document.getElementById('cube-battery-badge'),
         btnSettings: document.getElementById('btn-settings'),
@@ -208,6 +210,10 @@ document.addEventListener('DOMContentLoaded', () => {
         practiceCaseGroup: document.getElementById('practice-case-group'),
         practiceCaseMoves: document.getElementById('practice-case-moves'),
         practiceAlgBox: document.getElementById('practice-alg-box'),
+        practiceReelBox: document.getElementById('practice-reel-box'),
+        practiceReelTrack: document.getElementById('practice-reel-track'),
+        practiceReelFooter: document.getElementById('practice-reel-footer'),
+        practiceOverallBox: document.getElementById('practice-overall-box'),
         practiceStatusBanner: document.getElementById('practice-status-banner'),
         practiceTimerDigits: document.getElementById('practice-timer-digits'),
         practiceLiveTps: document.getElementById('practice-live-tps'),
@@ -1589,6 +1595,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const btConnectedDot = document.getElementById('bt-connected-dot');
 
+    function updateHeaderBatteryUI(level) {
+        if (level === null || level === undefined) {
+            if (elements.headerBatteryVal) elements.headerBatteryVal.style.display = 'none';
+            if (elements.btBatteryFillRect) elements.btBatteryFillRect.setAttribute('width', '0');
+            return;
+        }
+        const clamped = Math.max(0, Math.min(100, level));
+        const color = clamped > 50 ? '#10B981' : (clamped > 20 ? '#F59E0B' : '#EF4444');
+        const fillW = ((clamped / 100) * 13).toFixed(1);
+
+        if (elements.headerBatteryVal) {
+            elements.headerBatteryVal.textContent = `${clamped}%`;
+            elements.headerBatteryVal.style.color = color;
+            elements.headerBatteryVal.style.display = 'inline-block';
+        }
+        if (elements.btBatteryFillRect) {
+            elements.btBatteryFillRect.setAttribute('width', fillW);
+            elements.btBatteryFillRect.setAttribute('fill', color);
+        }
+        if (elements.btnBtCapsule && isCubeConnected) {
+            elements.btnBtCapsule.title = `魔方已连接 | 电量: ${clamped}% (点击查看日志与详情)`;
+        }
+    }
+
     bluetooth.on('status', (info) => {
         if (info.state === 'CONNECTED') {
             isCubeConnected = true;
@@ -1612,6 +1642,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 elements.cubeStatusBadge.className = 'badge badge-connected';
             }
             if (elements.btnRecalibrate) elements.btnRecalibrate.style.display = 'inline-flex';
+            if (currentBatteryLevel !== null) updateHeaderBatteryUI(currentBatteryLevel);
             appendBtLog('system', `已建立蓝牙通信握手: ${name}`);
             resetBtInactivityTimer();
             setNewScramble();
@@ -1622,6 +1653,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (btConnectedDot) btConnectedDot.style.display = 'none';
             if (elements.btCapsuleLabel) elements.btCapsuleLabel.textContent = '连接中...';
+            updateHeaderBatteryUI(null);
             if (elements.btModalStatusBadge) {
                 elements.btModalStatusBadge.innerHTML = '<span class="status-dot"></span> Connecting...';
                 elements.btModalStatusBadge.className = 'badge badge-connecting';
@@ -1640,6 +1672,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (btConnectedDot) btConnectedDot.style.display = 'none';
             if (elements.btCapsuleLabel) elements.btCapsuleLabel.textContent = '连接魔方';
+            updateHeaderBatteryUI(null);
             if (elements.btModalDeviceName) elements.btModalDeviceName.textContent = '未连接';
             if (elements.btModalBatteryVal) elements.btModalBatteryVal.textContent = '--%';
             if (elements.btModalBatteryFill) elements.btModalBatteryFill.style.width = '0%';
@@ -1660,12 +1693,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     bluetooth.on('battery', (data) => {
         currentBatteryLevel = data.level;
-        if (elements.btnBtCapsule && isCubeConnected) {
-            elements.btnBtCapsule.title = `魔方已连接 | 电量: ${data.level}% (点击查看日志与详情)`;
-        }
-        if (elements.btCapsuleLabel && isCubeConnected) {
-            elements.btCapsuleLabel.innerHTML = `<span class="bt-pulse-dot"></span> ${data.level}%`;
-        }
+        updateHeaderBatteryUI(data.level);
         if (elements.cubeBatteryBadge) {
             elements.cubeBatteryBadge.innerHTML = `
                 <svg class="svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect><line x1="23" y1="13" x2="23" y2="11"></line></svg>
@@ -2838,6 +2866,92 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function renderPracticeReelUI(activeStepIdx = 0, isDeviation = false, nextExpectedMove = null) {
+        if (!activePracticeCase) return;
+        const compiled = AlgDatabase.compileAlgorithm ? AlgDatabase.compileAlgorithm(activePracticeCase.alg) : [];
+        const moves = compiled.length > 0 ? compiled.map(s => s.displayMove) : activePracticeCase.alg.trim().split(/\s+/).filter(Boolean);
+        const totalMoves = moves.length;
+
+        if (elements.practiceReelTrack) {
+            let itemsHtml = '';
+            moves.forEach((move, idx) => {
+                let cls = 'step-pending';
+                let farCls = '';
+                let content = move;
+                const colorCls = getMoveColorClass(move);
+
+                if (idx < activeStepIdx) {
+                    cls = 'step-done';
+                    if (idx < activeStepIdx - 1) farCls = 'step-far';
+                } else if (idx === activeStepIdx) {
+                    if (isDeviation && nextExpectedMove) {
+                        cls = 'step-correction';
+                        content = nextExpectedMove;
+                    } else {
+                        cls = 'step-active';
+                    }
+                } else {
+                    cls = 'step-pending';
+                    if (idx > activeStepIdx + 2) farCls = 'step-far';
+                }
+
+                itemsHtml += `<div class="reel-step-item ${cls} ${farCls} ${colorCls}" data-idx="${idx}">${content}</div>`;
+            });
+
+            elements.practiceReelTrack.innerHTML = itemsHtml;
+            alignPracticeReelTrack(activeStepIdx, true);
+        }
+
+        if (elements.practiceReelFooter) {
+            elements.practiceReelFooter.style.display = 'flex';
+            const completedCount = Math.min(activeStepIdx, totalMoves);
+            const remainingCount = Math.max(0, totalMoves - completedCount);
+            const pct = totalMoves > 0 ? Math.round((completedCount / totalMoves) * 100) : 0;
+            elements.practiceReelFooter.innerHTML = `
+                <span>已完成 <strong class="progress-highlight">${completedCount}</strong> 步</span>
+                <span>·</span>
+                <span>剩余 <strong class="progress-highlight">${remainingCount}</strong> 步</span>
+                <span style="opacity: 0.65;">(${pct}%)</span>
+            `;
+        }
+
+        if (elements.practiceOverallBox) {
+            elements.practiceOverallBox.style.display = 'flex';
+            let chipsHtml = '';
+            moves.forEach((move, idx) => {
+                let stCls = 'pending';
+                if (idx < activeStepIdx) stCls = 'done';
+                else if (idx === activeStepIdx) stCls = 'active';
+                const colorCls = getMoveColorClass(move);
+                chipsHtml += `<span class="overall-move-chip ${stCls} ${colorCls}">${move}</span>`;
+            });
+            elements.practiceOverallBox.innerHTML = chipsHtml;
+        }
+    }
+
+    function alignPracticeReelTrack(activeIdx = 0, animate = true) {
+        const track = elements.practiceReelTrack;
+        if (!track) return;
+        const items = track.querySelectorAll('.reel-step-item');
+        if (!items || items.length === 0) return;
+        const clampedIdx = Math.min(Math.max(0, activeIdx), items.length - 1);
+        const activeItem = items[clampedIdx];
+        if (!activeItem) return;
+
+        const viewport = track.parentElement;
+        const vpWidth = (viewport && viewport.clientWidth > 0) ? viewport.clientWidth : (window.innerWidth || 360);
+        const itemCenter = activeItem.offsetLeft + (activeItem.offsetWidth / 2);
+        const targetOffset = Math.round((vpWidth / 2) - itemCenter);
+
+        track.style.setProperty('--track-curr-x', `${targetOffset}px`);
+        if (animate) {
+            track.style.transition = 'transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1)';
+        } else {
+            track.style.transition = 'none';
+        }
+        track.style.transform = `translate3d(${targetOffset}px, 0, 0)`;
+    }
+
     function selectPracticeCase(caseId) {
         if (!window.AlgDatabase) return;
         const c = AlgDatabase.getCaseById(caseId);
@@ -2848,11 +2962,12 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.practiceCaseGroup.textContent = c.group;
         elements.practiceCaseMoves.textContent = `${c.moves} moves`;
 
-        // Render colorized alg string
+        // Render colorized alg string fallback
         const tokens = c.alg.split(/\s+/).map(m => `<span class="move-token ${getMoveColorClass(m)}">${m}</span>`).join(' ');
-        elements.practiceAlgBox.innerHTML = tokens;
+        if (elements.practiceAlgBox) elements.practiceAlgBox.innerHTML = tokens;
 
         resetPracticeAttempt();
+        renderPracticeReelUI(0, false);
         renderPracticeCaseList();
         renderPracticeHistoryAndTrend();
     }
@@ -2993,6 +3108,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const tokens = activePracticeCase.alg.split(/\s+/).map(m => `<span class="move-token ${getMoveColorClass(m)}">${m}</span>`).join(' ');
             elements.practiceAlgBox.innerHTML = tokens;
         }
+
+        renderPracticeReelUI(0, false);
     }
 
     if (elements.btnResetPractice) elements.btnResetPractice.addEventListener('click', resetPracticeAttempt);
@@ -3023,7 +3140,10 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.practiceLiveTps.textContent = `${instantTps} TPS`;
         elements.practiceLiveStep.textContent = `Step ${matchResult.matchedCount} / ${matchResult.totalMoves}`;
 
-        // Highlight matched tokens in practiceAlgBox
+        // Update practice reel track to advance active step
+        renderPracticeReelUI(matchResult.matchedCount, !matchResult.isMatch, matchResult.nextExpected);
+
+        // Highlight matched tokens in practiceAlgBox fallback
         const targetMoves = matchResult.targetMoves || activePracticeCase.alg.split(/\s+/);
         const tokens = targetMoves.map((m, idx) => {
             let cls = 'move-token ' + getMoveColorClass(m);
@@ -3031,7 +3151,7 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (idx === matchResult.matchedCount) cls += ' token-active';
             return `<span class="${cls}">${m}</span>`;
         }).join(' ');
-        elements.practiceAlgBox.innerHTML = tokens;
+        if (elements.practiceAlgBox) elements.practiceAlgBox.innerHTML = tokens;
 
         if (matchResult.isComplete) {
             // Algorithm Finished!
@@ -3064,6 +3184,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Wrong move / deviation
             practiceMistakeCount++;
+            if (elements.practiceReelTrack) {
+                elements.practiceReelTrack.classList.remove('error-shake');
+                void elements.practiceReelTrack.offsetWidth;
+                elements.practiceReelTrack.classList.add('error-shake');
+            }
             if (practiceMistakeCount < 3) {
                 practiceState = 'DEVIATED';
                 elements.practiceStatusBanner.className = 'practice-status-banner status-warning';

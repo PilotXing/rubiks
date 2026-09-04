@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css?v=20.7">
+    <link rel="stylesheet" href="style.css?v=20.8">
 </head>
 <body class="style-dark color-emerald theme-dark">
 
@@ -34,7 +34,7 @@
                     </svg>
                 </span>
                 <span class="brand-title">Rubik Vision</span>
-                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v20.7</span>
+                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v20.8</span>
             </div>
 
             <div class="header-actions">
@@ -44,11 +44,13 @@
                     <svg class="svg-icon bt-icon-disconnected" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5"></polyline>
                     </svg>
-                    <!-- Battery icon for connected state -->
+                    <!-- Battery icon with dynamic fill rect for connected state -->
                     <svg class="svg-icon bt-icon-connected" style="display: none;" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                        <rect x="1" y="6" width="18" height="12" rx="2" ry="2"></rect>
-                        <line x1="23" y1="13" x2="23" y2="11"></line>
+                        <rect x="2" y="6" width="16" height="12" rx="2" ry="2"></rect>
+                        <rect id="bt-battery-fill-rect" x="3.5" y="7.5" width="13" height="9" rx="1" fill="#10B981" stroke="none"></rect>
+                        <line x1="21" y1="10" x2="21" y2="14" stroke-width="2.5"></line>
                     </svg>
+                    <span id="header-battery-val" class="header-battery-val" style="display: none;">--%</span>
                     <span id="bt-connected-dot" class="bt-connected-dot" style="display: none;"></span>
                     <span id="bt-capsule-label" style="display: none;">连接魔方</span>
                     <span id="cube-status-badge" style="display: none;"></span>
@@ -462,29 +464,7 @@
         <div id="view-practice" class="view-section" style="width: 100%; max-width: 1200px; margin: 0 auto;">
             <div class="practice-grid">
                 
-                <!-- Left: Category & Case Selector -->
-                <div class="case-list-card">
-                    <div style="display: flex; align-items: center; justify-content: space-between;">
-                        <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700;">Case Library</h4>
-                        <button id="btn-add-custom-alg" class="btn btn-primary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">+ Add Alg</button>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 0.5rem;">
-                        <select id="select-alg-category" class="form-control" style="font-size: 0.85rem; padding: 0.35rem 0.6rem;">
-                            <option value="ALL">All Categories</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group" style="margin-bottom: 0.5rem;">
-                        <input type="text" id="input-search-alg" placeholder="Search case name or alg..." style="font-size: 0.85rem; padding: 0.35rem 0.6rem;">
-                    </div>
-
-                    <div id="case-list-container" class="case-list-wrapper">
-                        <!-- Dynamic case cards -->
-                    </div>
-                </div>
-
-                <!-- Right: Interactive Practice & Real-Time Match Stage -->
+                <!-- 1. Hero Practice & Real-Time Match Stage (Top Hero Card) -->
                 <div class="practice-stage-card">
                     <div style="width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
                         <div>
@@ -497,13 +477,30 @@
                         </div>
                     </div>
 
-                    <!-- Main Arena: Timer Upper, Alg Below -->
+                    <!-- Main Arena: Timer Upper, Alg Scramble Reel Below -->
                     <div class="practice-arena-top">
-                        <div id="practice-timer-digits" class="practice-timer-digits" style="font-size: clamp(3rem, 10vw, 5.5rem); margin: 0.25rem 0;">
+                        <div id="practice-timer-digits" class="practice-timer-digits" style="font-size: clamp(3.2rem, 10vw, 5.5rem); margin: 0.25rem 0;">
                             0.00
                         </div>
 
-                        <div id="practice-alg-box" class="practice-alg-display" style="width: 100%; font-size: 1.45rem; padding: 0.75rem; text-align: center; border-radius: var(--radius-md); background: var(--bg-surface-elevated); margin-bottom: 0.5rem;">
+                        <!-- Scramble-Style Centered Dynamic Step Reel for Practice Formula -->
+                        <div id="practice-reel-box" class="practice-reel-container" style="width: 100%;">
+                            <div class="practice-reel-viewport">
+                                <div id="practice-reel-track" class="practice-reel-track">
+                                    <span class="scramble-empty-hint">请在下方选择或转动魔方开始练习</span>
+                                </div>
+                            </div>
+                            <div id="practice-reel-footer" class="practice-reel-footer" style="display: none;">
+                                <span>已完成 <strong class="progress-highlight">0</strong> 步</span>
+                                <span>·</span>
+                                <span>剩余 <strong class="progress-highlight">0</strong> 步</span>
+                                <span style="opacity: 0.65;">(0%)</span>
+                            </div>
+                            <!-- Overall Sequence Bar -->
+                            <div id="practice-overall-box" class="practice-overall-container" style="display: none;"></div>
+                        </div>
+
+                        <div id="practice-alg-box" class="practice-alg-display" style="display: none;">
                             Ready to practice
                         </div>
                     </div>
@@ -547,6 +544,29 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 2. Category & Case Library (Bottom Explorer Card) -->
+                <div class="case-list-card">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700;">Case Library (公式库)</h4>
+                        <button id="btn-add-custom-alg" class="btn btn-primary btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.75rem;">+ Add Alg</button>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0.5rem;">
+                        <select id="select-alg-category" class="form-control" style="font-size: 0.85rem; padding: 0.35rem 0.6rem;">
+                            <option value="ALL">All Categories</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0.5rem;">
+                        <input type="text" id="input-search-alg" placeholder="Search case name or alg..." style="font-size: 0.85rem; padding: 0.35rem 0.6rem;">
+                    </div>
+
+                    <div id="case-list-container" class="case-list-wrapper">
+                        <!-- Dynamic case cards -->
+                    </div>
+                </div>
+
             </div>
         </div>
 
