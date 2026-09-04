@@ -433,17 +433,16 @@
             try {
                 min2phase.initialize();
                 // We want moves M such that currentState * M = targetState.
-                // targetState_inv * currentState * M = I
-                // Let relativeCube = targetState_inv * currentState.
-                // min2phase.solve(relativeCube) solves relativeCube to Solved state,
-                // which yields exactly M!
-                const targetCC = targetState.toCubieCube();
-                targetCC.invCubieCube(); // Invert in place
-
+                // In group theory: M = currentState^(-1) * targetState.
+                // In min2phase, min2phase.solve(prod) finds the sequence M such that Solved * M = prod.
+                // Therefore, setting prod = currentState^(-1) * targetState yields exactly M!
                 const currentCC = currentState.toCubieCube();
+                currentCC.invCubieCube(); // Invert in place: currentState^(-1)
+
+                const targetCC = targetState.toCubieCube();
                 const prod = new min2phase.CubieCube();
-                min2phase.CornMult(targetCC, currentCC, prod);
-                min2phase.EdgeMult(targetCC, currentCC, prod);
+                min2phase.CornMult(currentCC, targetCC, prod);
+                min2phase.EdgeMult(currentCC, targetCC, prod);
 
                 const sol = min2phase.solve(prod);
                 if (sol && sol.trim().length > 0) {
@@ -671,18 +670,39 @@
                             this.remainingOnFace = null;
                             this.halfTurnDirection = null;
                         } else if (this.isHalfTurn && this.halfFace === targetFace) {
-                            // Wrong turn undone back to 0
-                            this.isHalfTurn = false;
-                            this.halfFace = null;
-                            this.remainingOnFace = null;
-                            this.halfTurnDirection = null;
-                            this.wasReverseCancelled = true;
+                            if (move === this.remainingOnFace) {
+                                // Move completed the expected target state!
+                                this.currentStep++;
+                                this.isHalfTurn = false;
+                                this.halfFace = null;
+                                this.remainingOnFace = null;
+                                this.halfTurnDirection = null;
+                            } else {
+                                // Wrong turn undone back to 0 or another position
+                                this.isHalfTurn = false;
+                                this.halfFace = null;
+                                this.remainingOnFace = null;
+                                this.halfTurnDirection = null;
+                                this.wasReverseCancelled = true;
+                            }
                         } else {
-                            // Wrong direction on target face
+                            // Wrong direction on target face: compute exact rotation to reach targetMove!
+                            let neededOnFace = targetMove;
+                            const targetState = (this.expectedStates && this.currentStep + 1 < this.expectedStates.length)
+                                ? this.expectedStates[this.currentStep + 1]
+                                : null;
+                            if (targetState) {
+                                for (const cand of [targetFace, targetFace + "'", targetFace + "2"]) {
+                                    if (this.currentCube.clone().applyMove(cand).equals(targetState)) {
+                                        neededOnFace = cand;
+                                        break;
+                                    }
+                                }
+                            }
                             this.isHalfTurn = true;
                             this.halfFace = targetFace;
                             this.halfTurnDirection = move;
-                            this.remainingOnFace = targetMove;
+                            this.remainingOnFace = neededOnFace;
                         }
                     }
 
