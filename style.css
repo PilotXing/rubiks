@@ -1661,7 +1661,7 @@ body.theme-light .card-collapsible.collapsed .btn-panel-toggle {
     height: 100%;
     white-space: nowrap;
     will-change: transform;
-    transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
+    transition: transform var(--reel-transition-dur, 0.22s) var(--reel-transition-ease, cubic-bezier(0.2, 0.9, 0.3, 1));
 }
 
 .scramble-reel-track.error-shake {

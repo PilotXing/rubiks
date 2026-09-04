@@ -752,6 +752,39 @@ document.addEventListener('DOMContentLoaded', () => {
         return rows.map(rowSpans => `<div class="scramble-row">${rowSpans.join('')}</div>`).join('');
     }
 
+    // Real-Time Scramble TPS & Speed Tracker for Fluid Tape Scroll
+    let lastScrambleMoveTime = 0;
+    let scrambleSmoothedInterval = 280; // ms per move (baseline ~3.5 TPS)
+    let scrambleMoveCount = 0;
+
+    function recordScrambleMoveSpeed() {
+        const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+        if (lastScrambleMoveTime > 0) {
+            const dt = now - lastScrambleMoveTime;
+            // Ignore long pauses / gaps (e.g. > 1500ms)
+            if (dt >= 40 && dt <= 1500) {
+                scrambleMoveCount++;
+                // Exponential moving average favoring current turn speed
+                const alpha = scrambleMoveCount <= 2 ? 0.6 : 0.4;
+                scrambleSmoothedInterval = Math.round(scrambleSmoothedInterval * (1 - alpha) + dt * alpha);
+            } else if (dt > 1500) {
+                // User paused or hesitated: reset to gentle starting pace
+                scrambleSmoothedInterval = 280;
+                scrambleMoveCount = 1;
+            }
+        } else {
+            scrambleSmoothedInterval = 280;
+            scrambleMoveCount = 1;
+        }
+        lastScrambleMoveTime = now;
+    }
+
+    function resetScrambleMoveSpeed() {
+        lastScrambleMoveTime = 0;
+        scrambleSmoothedInterval = 280;
+        scrambleMoveCount = 0;
+    }
+
     function alignReelTrack(track, activeIdx = 0, animate = true) {
         if (!track) return;
         const items = track.querySelectorAll('.reel-step-item');
@@ -767,7 +800,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         track.style.setProperty('--track-curr-x', `${targetOffset}px`);
         if (animate) {
-            track.style.transition = 'transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1)';
+            const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+            const timeSinceLastTurn = lastScrambleMoveTime > 0 ? (now - lastScrambleMoveTime) : 9999;
+            const isContinuousTurning = timeSinceLastTurn < 650 && scrambleMoveCount >= 2;
+
+            let durationSec;
+            let easingCurve;
+
+            if (isContinuousTurning) {
+                // Continuous scramble turning: scroll continuously and smoothly without harsh deceleration stop
+                // Duration matches turning interval so moves glide right into each other seamlessly
+                durationSec = Math.max(0.10, Math.min(0.38, (scrambleSmoothedInterval * 0.95) / 1000));
+                // Gentle linear-gliding curve: no harsh snap-to-stop
+                easingCurve = 'cubic-bezier(0.25, 0.35, 0.45, 1.0)';
+            } else {
+                // Single move or first move after pause: use gentle transition to position
+                const preset = getReelMotionConfig();
+                durationSec = preset && preset.durationSec > 0 ? preset.durationSec : 0.24;
+                easingCurve = (preset && preset.curve) ? preset.curve : 'cubic-bezier(0.25, 1, 0.5, 1)';
+            }
+
+            track.style.transition = `transform ${durationSec.toFixed(3)}s ${easingCurve}`;
         } else {
             track.style.transition = 'none';
         }
@@ -1054,6 +1107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Pre-calculate next preview for continuous slide-in
         pendingNextScramble = generateWcaScramble(21);
 
+        resetScrambleMoveSpeed();
         currentScramble = scrambleStr;
         timer.setScramble(currentScramble);
         tracker.setScramble(currentScramble);
@@ -1278,6 +1332,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (banner) banner.className = 'scramble-banner';
 
         if (!evalResult || (evalResult.currentStep === 0 && !evalResult.isHalfTurn && !evalResult.isDeviated)) {
+            resetScrambleMoveSpeed();
             setScrambleFullscreen(false);
             if (halfTurnTimer) {
                 clearTimeout(halfTurnTimer);
@@ -1303,6 +1358,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (evalResult.isComplete) {
+            resetScrambleMoveSpeed();
             setScrambleFullscreen(false);
             wasDeviated = false;
             if (halfTurnTimer) {
@@ -1780,6 +1836,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else {
             // Actively scrambling: Route move directly to scramble tracker!
+            recordScrambleMoveSpeed();
             const prevMove = lastScrambleMove;
             lastScrambleMove = moveEvent.move;
 
