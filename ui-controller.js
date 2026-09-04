@@ -555,28 +555,44 @@ document.addEventListener('DOMContentLoaded', () => {
         updateArenaToggleBtn(mode);
     }
 
-    function setScrambleFullscreen(active) {
+    function setScrambleFullscreen(active, userTriggered = false) {
         if (active) {
             if (!document.body.classList.contains('is-scrambling')) {
                 document.body.classList.add('is-scrambling');
-                requestAnimationFrame(() => {
+                const resize3D = () => {
                     if (elements.cube3dContainer && renderer3D) {
                         const rect = elements.cube3dContainer.getBoundingClientRect();
-                        const sz = Math.min(rect.width || 320, rect.height || 320) || 320;
+                        const isLandscape = window.matchMedia('(orientation: landscape)').matches;
+                        const defaultSz = isLandscape ? 340 : 300;
+                        const sz = Math.min(rect.width || defaultSz, rect.height || defaultSz) || defaultSz;
                         renderer3D.resize(sz, sz);
                     }
+                };
+                requestAnimationFrame(() => {
+                    resize3D();
+                    setTimeout(resize3D, 80);
                 });
+            }
+            if (userTriggered && document.documentElement.requestFullscreen && !document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
             }
         } else {
             if (document.body.classList.contains('is-scrambling')) {
                 document.body.classList.remove('is-scrambling');
-                requestAnimationFrame(() => {
+                const resize3D = () => {
                     if (elements.cube3dContainer && renderer3D) {
                         const rect = elements.cube3dContainer.getBoundingClientRect();
                         const sz = Math.min(rect.width || 180, rect.height || 180) || 180;
                         renderer3D.resize(sz, sz);
                     }
+                };
+                requestAnimationFrame(() => {
+                    resize3D();
+                    setTimeout(resize3D, 80);
                 });
+            }
+            if (userTriggered && document.exitFullscreen && document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
             }
         }
     }
@@ -584,7 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.btnExitScrambleFullscreen) {
         elements.btnExitScrambleFullscreen.addEventListener('click', (e) => {
             e.stopPropagation();
-            setScrambleFullscreen(false);
+            setScrambleFullscreen(false, true);
         });
     }
 
@@ -1388,7 +1404,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const btnFs = e.target.closest('.btn-enter-scramble-fs');
         if (btnFs) {
             e.stopPropagation();
-            setScrambleFullscreen(true);
+            setScrambleFullscreen(true, true);
         }
     });
 
@@ -3265,10 +3281,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Window Resize & Reorientation Adaptive Redraw
-    window.addEventListener('resize', () => {
+    function handleScreenResize() {
         if (renderer3D && elements.cube3dContainer) {
             const rect = elements.cube3dContainer.getBoundingClientRect();
-            const sz = Math.min(rect.width || 180, rect.height || 180) || 180;
+            const isScrambling = document.body.classList.contains('is-scrambling');
+            const fallbackSz = isScrambling ? 320 : 180;
+            const sz = Math.min(rect.width || fallbackSz, rect.height || fallbackSz) || fallbackSz;
             renderer3D.resize(sz, sz);
         }
         if (trendChart && currentView === 'view-analytics') {
@@ -3277,6 +3295,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (mainMovementChart && elements.mainSolveBreakdownCard && elements.mainSolveBreakdownCard.style.display !== 'none') {
             mainMovementChart.render();
         }
+    }
+
+    window.addEventListener('resize', handleScreenResize);
+    window.addEventListener('orientationchange', () => {
+        setTimeout(handleScreenResize, 100);
+        setTimeout(handleScreenResize, 250);
     });
 
     // -------------------------------------------------------------

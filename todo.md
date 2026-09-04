@@ -719,6 +719,20 @@
 - [x] **Version Upgrade**:
     - Bumped to `v20.3` (sw.js cache `rubiks-timer-v20.3`).
 
+## 04 SEP Landscape Full-Screen Scramble Side-by-Side Adaptive Mode (v20.4)
+- [x] **Landscape Side-by-Side Fullscreen Layout (横屏全屏打乱左右分栏自适应)**:
+    - Root cause: In landscape orientation, vertical height is narrow (~360-400px) while width is wide (>800px). The previous layout stacked the scramble card on top of the 3D cube vertically with a fixed `max-width: 680px`, causing wide blank gaps on left/right and cutting the 3D cube in half at the bottom.
+    - Implemented `@media (orientation: landscape)` responsive split:
+      - **Left Side**: Complete Scramble Focus Card (live sync status, full carousel reel, progress indicator, chips formula bar, and exit button) taking 100% of left column.
+      - **Right Side**: Full 3D Interactive Rubik's Cube centered at full height (`min(44vw, 84vh)`), completely in view without any vertical clipping or cutoff.
+      - Removed horizontal container constraints to span 100% width edge-to-edge.
+- [x] **Native Browser Fullscreen API Integration (浏览器原生全屏支持)**:
+    - Wired `requestFullscreen()` on user-triggered full-screen scramble entry and `exitFullscreen()` on exit, auto-hiding browser URL and status bars for true distraction-free immersion.
+    - Added `orientationchange` listener with double-tick adaptive 3D resize.
+- [x] **Version Upgrade**:
+    - Bumped to `v20.4` (sw.js cache `rubiks-timer-v20.4`).
+
+
 
 
 
