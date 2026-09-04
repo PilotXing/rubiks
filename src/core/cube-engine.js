@@ -7,7 +7,11 @@
     if (typeof define === 'function' && define.amd) {
         define(['min2phase'], factory);
     } else if (typeof module === 'object' && module.exports) {
-        module.exports = factory(require('./min2phase'));
+        let m2p = null;
+        try { m2p = require('../../lib/min2phase'); } catch (e) {
+            try { m2p = require('./min2phase'); } catch (e2) {}
+        }
+        module.exports = factory(m2p);
     } else {
         root.CubeEngine = factory(root.min2phase);
     }

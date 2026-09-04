@@ -7,7 +7,11 @@
     if (typeof define === 'function' && define.amd) {
         define(['aesjs'], factory);
     } else if (typeof module === 'object' && module.exports) {
-        module.exports = factory(require('./aes'));
+        let aes = null;
+        try { aes = require('../../lib/aes'); } catch (e) {
+            try { aes = require('./aes'); } catch (e2) {}
+        }
+        module.exports = factory(aes);
     } else {
         root.GanBluetooth = factory(root.aesjs);
     }
