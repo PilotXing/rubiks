@@ -248,6 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let reconRenderer3D = null;
     let trendChart = null;
     let movementChart = null;
+    let mainMovementChart = null;
 
     try {
         const initialW = elements.cube3dContainer ? (elements.cube3dContainer.clientWidth || 200) : 200;
@@ -2198,7 +2199,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // -------------------------------------------------------------
     // 8. Main Screen Inline Solve Breakdown & Curve
     // -------------------------------------------------------------
-    let mainMovementChart = null;
     let latestFinishedSolve = null;
 
     function syncMainCubeToSolveStep(solve, stepNum) {
