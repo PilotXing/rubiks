@@ -302,7 +302,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Alert & Audio Settings
     let scrambleAlertsEnabled = localStorage.getItem('scramble_alerts_enabled') !== 'false';
     let wasDeviated = false;
+    let halfTurnTimer = null;
+    let showExpandedDirection = false;
+    let lastScrambleMove = null;
+    let currentScrambleEvalResult = null;
     sound.enabled = localStorage.getItem('sound_enabled') !== 'false';
+
+    function isOppositeMove(m1, m2) {
+        if (!m1 || !m2 || typeof m1 !== 'string' || typeof m2 !== 'string') return false;
+        const f1 = m1.charAt(0);
+        const f2 = m2.charAt(0);
+        if (f1 !== f2) return false;
+        if (m1.endsWith('2') || m2.endsWith('2')) return false;
+        const p1 = m1.endsWith("'");
+        const p2 = m2.endsWith("'");
+        return p1 !== p2;
+    }
     sound.voiceEnabled = localStorage.getItem('voice_enabled') !== 'false';
     timer.inspectionEnabled = localStorage.getItem('inspection_enabled') === 'true';
 
@@ -726,52 +741,26 @@ document.addEventListener('DOMContentLoaded', () => {
         return rows.map(rowSpans => `<div class="scramble-row">${rowSpans.join('')}</div>`).join('');
     }
 
-    function renderReelSlotsHTML(moves, activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, isDeviated = false) {
-        const totalMoves = moves.length;
-        const clampedActiveIdx = Math.min(Math.max(0, activeIdx), Math.max(0, totalMoves - 1));
-        const isCorrectionMode = isDeviated && correctionMoves && correctionMoves.length > 0 && correctionMoves.length <= 2;
+    function alignReelTrack(track, activeIdx = 0, animate = true) {
+        if (!track) return;
+        const items = track.querySelectorAll('.reel-step-item');
+        if (!items || items.length === 0) return;
+        const clampedIdx = Math.min(Math.max(0, activeIdx), items.length - 1);
+        const activeItem = items[clampedIdx];
+        if (!activeItem) return;
 
-        let html = '';
-        // 5 fixed symmetrical slots: rel = -2, -1, 0, +1, +2
-        for (let rel = -2; rel <= 2; rel++) {
-            const idx = clampedActiveIdx + rel;
-            if (idx < 0 || idx >= totalMoves) {
-                html += `<div class="reel-slot slot-${rel} slot-empty" aria-hidden="true"></div>`;
-                continue;
-            }
+        const viewport = track.parentElement;
+        const vpWidth = (viewport && viewport.clientWidth > 0) ? viewport.clientWidth : (window.innerWidth || 360);
+        const itemCenter = activeItem.offsetLeft + (activeItem.offsetWidth / 2);
+        const targetOffset = Math.round((vpWidth / 2) - itemCenter);
 
-            const move = moves[idx];
-            const colorCls = getMoveColorClass(move);
-
-            if (rel < 0) {
-                html += `<div class="reel-slot slot-${rel}"><div class="reel-step-item step-done ${colorCls}">${move}</div></div>`;
-            } else if (rel === 0) {
-                if (isCorrectionMode) {
-                    const undoMove = correctionMoves[0];
-                    const nextMove = correctionMoves.length > 1 ? correctionMoves[1] : (moves[idx] || '');
-                    html += `
-                        <div class="reel-slot slot-0">
-                            <div class="reel-step-item step-active ${colorCls}" style="width: auto; min-width: 90px; padding: 0 0.6rem;">
-                                <div class="reel-correction-badge">
-                                    <span class="reel-correction-undo">${undoMove}</span>
-                                    <span class="reel-correction-arrow">➔</span>
-                                    <span class="reel-correction-next">${nextMove}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                } else if (isHalfTurn) {
-                    const label = remainingOnFace ? `${remainingOnFace} (½)` : `${move} (½)`;
-                    html += `<div class="reel-slot slot-0"><div class="reel-step-item step-half-active ${colorCls}">${label}</div></div>`;
-                } else {
-                    html += `<div class="reel-slot slot-0"><div class="reel-step-item step-active ${colorCls}">${move}</div></div>`;
-                }
-            } else {
-                // rel > 0
-                html += `<div class="reel-slot slot-${rel}"><div class="reel-step-item step-pending ${colorCls}">${move}</div></div>`;
-            }
+        track.style.setProperty('--track-curr-x', `${targetOffset}px`);
+        if (animate) {
+            track.style.transition = 'transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1)';
+        } else {
+            track.style.transition = 'none';
         }
-        return html;
+        track.style.transform = `translate3d(${targetOffset}px, 0, 0)`;
     }
 
     function renderScrambleReelHTML(scrambleStr, activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, isDeviated = false) {
@@ -780,7 +769,37 @@ document.addEventListener('DOMContentLoaded', () => {
         if (moves.length === 0) return '<span class="scramble-empty-hint">Loading scramble...</span>';
 
         const totalMoves = moves.length;
-        const slotsHtml = renderReelSlotsHTML(moves, activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, isDeviated);
+        let trackItemsHtml = '';
+
+        moves.forEach((move, idx) => {
+            let cls = 'step-pending';
+            let farCls = '';
+            let content = move;
+            const colorCls = getMoveColorClass(move);
+
+            if (idx < activeIdx) {
+                cls = 'step-done';
+                if (idx < activeIdx - 1) farCls = 'step-far';
+            } else if (idx === activeIdx) {
+                if (isDeviated && correctionMoves && correctionMoves.length > 0) {
+                    cls = 'step-correction';
+                    const nextCorrection = correctionMoves[0];
+                    const corrColor = getMoveColorClass(nextCorrection);
+                    content = nextCorrection;
+                } else if (isHalfTurn && showExpandedDirection) {
+                    cls = 'step-half-active';
+                    const label = remainingOnFace || move;
+                    content = `<span class="step-half-base">${move}</span><span class="step-half-guide">再转 ${label}</span>`;
+                } else {
+                    cls = 'step-active';
+                }
+            } else {
+                cls = 'step-pending';
+                if (idx > activeIdx + 2) farCls = 'step-far';
+            }
+
+            trackItemsHtml += `<div class="reel-step-item ${cls} ${farCls} ${colorCls}" data-idx="${idx}">${content}</div>`;
+        });
 
         // Footer progress sub-label
         const completedCount = Math.min(activeIdx, totalMoves);
@@ -816,7 +835,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="scramble-reel-container">
                 <div class="scramble-reel-viewport">
                     <div class="scramble-reel-track">
-                        ${slotsHtml}
+                        ${trackItemsHtml}
                     </div>
                 </div>
                 ${footerHtml}
@@ -898,37 +917,83 @@ document.addEventListener('DOMContentLoaded', () => {
             const moves = (currentStr || '').trim().split(/\s+/).filter(Boolean);
             
             if (currentTrack && moves.length > 0 && scrambleDisplayStyle !== 'grid') {
-                // Update 5-slot window directly - Slot 0 is physically centered at all times
-                currentTrack.innerHTML = renderReelSlotsHTML(moves, activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, isDeviated);
+                const existingItems = currentTrack.querySelectorAll('.reel-step-item');
+                if (existingItems.length === moves.length) {
+                    // Smooth in-place DOM update preserving CSS slide animation
+                    existingItems.forEach((item, idx) => {
+                        const origMove = moves[idx];
+                        const colorCls = getMoveColorClass(origMove);
+                        let cls = 'step-pending';
+                        let farCls = '';
+                        
+                        if (idx < activeIdx) {
+                            cls = 'step-done';
+                            if (idx < activeIdx - 1) farCls = 'step-far';
+                            item.className = `reel-step-item ${cls} ${farCls} ${colorCls}`;
+                            item.textContent = origMove;
+                        } else if (idx === activeIdx) {
+                            if (isDeviated && correctionMoves && correctionMoves.length > 0) {
+                                cls = 'step-correction';
+                                const nextCorrection = correctionMoves[0];
+                                const corrColor = getMoveColorClass(nextCorrection);
+                                item.className = `reel-step-item ${cls} ${corrColor}`;
+                                item.textContent = nextCorrection;
+                            } else if (isHalfTurn && showExpandedDirection) {
+                                cls = 'step-half-active';
+                                const label = remainingOnFace || origMove;
+                                item.className = `reel-step-item ${cls} ${colorCls}`;
+                                item.innerHTML = `<span class="step-half-base">${origMove}</span><span class="step-half-guide">再转 ${label}</span>`;
+                            } else {
+                                cls = 'step-active';
+                                item.className = `reel-step-item ${cls} ${colorCls}`;
+                                item.textContent = origMove;
+                            }
+                        } else {
+                            cls = 'step-pending';
+                            if (idx > activeIdx + 2) farCls = 'step-far';
+                            item.className = `reel-step-item ${cls} ${farCls} ${colorCls}`;
+                            item.textContent = origMove;
+                        }
+                    });
 
-                // Update footer progress text
-                const completedCount = Math.min(activeIdx, moves.length);
-                const remainingCount = Math.max(0, moves.length - completedCount);
-                const pct = Math.round((completedCount / moves.length) * 100);
-                const footerEl = carouselElements.cardCurrent.querySelector('.scramble-reel-footer');
-                if (footerEl) {
-                    footerEl.innerHTML = `
-                        <span>已完成 <strong class="progress-highlight">${completedCount}</strong> 步</span>
-                        <span>·</span>
-                        <span>剩余 <strong class="progress-highlight">${remainingCount}</strong> 步</span>
-                        <span style="opacity: 0.65;">(${pct}%)</span>
-                        <button class="btn-enter-scramble-fs" title="进入全屏打乱模式 (Fullscreen Scramble)" type="button">⛶ 全屏</button>
-                    `;
+                    // Update footer progress text
+                    const completedCount = Math.min(activeIdx, moves.length);
+                    const remainingCount = Math.max(0, moves.length - completedCount);
+                    const pct = Math.round((completedCount / moves.length) * 100);
+                    const footerEl = carouselElements.cardCurrent.querySelector('.scramble-reel-footer');
+                    if (footerEl) {
+                        footerEl.innerHTML = `
+                            <span>已完成 <strong class="progress-highlight">${completedCount}</strong> 步</span>
+                            <span>·</span>
+                            <span>剩余 <strong class="progress-highlight">${remainingCount}</strong> 步</span>
+                            <span style="opacity: 0.65;">(${pct}%)</span>
+                            <button class="btn-enter-scramble-fs" title="进入全屏打乱模式 (Fullscreen Scramble)" type="button">⛶ 全屏</button>
+                        `;
+                    }
+
+                    // Update overall sequence bar chips
+                    const overallChips = carouselElements.cardCurrent.querySelectorAll('.overall-move-chip');
+                    overallChips.forEach((chip, idx) => {
+                        let stCls = 'pending';
+                        if (idx < activeIdx) stCls = 'done';
+                        else if (idx === activeIdx) stCls = 'active';
+                        const colorCls = getMoveColorClass(moves[idx]);
+                        chip.textContent = moves[idx];
+                        chip.className = `overall-move-chip ${stCls} ${colorCls}`;
+                    });
+
+                    alignReelTrack(currentTrack, activeIdx, true);
+                } else {
+                    carouselElements.cardCurrent.innerHTML = formatScrambleHTML(currentStr, activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, null, isDeviated);
+                    carouselElements.cardCurrent.classList.remove('scramble-empty-hint');
+                    const newTrack = carouselElements.cardCurrent.querySelector('.scramble-reel-track');
+                    if (newTrack) alignReelTrack(newTrack, activeIdx, false);
                 }
-
-                // Update overall sequence bar chips
-                const overallChips = carouselElements.cardCurrent.querySelectorAll('.overall-move-chip');
-                overallChips.forEach((chip, idx) => {
-                    let stCls = 'pending';
-                    if (idx < activeIdx) stCls = 'done';
-                    else if (idx === activeIdx) stCls = 'active';
-                    const colorCls = getMoveColorClass(moves[idx]);
-                    chip.textContent = moves[idx];
-                    chip.className = `overall-move-chip ${stCls} ${colorCls}`;
-                });
             } else {
                 carouselElements.cardCurrent.innerHTML = formatScrambleHTML(currentStr, activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, null, isDeviated);
                 carouselElements.cardCurrent.classList.remove('scramble-empty-hint');
+                const newTrack = carouselElements.cardCurrent.querySelector('.scramble-reel-track');
+                if (newTrack) alignReelTrack(newTrack, activeIdx, false);
             }
         }
 
@@ -1197,11 +1262,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateScrambleStatus(evalResult) {
+        currentScrambleEvalResult = evalResult;
         const banner = elements.scrambleBanner;
         if (banner) banner.className = 'scramble-banner';
 
         if (!evalResult || (evalResult.currentStep === 0 && !evalResult.isHalfTurn && !evalResult.isDeviated)) {
             setScrambleFullscreen(false);
+            if (halfTurnTimer) {
+                clearTimeout(halfTurnTimer);
+                halfTurnTimer = null;
+            }
+            showExpandedDirection = false;
             if (banner) {
                 banner.innerHTML = `<span>Follow the scramble sequence above on your cube</span>`;
                 banner.classList.add('status-pending');
@@ -1223,6 +1294,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (evalResult.isComplete) {
             setScrambleFullscreen(false);
             wasDeviated = false;
+            if (halfTurnTimer) {
+                clearTimeout(halfTurnTimer);
+                halfTurnTimer = null;
+            }
+            showExpandedDirection = false;
             setArenaMode('TIMER');
             if (banner) {
                 banner.innerHTML = `<span>SCRAMBLE COMPLETE — Ready to Solve!</span>`;
@@ -1238,6 +1314,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (evalResult.isDeviated) {
             setScrambleFullscreen(true);
             setArenaMode('SCRAMBLE');
+            if (halfTurnTimer) {
+                clearTimeout(halfTurnTimer);
+                halfTurnTimer = null;
+            }
+            showExpandedDirection = false;
             if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
 
             if (evalResult.repathed && evalResult.fullScrambleString && evalResult.fullScrambleString !== currentScramble) {
@@ -1248,18 +1329,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
+            const nextCorrection = (evalResult.correctionMoves && evalResult.correctionMoves.length > 0)
+                ? evalResult.correctionMoves[0]
+                : ((evalResult.remainingMoves && evalResult.remainingMoves.length > 0) ? evalResult.remainingMoves[0] : '');
+
             if (banner) {
                 if (evalResult.repathed) {
-                    const nextMove = (evalResult.remainingMoves && evalResult.remainingMoves.length > 0)
-                        ? evalResult.remainingMoves[0]
-                        : (evalResult.correctionMoves && evalResult.correctionMoves.length > 0 ? evalResult.correctionMoves[0] : '');
                     const remSteps = evalResult.remainingMoves ? evalResult.remainingMoves.length : 0;
-                    banner.innerHTML = `<span>偏离超3步，已重新计算到打乱目标的最短路径: <strong>${nextMove}</strong> (剩余 ${remSteps} 步)</span>`;
+                    banner.innerHTML = `<span>偏离超3步，已重算最短路径: <strong>${nextCorrection}</strong> (剩余 ${remSteps} 步)</span>`;
                 } else {
-                    const undoText = (evalResult.correctionMoves && evalResult.correctionMoves.length > 0)
-                        ? evalResult.correctionMoves.join(' ')
-                        : '撤回动作';
-                    banner.innerHTML = `<span>转动错误，请转动 <strong>${undoText}</strong> 纠错回到打乱步骤</span>`;
+                    banner.innerHTML = `<span>转动错误，请转动 <strong>${nextCorrection}</strong> 纠错回到打乱步骤</span>`;
                 }
                 banner.classList.add('status-warning');
             }
@@ -1294,11 +1373,45 @@ document.addEventListener('DOMContentLoaded', () => {
             setArenaMode('SCRAMBLE');
             wasDeviated = false;
             if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
-            const turnHelp = evalResult.remainingOnFace ? `Turn <strong>${evalResult.remainingOnFace}</strong> to complete step` : `Complete <strong>${evalResult.halfFace || ''}</strong> turn`;
-            if (banner) {
-                banner.innerHTML = `<span>Move in progress: ${turnHelp}...</span>`;
-                banner.classList.add('status-half-turn');
+
+            // If reverse turn cancelled back to 0, show expanded guide immediately
+            if (evalResult.wasReverseCancelled) {
+                if (halfTurnTimer) {
+                    clearTimeout(halfTurnTimer);
+                    halfTurnTimer = null;
+                }
+                showExpandedDirection = true;
             }
+
+            if (!showExpandedDirection) {
+                // First 90 deg turn of x2/x3: treat normally as move in progress without premature distracting helper badges
+                const pct = Math.round((evalResult.currentStep / evalResult.totalSteps) * 100);
+                if (banner) {
+                    banner.innerHTML = `<span>打乱中: ${evalResult.currentStep} / ${evalResult.totalSteps} 步 (${pct}%)</span>`;
+                    banner.classList.add('status-pending');
+                }
+                if (!halfTurnTimer) {
+                    halfTurnTimer = setTimeout(() => {
+                        halfTurnTimer = null;
+                        showExpandedDirection = true;
+                        if (currentScrambleEvalResult && currentScrambleEvalResult.isHalfTurn) {
+                            renderScrambleDisplay(currentScrambleEvalResult.currentStep, [], true, currentScrambleEvalResult.halfFace, currentScrambleEvalResult.remainingOnFace, false);
+                            if (elements.scrambleBanner) {
+                                const rem = currentScrambleEvalResult.remainingOnFace || '';
+                                elements.scrambleBanner.innerHTML = `<span>还需转动 <strong>${rem}</strong> 完成此步</span>`;
+                                elements.scrambleBanner.className = 'scramble-banner status-half-turn';
+                            }
+                        }
+                    }, 1000);
+                }
+            } else {
+                if (banner) {
+                    const turnHelp = evalResult.remainingOnFace ? `还需转动 <strong>${evalResult.remainingOnFace}</strong> 完成此步` : `完成 <strong>${evalResult.halfFace || ''}</strong> 层面转动`;
+                    banner.innerHTML = `<span>${turnHelp}</span>`;
+                    banner.classList.add('status-half-turn');
+                }
+            }
+
             if (elements.timerStateBadge) {
                 elements.timerStateBadge.textContent = 'SCRAMBLING';
                 elements.timerStateBadge.className = 'badge badge-scrambling';
@@ -1309,10 +1422,15 @@ document.addEventListener('DOMContentLoaded', () => {
             setScrambleFullscreen(true);
             setArenaMode('SCRAMBLE');
             wasDeviated = false;
+            if (halfTurnTimer) {
+                clearTimeout(halfTurnTimer);
+                halfTurnTimer = null;
+            }
+            showExpandedDirection = false;
             if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
             const pct = Math.round((evalResult.currentStep / evalResult.totalSteps) * 100);
             if (banner) {
-                banner.innerHTML = `<span>Scrambling: ${evalResult.currentStep} / ${evalResult.totalSteps} moves (${pct}%)</span>`;
+                banner.innerHTML = `<span>打乱中: ${evalResult.currentStep} / ${evalResult.totalSteps} 步 (${pct}%)</span>`;
                 banner.classList.add('status-pending');
             }
             if (elements.timerStateBadge) {
@@ -1629,6 +1747,20 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } else {
             // Actively scrambling: Route move directly to scramble tracker!
+            const prevMove = lastScrambleMove;
+            lastScrambleMove = moveEvent.move;
+
+            // Reverse turn detection (e.g. R followed by R') -> "means I'm lost"
+            if (currentScrambleEvalResult && currentScrambleEvalResult.isHalfTurn) {
+                if (isOppositeMove(prevMove, moveEvent.move)) {
+                    if (halfTurnTimer) {
+                        clearTimeout(halfTurnTimer);
+                        halfTurnTimer = null;
+                    }
+                    showExpandedDirection = true;
+                }
+            }
+
             const expectedMove = (tracker.scrambleMoves && tracker.scrambleMoves[tracker.currentStep]) || '--';
             const evalResult = tracker.onCubeMove(moveEvent.move);
             appendBtLog('scramble', `打乱追踪: 收到动作 [${moveEvent.move}], 期望步骤 [${expectedMove}], 进度: ${evalResult.currentStep}/${evalResult.totalSteps} (半转: ${evalResult.isHalfTurn}, 偏离: ${evalResult.isDeviated})`);
@@ -3221,6 +3353,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (mainMovementChart && elements.mainSolveBreakdownCard && elements.mainSolveBreakdownCard.style.display !== 'none') {
             mainMovementChart.render();
+        }
+        const currentTrack = document.querySelector('.scramble-card-current .scramble-reel-track');
+        if (currentTrack) {
+            const curIdx = tracker ? tracker.currentStep : 0;
+            alignReelTrack(currentTrack, curIdx, false);
         }
     }
 

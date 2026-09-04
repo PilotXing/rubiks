@@ -732,19 +732,22 @@
 - [x] **Version Upgrade**:
     - Bumped to `v20.4` (sw.js cache `rubiks-timer-v20.4`).
 
-## 04 SEP Windowed 5-Slot Scramble Reel & Network-First Cache Architecture (v20.6)
-- [x] **Windowed 5-Slot Symmetrical Reel Architecture (窗口固定 5 槽位绝对居中架构)**:
-    - Root cause: Rendering all 21 steps on a single continuous track with `transform: translate3d(-Xpx)` caused cumulative drift because varying step widths (56~64px, 90px+ correction badges, font scaling) and missing following steps on later moves shifted the active step progressively to the right (+280px+ by step 19, running completely off-screen).
-    - Replaced 21-element shifting track with a windowed 5-slot symmetrical layout:
-      `[Slot -2 (54px)] [Slot -1 (60px)] [Slot 0: Active Move (Centered)] [Slot +1 (60px)] [Slot +2 (54px)]`
-    - Locked Slot 0 to the exact 50% horizontal center via CSS Flexbox (`justify-content: center; margin: 0 auto;`).
-    - At start (Step 0), left slots are empty placeholders; at end (Step 19), right slots are empty placeholders.
-    - Zero cumulative math error possible: the active move is geometrically pinned to the card center across all steps (Step 0 to final step).
-- [x] **Network-First Service Worker Strategy for Code Assets (代码资源全面转为 Network-First)**:
-    - Changed SW caching strategy for HTML, JS, and CSS to Network-First.
-    - Fixed `ignoreSearch` cache bug that prevented query-string updates (`?v=...`) from updating client scripts.
+## 04 SEP Smooth Scramble Reel Sliding Animation, Half-Turn Delay Guidance & Single Correction Move (v20.7)
+- [x] **Smooth Reel Slide Animation with Absolute Dynamic Centering (打乱公式转盘丝滑滑动动画 + 绝对物理居中零漂移)**:
+    - Replaced abrupt slot jumps with continuous hardware-accelerated reel sliding animation (`transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1)`).
+    - Solved cumulative offset drift by calculating exact dynamic center from real DOM layout:
+      `targetOffset = (viewportWidth / 2) - (activeItem.offsetLeft + activeItem.offsetWidth / 2)`.
+    - Guarantees the current move is pinned to the exact 50% horizontal center of the viewport on all steps (0 to 21) across all devices and aspect ratios without any rightward drift.
+    - Added depth-of-field optical fade for distant moves (`.step-far`) with soft edge linear gradients.
+- [x] **Half-Turn (x2/x3) Hesitation Delay & Reverse Move Guidance (双转/反向转动智能延迟引导)**:
+    - For double-turns (e.g. `R2`, `U2`): on the first $90^\circ$ turn, it is treated and displayed normally as a move in progress without premature or distracting helper badges.
+    - If the user hesitates for $> 1.0\text{ s}$ without completing the turn, the expanded guidance (`再转 R` / `还需转动 R 完成此步`) automatically appears.
+    - If the user makes a reverse turn on the face (e.g. $R \to R'$ meaning "I'm lost"), the $1.0\text{ s}$ timer is immediately cancelled, face state returns to $0^\circ$, and expanded direction guidance is instantly shown.
+- [x] **Single Corrected Next Move on Deviation (偏离打乱仅显示单一纠错动作)**:
+    - When user turns the wrong face (`isDeviated`), replaced confusing `[undo ➔ next]` capsule with **only the single corrected next move** (e.g. `R'`) displayed in the active slot with a clean pulsing red alert (`step-correction`).
+    - Banner clearly prompts: `转动错误，请转动 <strong>R'</strong> 纠错回到打乱步骤`.
 - [x] **Version Upgrade**:
-    - Bumped to `v20.6` (sw.js cache `rubiks-timer-v20.6`).
+    - Bumped to `v20.7` (sw.js cache `rubiks-timer-v20.7`).
 
 
 

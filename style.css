@@ -1603,22 +1603,25 @@ body {
     overflow: hidden;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     height: 76px;
-    mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 4%, rgba(0,0,0,1) 96%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 4%, rgba(0,0,0,1) 96%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 5%, rgba(0,0,0,1) 95%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 5%, rgba(0,0,0,1) 95%, transparent 100%);
 }
 
 .scramble-reel-track {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
     position: relative;
-    width: 100%;
-    max-width: 560px;
+    left: 0;
+    top: 0;
+    margin: 0;
+    padding: 0;
+    width: max-content;
     height: 100%;
-    margin: 0 auto;
     white-space: nowrap;
+    will-change: transform;
+    transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
 .scramble-reel-track.error-shake {
@@ -1626,47 +1629,12 @@ body {
 }
 
 @keyframes scramble-error-shake {
-    0%, 100% { transform: translate3d(0, 0, 0); }
-    15% { transform: translate3d(-10px, 0, 0); }
-    30% { transform: translate3d(9px, 0, 0); }
-    45% { transform: translate3d(-6px, 0, 0); }
-    60% { transform: translate3d(5px, 0, 0); }
-    75% { transform: translate3d(-2px, 0, 0); }
-}
-
-/* Symmetrical 5-slot window containers */
-.reel-slot {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    flex-shrink: 0;
-}
-
-.reel-slot.slot--2,
-.reel-slot.slot-2 {
-    width: 54px;
-    flex: 0 0 54px;
-}
-
-.reel-slot.slot--1,
-.reel-slot.slot-1 {
-    width: 60px;
-    flex: 0 0 60px;
-}
-
-/* Center Active Slot - strictly locked to center */
-.reel-slot.slot-0 {
-    width: auto;
-    min-width: 68px;
-    max-width: 150px;
-    flex: 0 0 auto;
-    margin: 0 4px;
-}
-
-.reel-slot.slot-empty {
-    visibility: hidden;
-    pointer-events: none;
+    0%, 100% { transform: translate3d(var(--track-curr-x, 0px), 0, 0); }
+    15% { transform: translate3d(calc(var(--track-curr-x, 0px) - 10px), 0, 0); }
+    30% { transform: translate3d(calc(var(--track-curr-x, 0px) + 9px), 0, 0); }
+    45% { transform: translate3d(calc(var(--track-curr-x, 0px) - 6px), 0, 0); }
+    60% { transform: translate3d(calc(var(--track-curr-x, 0px) + 5px), 0, 0); }
+    75% { transform: translate3d(calc(var(--track-curr-x, 0px) - 2px), 0, 0); }
 }
 
 .reel-step-item {
@@ -1680,75 +1648,115 @@ body {
     line-height: 1;
     position: relative;
     user-select: none;
-    transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.2s ease;
+    width: 52px;
+    height: 56px;
+    margin: 0 4px;
+    border-radius: 10px;
+    font-size: 1.55rem;
+    flex-shrink: 0;
+    transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
 /* Done past steps */
 .reel-step-item.step-done {
     color: var(--text-muted);
     opacity: 0.35;
-    font-size: 1.35rem;
-    transform: scale(0.86);
+    transform: scale(0.85);
 }
 
-.reel-slot.slot--1 .reel-step-item.step-done {
-    opacity: 0.45;
-    transform: scale(0.88);
-}
-
-.reel-slot.slot--2 .reel-step-item.step-done {
-    opacity: 0.22;
-    transform: scale(0.78);
+.reel-step-item.step-done.step-far {
+    opacity: 0.16;
+    transform: scale(0.75);
 }
 
 /* Active current step in center */
 .reel-step-item.step-active {
-    min-width: 56px;
+    min-width: 58px;
+    width: auto;
+    padding: 0 0.55rem;
     height: 60px;
-    padding: 0 0.5rem;
-    font-size: 1.9rem;
+    font-size: 1.85rem;
     font-weight: 900;
     color: #FFFFFF;
     background: rgba(16, 185, 129, 0.24);
     border: 2px solid var(--accent-primary);
     border-radius: 12px;
     box-shadow: 0 0 20px rgba(16, 185, 129, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    transform: scale(1.04);
+    transform: scale(1.05);
     opacity: 1;
     z-index: 5;
 }
 
-/* Half-turn (1/2) in-progress */
+/* Single Next Correction Move Display */
+.reel-step-item.step-correction {
+    min-width: 58px;
+    width: auto;
+    padding: 0 0.6rem;
+    height: 60px;
+    font-size: 1.85rem;
+    font-weight: 900;
+    color: #FFFFFF;
+    background: rgba(239, 68, 68, 0.28);
+    border: 2px solid #EF4444;
+    border-radius: 12px;
+    box-shadow: 0 0 22px rgba(239, 68, 68, 0.45);
+    transform: scale(1.06);
+    opacity: 1;
+    z-index: 5;
+    animation: pulse-correction 1s infinite alternate ease-in-out;
+}
+
+@keyframes pulse-correction {
+    0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+    100% { box-shadow: 0 0 24px rgba(239, 68, 68, 0.7); }
+}
+
+/* Half-turn (1/2) in-progress with expanded guidance */
 .reel-step-item.step-half-active {
     min-width: 72px;
+    width: auto;
     height: 60px;
-    padding: 0 0.6rem;
-    font-size: 1.6rem;
+    padding: 0.15rem 0.65rem;
+    font-size: 1.55rem;
     font-weight: 900;
     color: #F59E0B;
     background: rgba(245, 158, 11, 0.22);
     border: 2px solid #F59E0B;
     border-radius: 12px;
-    box-shadow: 0 0 20px rgba(245, 158, 11, 0.42);
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
     transform: scale(1.04);
     opacity: 1;
     z-index: 5;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
-/* Upcoming steps */
+.step-half-base {
+    line-height: 1;
+}
+
+.step-half-guide {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #FBBF24;
+    letter-spacing: 0.02em;
+    margin-top: 3px;
+    white-space: nowrap;
+}
+
+/* Upcoming pending steps */
 .reel-step-item.step-pending {
-    font-size: 1.45rem;
-    color: var(--text-secondary);
+    color: var(--text-primary);
+    opacity: 0.82;
+    transform: scale(0.92);
 }
 
-.reel-slot.slot-1 .reel-step-item.step-pending {
-    opacity: 0.85;
-    transform: scale(0.94);
-}
-
-.reel-slot.slot-2 .reel-step-item.step-pending {
-    opacity: 0.45;
-    transform: scale(0.82);
+.reel-step-item.step-pending.step-far {
+    opacity: 0.38;
+    transform: scale(0.80);
 }
 
 /* Error Correction Capsule in Center */

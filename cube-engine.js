@@ -602,6 +602,8 @@
             this.isHalfTurn = false;
             this.halfFace = null;
             this.remainingOnFace = null;
+            this.halfTurnDirection = null;
+            this.wasReverseCancelled = false;
             this.correctionMoves = [];
             this.currentStep = 0;
             this.lastMovedFace = null;
@@ -614,6 +616,7 @@
 
         onCubeMove(moveStr) {
             const move = normalizeMove(moveStr);
+            this.wasReverseCancelled = false;
             this.lastMovedFace = move.charAt(0);
             this.moveHistory.push(move);
             this.currentCube.applyMove(move);
@@ -634,17 +637,29 @@
                             this.isHalfTurn = false;
                             this.halfFace = null;
                             this.remainingOnFace = null;
+                            this.halfTurnDirection = null;
                         } else if (this.isHalfTurn && this.halfFace === targetFace) {
-                            // Second 90 turn on same face completes the 180 turn!
-                            this.currentStep++;
-                            this.isHalfTurn = false;
-                            this.halfFace = null;
-                            this.remainingOnFace = null;
+                            if (this.halfTurnDirection && move !== this.halfTurnDirection) {
+                                // Reverse 90 turn cancels back to 0! (e.g. R followed by R')
+                                this.isHalfTurn = false;
+                                this.halfFace = null;
+                                this.remainingOnFace = null;
+                                this.halfTurnDirection = null;
+                                this.wasReverseCancelled = true;
+                            } else {
+                                // Second 90 turn in same direction completes the 180 turn!
+                                this.currentStep++;
+                                this.isHalfTurn = false;
+                                this.halfFace = null;
+                                this.remainingOnFace = null;
+                                this.halfTurnDirection = null;
+                            }
                         } else {
                             // First 90 turn of a 180 move
                             this.isHalfTurn = true;
                             this.halfFace = targetFace;
-                            this.remainingOnFace = targetFace;
+                            this.halfTurnDirection = move;
+                            this.remainingOnFace = move;
                         }
                     } else {
                         // 90 turn target (e.g. R or R')
@@ -654,10 +669,19 @@
                             this.isHalfTurn = false;
                             this.halfFace = null;
                             this.remainingOnFace = null;
+                            this.halfTurnDirection = null;
+                        } else if (this.isHalfTurn && this.halfFace === targetFace) {
+                            // Wrong turn undone back to 0
+                            this.isHalfTurn = false;
+                            this.halfFace = null;
+                            this.remainingOnFace = null;
+                            this.halfTurnDirection = null;
+                            this.wasReverseCancelled = true;
                         } else {
                             // Wrong direction on target face
                             this.isHalfTurn = true;
                             this.halfFace = targetFace;
+                            this.halfTurnDirection = move;
                             this.remainingOnFace = targetMove;
                         }
                     }
@@ -683,6 +707,7 @@
                         isHalfTurn: this.isHalfTurn,
                         halfFace: this.halfFace,
                         remainingOnFace: this.remainingOnFace,
+                        wasReverseCancelled: !!this.wasReverseCancelled,
                         currentStep: this.currentStep,
                         totalSteps: this.scrambleMoves.length,
                         correctionMoves: [],

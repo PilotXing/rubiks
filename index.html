@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css?v=20.6">
+    <link rel="stylesheet" href="style.css?v=20.7">
 </head>
 <body class="style-dark color-emerald theme-dark">
 
@@ -34,7 +34,7 @@
                     </svg>
                 </span>
                 <span class="brand-title">Rubik Vision</span>
-                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v20.6</span>
+                <span id="app-version-badge" class="badge" style="background: linear-gradient(135deg, #3B82F6, #1D4ED8); color: #FFF; font-weight: 800; font-size: 0.82rem; padding: 0.2rem 0.55rem; border-radius: 6px; box-shadow: 0 0 14px rgba(59, 130, 246, 0.7); letter-spacing: 0.05em;">v20.7</span>
             </div>
 
             <div class="header-actions">
@@ -121,17 +121,9 @@
                                 <div class="scramble-reel-container">
                                     <div class="scramble-reel-viewport">
                                         <div class="scramble-reel-track">
-                                            <div class="reel-slot slot--2 slot-empty" aria-hidden="true"></div>
-                                            <div class="reel-slot slot--1 slot-empty" aria-hidden="true"></div>
-                                            <div class="reel-slot slot-0">
-                                                <div class="reel-step-item step-active move-col-r">R</div>
-                                            </div>
-                                            <div class="reel-slot slot-1">
-                                                <div class="reel-step-item step-pending move-col-u">U'</div>
-                                            </div>
-                                            <div class="reel-slot slot-2">
-                                                <div class="reel-step-item step-pending move-col-r">R</div>
-                                            </div>
+                                            <div class="reel-step-item step-active move-col-r">R</div>
+                                            <div class="reel-step-item step-pending move-col-u">U'</div>
+                                            <div class="reel-step-item step-pending move-col-r">R</div>
                                         </div>
                                     </div>
                                     <div class="scramble-reel-footer">
@@ -1103,20 +1095,20 @@
     </div>
 
     <!-- Scripts -->
-    <script src="aes.js?v=20.6"></script>
-    <script src="min2phase.js?v=20.6"></script>
-    <script src="three.min.js?v=20.6"></script>
-    <script src="echarts.min.js?v=20.6"></script>
-    <script src="cube-engine.js?v=20.6"></script>
-    <script src="alg-database.js?v=20.6"></script>
-    <script src="method-analyzer.js?v=20.6"></script>
-    <script src="chart-engine.js?v=20.6"></script>
-    <script src="gan-bluetooth.js?v=20.6"></script>
-    <script src="audio-synth.js?v=20.6"></script>
-    <script src="renderer-3d.js?v=20.6"></script>
-    <script src="renderer-2d.js?v=20.6"></script>
-    <script src="timer-engine.js?v=20.6"></script>
-    <script src="ui-controller.js?v=20.6"></script>
+    <script src="aes.js?v=20.7"></script>
+    <script src="min2phase.js?v=20.7"></script>
+    <script src="three.min.js?v=20.7"></script>
+    <script src="echarts.min.js?v=20.7"></script>
+    <script src="cube-engine.js?v=20.7"></script>
+    <script src="alg-database.js?v=20.7"></script>
+    <script src="method-analyzer.js?v=20.7"></script>
+    <script src="chart-engine.js?v=20.7"></script>
+    <script src="gan-bluetooth.js?v=20.7"></script>
+    <script src="audio-synth.js?v=20.7"></script>
+    <script src="renderer-3d.js?v=20.7"></script>
+    <script src="renderer-2d.js?v=20.7"></script>
+    <script src="timer-engine.js?v=20.7"></script>
+    <script src="ui-controller.js?v=20.7"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
