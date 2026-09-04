@@ -1684,98 +1684,102 @@ body.theme-light .card-collapsible.collapsed .btn-panel-toggle {
     justify-content: center;
     box-sizing: border-box;
     font-family: var(--font-mono);
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1;
     position: relative;
     user-select: none;
-    width: 52px;
-    height: 56px;
+    width: 60px;
+    height: 50px;
     margin: 0 4px;
-    border-radius: 10px;
-    font-size: 1.55rem;
+    font-size: 1.85rem;
     flex-shrink: 0;
-    transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    transition: opacity 0.15s ease, color 0.15s ease;
 }
 
-/* Done past steps */
+/* Done past steps - Grayed out for easy current position tracking */
 .reel-step-item.step-done {
-    color: var(--text-muted);
-    opacity: 0.32;
-    transform: scale(0.85);
+    color: var(--text-muted) !important;
+    opacity: 0.32 !important;
+    font-size: 1.85rem !important;
+    font-weight: 700 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: none !important;
 }
 
 .reel-step-item.step-done.step-far {
-    opacity: 0.14;
-    transform: scale(0.75);
+    opacity: 0.16 !important;
+    transform: none !important;
 }
 
-/* Active current step in center - Clear, crisp, focused */
+/* Active current step in center - Exact same size, font, and color as queue, no inverted box, no scaling, no shadow */
 .reel-step-item.step-active {
-    min-width: 58px;
-    width: auto;
-    padding: 0 0.65rem;
-    height: 60px;
-    font-size: 1.95rem;
-    font-weight: 900;
-    color: #FFFFFF !important;
-    background: var(--accent-primary) !important;
-    border: 2px solid var(--accent-hover);
-    border-radius: 12px;
-    box-shadow: 0 4px 16px var(--accent-glow, rgba(16, 185, 129, 0.4)), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    transform: scale(1.05);
-    opacity: 1;
-    z-index: 5;
+    min-width: unset !important;
+    width: 60px !important;
+    height: 50px !important;
+    padding: 0 !important;
+    font-size: 1.85rem !important;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    z-index: 2;
 }
 
 /* Light mode crisp contrast for active step */
 body.style-light .reel-step-item.step-active,
 body.theme-light .reel-step-item.step-active {
-    color: #FFFFFF !important;
-    background: var(--accent-primary) !important;
-    border-color: var(--accent-hover);
-    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    color: var(--text-primary) !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: none !important;
 }
 
-/* Single Next Correction Move Display */
+/* Single Next Correction Move Display (clean red text on tape) */
 .reel-step-item.step-correction {
-    min-width: 58px;
-    width: auto;
-    padding: 0 0.6rem;
-    height: 60px;
-    font-size: 1.85rem;
-    font-weight: 900;
-    color: #FFFFFF !important;
-    background: #EF4444 !important;
-    border: 2px solid #DC2626;
-    border-radius: 12px;
-    box-shadow: 0 0 22px rgba(239, 68, 68, 0.45);
-    transform: scale(1.06);
-    opacity: 1;
-    z-index: 5;
-    animation: pulse-correction 1s infinite alternate ease-in-out;
+    min-width: unset !important;
+    width: 60px !important;
+    height: 50px !important;
+    padding: 0 !important;
+    font-size: 1.85rem !important;
+    font-weight: 800 !important;
+    color: #EF4444 !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    z-index: 2;
 }
 
-@keyframes pulse-correction {
-    0% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
-    100% { box-shadow: 0 0 24px rgba(239, 68, 68, 0.7); }
-}
-
-/* Half-turn (1/2) in-progress with expanded guidance */
+/* Half-turn in-progress with expanded guidance */
 .reel-step-item.step-half-active {
-    min-width: 72px;
-    width: auto;
-    height: 60px;
-    padding: 0.15rem 0.65rem;
-    font-size: 1.55rem;
-    font-weight: 900;
-    color: #FFFFFF !important;
-    background: #D97706 !important;
-    border: 2px solid #B45309;
-    border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(217, 119, 6, 0.4);
-    transform: scale(1.04);
-    opacity: 1;
-    z-index: 5;
+    min-width: unset !important;
+    width: 60px !important;
+    height: 50px !important;
+    padding: 0 !important;
+    font-size: 1.85rem !important;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    z-index: 2;
     display: inline-flex;
     flex-direction: column;
     align-items: center;
@@ -1790,22 +1794,29 @@ body.theme-light .reel-step-item.step-active {
     display: block;
     font-size: 0.65rem;
     font-weight: 700;
-    color: #FEF3C7;
+    color: var(--accent-primary);
     letter-spacing: 0.02em;
-    margin-top: 3px;
+    margin-top: 2px;
     white-space: nowrap;
 }
 
-/* Upcoming pending steps */
+/* Upcoming pending steps - Same font size and weight as active */
 .reel-step-item.step-pending {
-    color: var(--text-primary);
-    opacity: 0.85;
-    transform: scale(0.92);
+    width: 60px !important;
+    height: 50px !important;
+    font-size: 1.85rem !important;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+    opacity: 0.85 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    transform: none !important;
 }
 
 .reel-step-item.step-pending.step-far {
-    opacity: 0.42;
-    transform: scale(0.80);
+    opacity: 0.42 !important;
+    transform: none !important;
 }
 
 /* Error Correction Capsule in Center */
@@ -3196,12 +3207,14 @@ body.theme-light .nav-tab-btn.active {
     font-family: var(--font-mono);
     font-size: 0.84rem;
     font-weight: 700;
-    padding: 0.14rem 0.42rem;
-    border-radius: 4px;
+    padding: 0.14rem 0.35rem;
+    border-radius: 3px;
     color: var(--text-primary);
     background: transparent;
-    transition: all 0.18s ease;
+    transition: color 0.15s ease, opacity 0.15s ease;
     user-select: none;
+    box-shadow: none !important;
+    transform: none !important;
 }
 
 .overall-move-chip.done {
@@ -3210,12 +3223,13 @@ body.theme-light .nav-tab-btn.active {
 }
 
 .overall-move-chip.active {
-    background: var(--accent-primary, #10B981) !important;
-    color: #FFFFFF !important;
+    background: transparent !important;
+    color: var(--accent-primary, #10B981) !important;
     font-weight: 800;
-    transform: scale(1.15);
-    box-shadow: 0 2px 8px var(--accent-glow, rgba(16, 185, 129, 0.4));
-    border-radius: 4px;
+    border-bottom: 2px solid var(--accent-primary, #10B981);
+    transform: none !important;
+    box-shadow: none !important;
+    border-radius: 0;
 }
 
 .overall-move-chip.pending {
@@ -3365,8 +3379,8 @@ body.is-scrambling .arena-card {
     background: var(--bg-surface-elevated, rgba(28, 28, 30, 0.85)) !important;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(16, 185, 129, 0.35) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(16, 185, 129, 0.15) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12) !important;
     border-radius: var(--radius-lg, 16px) !important;
     width: 100% !important;
     padding: 0.4rem 0.25rem !important;
@@ -3386,12 +3400,39 @@ body.is-scrambling .scramble-card {
 }
 
 body.is-scrambling .scramble-reel-viewport {
-    height: clamp(56px, 12vw, 76px) !important;
+    height: clamp(52px, 12vw, 70px) !important;
+}
+
+body.is-scrambling .reel-step-item {
+    width: clamp(64px, 16vw, 84px) !important;
+    height: clamp(48px, 12vw, 64px) !important;
+    font-size: clamp(2.0rem, 7vw, 2.7rem) !important;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    line-height: 1 !important;
+}
+
+body.is-scrambling .reel-step-item.step-done {
+    color: var(--text-muted) !important;
+    opacity: 0.32 !important;
 }
 
 body.is-scrambling .reel-step-item.step-active {
-    font-size: clamp(2.2rem, 9vw, 3.4rem) !important;
-    line-height: 1;
+    font-size: clamp(2.0rem, 7vw, 2.7rem) !important;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    line-height: 1 !important;
 }
 
 /* 3D Live Cube positioned directly below the Scramble Box */
@@ -3510,8 +3551,8 @@ body.is-scrambling .cube-3d-stage {
         height: clamp(52px, 15vh, 74px) !important;
     }
 
-    body.is-scrambling .reel-step-item.step-active {
-        font-size: clamp(2.2rem, 12vh, 3.2rem) !important;
+    body.is-scrambling .reel-step-item {
+        font-size: clamp(1.8rem, 10vh, 2.6rem) !important;
     }
 
     body.is-scrambling .reel-slot.slot--2,
