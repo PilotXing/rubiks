@@ -1058,6 +1058,38 @@ body.theme-win98 ::-webkit-scrollbar-thumb {
     border: none;
 }
 
+/* Win98 Telemetry Pills & Stats Bar */
+body.style-win98 .breakdown-stat-pill,
+body.theme-win98 .breakdown-stat-pill {
+    background-color: #C0C0C0 !important;
+    color: #000000 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: inset -1px -1px #ffffff, inset 1px 1px #808080 !important;
+    font-family: var(--font-sans) !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    padding: 1px 6px !important;
+}
+
+body.style-win98 .breakdown-stat-pill.stat-avg,
+body.theme-win98 .breakdown-stat-pill.stat-avg {
+    background-color: #D4D0C8 !important;
+    color: #000000 !important;
+}
+
+body.style-win98 .main-solve-stats-bar,
+body.theme-win98 .main-solve-stats-bar {
+    border-top: 1px solid #808080 !important;
+}
+
+body.style-win98 .solve-stats-title,
+body.theme-win98 .solve-stats-title {
+    color: #000000 !important;
+    font-family: var(--font-sans) !important;
+    font-weight: 700 !important;
+}
+
 /* ==========================================================================
    2. Accent Color Palettes (强调主题色 - 自由正交切换)
    ========================================================================== */
@@ -3362,9 +3394,9 @@ body.theme-light .nav-tab-btn.active {
     font-size: 0.74rem;
     font-weight: 700;
     color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-surface-elevated);
     border: 1px solid var(--border-color);
-    padding: 0.1rem 0.35rem;
+    padding: 0.12rem 0.45rem;
     border-radius: var(--radius-sm);
     white-space: nowrap;
     line-height: 1.15;
@@ -3372,31 +3404,21 @@ body.theme-light .nav-tab-btn.active {
     box-sizing: border-box;
 }
 
-.breakdown-stat-pill.highlight-moves {
+.breakdown-stat-pill.highlight-moves,
+.breakdown-stat-pill.highlight-time,
+.breakdown-stat-pill.highlight-tps {
     color: var(--text-primary);
     border-color: var(--border-color);
     background: var(--bg-surface-elevated);
-}
-
-.breakdown-stat-pill.highlight-time {
-    color: var(--accent-primary);
-    border-color: rgba(16, 185, 129, 0.4);
-    background: var(--accent-subtle, rgba(16, 185, 129, 0.12));
-    font-weight: 800;
-}
-
-.breakdown-stat-pill.highlight-tps {
-    color: var(--text-secondary);
-    border-color: var(--border-color);
-    background: var(--bg-surface-elevated);
+    font-weight: 700;
 }
 
 .breakdown-stat-pill.stat-avg {
-    color: var(--text-muted);
+    color: var(--text-secondary);
     font-size: 0.72rem;
     font-weight: 600;
     border-color: var(--border-subtle);
-    background: transparent;
+    background: var(--bg-surface);
 }
 
 .breakdown-stat-divider {
@@ -3404,6 +3426,26 @@ body.theme-light .nav-tab-btn.active {
     font-weight: 300;
     margin: 0 0.05rem;
     opacity: 0.5;
+}
+
+.main-solve-stats-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.5rem;
+    margin-top: 0.45rem;
+    padding-top: 0.45rem;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.solve-stats-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    user-select: none;
 }
 
 .breakdown-chart-wrapper {

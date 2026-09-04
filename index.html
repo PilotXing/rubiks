@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css?v=20.19">
+    <link rel="stylesheet" href="style.css?v=20.20">
 </head>
 <body class="style-dark color-emerald theme-dark">
 
@@ -34,7 +34,7 @@
                     </svg>
                 </span>
                 <span class="brand-title">Rubik Vision</span>
-                <span id="app-version-badge" class="badge app-version-badge">v20.19</span>
+                <span id="app-version-badge" class="badge app-version-badge">v20.20</span>
             </div>
 
             <div class="header-actions">
@@ -187,10 +187,6 @@
                             <span id="main-stat-moves" class="breakdown-stat-pill highlight-moves" title="本次复原步数">--步</span>
                             <span id="main-stat-time" class="breakdown-stat-pill highlight-time" title="本次复原时间">--s</span>
                             <span id="main-stat-tps" class="breakdown-stat-pill highlight-tps" title="本次复原 TPS">-- TPS</span>
-                            <span class="breakdown-stat-divider">|</span>
-                            <span id="main-stat-ao3" class="breakdown-stat-pill stat-avg" title="当前三次平均 (ao3)">ao3: --</span>
-                            <span id="main-stat-ao5" class="breakdown-stat-pill stat-avg" title="当前五次去极值平均 (ao5)">ao5: --</span>
-                            <span id="main-stat-ao12" class="breakdown-stat-pill stat-avg" title="当前十二次去极值平均 (ao12)">ao12: --</span>
                         </div>
                         <button class="btn-panel-toggle" data-target="main-solve-breakdown-card" title="折叠/展开" style="flex-shrink: 0;">
                             <svg class="svg-icon svg-chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
@@ -221,6 +217,18 @@
                             </div>
                             <div style="height: 250px; width: 100%; position: relative;">
                                 <div id="chart-main-solve-graph" style="width: 100%; height: 100%;"></div>
+                            </div>
+                            <!-- Solve Rolling Statistics Bar (Underneath Chart) -->
+                            <div id="main-solve-stats-bar" class="main-solve-stats-bar">
+                                <span class="solve-stats-title">
+                                    <svg class="svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                                    <span>滚动统计:</span>
+                                </span>
+                                <span id="main-stat-ao3" class="breakdown-stat-pill stat-avg" title="当前三次平均 (ao3/mo3)">ao3: --</span>
+                                <span id="main-stat-ao5" class="breakdown-stat-pill stat-avg" title="当前五次去极值平均 (ao5)">ao5: --</span>
+                                <span id="main-stat-ao12" class="breakdown-stat-pill stat-avg" title="当前十二次去极值平均 (ao12)">ao12: --</span>
+                                <span id="main-stat-best" class="breakdown-stat-pill stat-avg" title="本组最快单次">best: --</span>
+                                <span id="main-stat-mean" class="breakdown-stat-pill stat-avg" title="本组总算术平均">mean: --</span>
                             </div>
                         </div>
                     </div>
@@ -1117,26 +1125,26 @@
 
     <!-- Scripts -->
     <!-- Third-Party Libraries -->
-    <script src="lib/aes.js?v=20.19"></script>
-    <script src="lib/min2phase.js?v=20.19"></script>
-    <script src="lib/three.min.js?v=20.19"></script>
-    <script src="lib/echarts.min.js?v=20.19"></script>
+    <script src="lib/aes.js?v=20.20"></script>
+    <script src="lib/min2phase.js?v=20.20"></script>
+    <script src="lib/three.min.js?v=20.20"></script>
+    <script src="lib/echarts.min.js?v=20.20"></script>
 
     <!-- Bluetooth Hardware & Audio -->
-    <script src="src/bluetooth/gan-bluetooth.js?v=20.19"></script>
-    <script src="src/audio/audio-synth.js?v=20.19"></script>
+    <script src="src/bluetooth/gan-bluetooth.js?v=20.20"></script>
+    <script src="src/audio/audio-synth.js?v=20.20"></script>
 
     <!-- Core Engines & Analyzers -->
-    <script src="src/core/cube-engine.js?v=20.19"></script>
-    <script src="src/core/alg-database.js?v=20.19"></script>
-    <script src="src/core/method-analyzer.js?v=20.19"></script>
-    <script src="src/core/timer-engine.js?v=20.19"></script>
+    <script src="src/core/cube-engine.js?v=20.20"></script>
+    <script src="src/core/alg-database.js?v=20.20"></script>
+    <script src="src/core/method-analyzer.js?v=20.20"></script>
+    <script src="src/core/timer-engine.js?v=20.20"></script>
 
     <!-- Visualizers & UI -->
-    <script src="src/renderers/renderer-3d.js?v=20.19"></script>
-    <script src="src/renderers/renderer-2d.js?v=20.19"></script>
-    <script src="src/ui/chart-engine.js?v=20.19"></script>
-    <script src="src/ui/ui-controller.js?v=20.19"></script>
+    <script src="src/renderers/renderer-3d.js?v=20.20"></script>
+    <script src="src/renderers/renderer-2d.js?v=20.20"></script>
+    <script src="src/ui/chart-engine.js?v=20.20"></script>
+    <script src="src/ui/ui-controller.js?v=20.20"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

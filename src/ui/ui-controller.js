@@ -94,6 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
         mainStatAo3: document.getElementById('main-stat-ao3'),
         mainStatAo5: document.getElementById('main-stat-ao5'),
         mainStatAo12: document.getElementById('main-stat-ao12'),
+        mainStatBest: document.getElementById('main-stat-best'),
+        mainStatMean: document.getElementById('main-stat-mean'),
         selectSettingsReconMethod: document.getElementById('select-settings-recon-method'),
         canvasMainSolveGraph: document.getElementById('chart-main-solve-graph') || document.getElementById('canvas-main-solve-graph'),
         toggleMainCumulative: document.getElementById('toggle-main-cumulative'),
@@ -2135,6 +2137,14 @@ document.addEventListener('DOMContentLoaded', () => {
             session.clearSession();
             renderStatsAndHistory();
             if (trendChart) trendChart.setData([]);
+            if (elements.mainStatMoves) elements.mainStatMoves.textContent = '--步';
+            if (elements.mainStatTime) elements.mainStatTime.textContent = '--s';
+            if (elements.mainStatTps) elements.mainStatTps.textContent = '-- TPS';
+            if (elements.mainStatAo3) elements.mainStatAo3.textContent = 'ao3: --';
+            if (elements.mainStatAo5) elements.mainStatAo5.textContent = 'ao5: --';
+            if (elements.mainStatAo12) elements.mainStatAo12.textContent = 'ao12: --';
+            if (elements.mainStatBest) elements.mainStatBest.textContent = 'best: --';
+            if (elements.mainStatMean) elements.mainStatMean.textContent = 'mean: --';
         }
     });
 
@@ -2414,13 +2424,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const analysis = MethodAnalyzer.analyzeSolve(solve, method, 'auto');
 
         const moveCount = solve.moveCount || (solve.moves ? solve.moves.length : 0);
-        const solveTimeStr = solve.formattedTime || (solve.finalTimeMs ? (solve.finalTimeMs / 1000).toFixed(2) + 's' : '--s');
+        let solveTimeStr = '--s';
+        if (solve.formattedTime) {
+            solveTimeStr = solve.formattedTime === 'DNF' ? 'DNF' : (solve.formattedTime.endsWith('s') ? solve.formattedTime : `${solve.formattedTime}s`);
+        } else if (solve.finalTimeMs) {
+            solveTimeStr = `${(solve.finalTimeMs / 1000).toFixed(2)}s`;
+        }
         const solveTpsStr = solve.tps || (solve.finalTimeMs > 0 ? (moveCount / (solve.finalTimeMs / 1000)).toFixed(2) : '--');
 
         const stats = session.getStats();
-        const ao3Str = stats.currentAo3 !== null ? (stats.currentAo3 > 0 ? (stats.currentAo3 / 1000).toFixed(2) : 'DNF') : '--';
-        const ao5Str = stats.currentAo5 !== null ? (stats.currentAo5 > 0 ? (stats.currentAo5 / 1000).toFixed(2) : 'DNF') : '--';
-        const ao12Str = stats.currentAo12 !== null ? (stats.currentAo12 > 0 ? (stats.currentAo12 / 1000).toFixed(2) : 'DNF') : '--';
+        const ao3Str = stats.currentAo3Formatted || (stats.currentAo3 !== null ? (stats.currentAo3 > 0 ? (stats.currentAo3 / 1000).toFixed(2) : 'DNF') : '--');
+        const ao5Str = stats.currentAo5Formatted || (stats.currentAo5 !== null ? (stats.currentAo5 > 0 ? (stats.currentAo5 / 1000).toFixed(2) : 'DNF') : '--');
+        const ao12Str = stats.currentAo12Formatted || (stats.currentAo12 !== null ? (stats.currentAo12 > 0 ? (stats.currentAo12 / 1000).toFixed(2) : 'DNF') : '--');
+        const bestStr = stats.bestFormatted || (stats.best !== null ? (stats.best / 1000).toFixed(2) : '--');
+        const meanStr = stats.meanFormatted || (stats.mean !== null ? (stats.mean / 1000).toFixed(2) : '--');
 
         if (elements.mainStatMoves) elements.mainStatMoves.textContent = `${moveCount}步`;
         if (elements.mainStatTime) elements.mainStatTime.textContent = `${solveTimeStr}`;
@@ -2428,6 +2445,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.mainStatAo3) elements.mainStatAo3.textContent = `ao3: ${ao3Str}`;
         if (elements.mainStatAo5) elements.mainStatAo5.textContent = `ao5: ${ao5Str}`;
         if (elements.mainStatAo12) elements.mainStatAo12.textContent = `ao12: ${ao12Str}`;
+        if (elements.mainStatBest) elements.mainStatBest.textContent = `best: ${bestStr}`;
+        if (elements.mainStatMean) elements.mainStatMean.textContent = `mean: ${meanStr}`;
 
         // 1. Full-Width Chart Rendering with Anti-Collision On-Curve Stage Metrics
         if (mainMovementChart) {
