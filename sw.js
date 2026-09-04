@@ -1,27 +1,27 @@
 // Service Worker for Rubik Vision Bluetooth Timer
-const CACHE_NAME = 'rubiks-timer-v20.20';
+const CACHE_NAME = 'rubiks-timer-v20.21';
 const ASSETS = [
     '/',
     '/index.html',
-    '/style.css?v=20.20',
+    '/style.css?v=20.21',
     '/manifest.json',
     '/icon.svg',
     '/icon-192.png',
     '/icon-512.png',
-    '/lib/aes.js?v=20.20',
-    '/lib/min2phase.js?v=20.20',
-    '/lib/three.min.js?v=20.20',
-    '/lib/echarts.min.js?v=20.20',
-    '/src/bluetooth/gan-bluetooth.js?v=20.20',
-    '/src/audio/audio-synth.js?v=20.20',
-    '/src/core/cube-engine.js?v=20.20',
-    '/src/core/alg-database.js?v=20.20',
-    '/src/core/method-analyzer.js?v=20.20',
-    '/src/core/timer-engine.js?v=20.20',
-    '/src/renderers/renderer-3d.js?v=20.20',
-    '/src/renderers/renderer-2d.js?v=20.20',
-    '/src/ui/chart-engine.js?v=20.20',
-    '/src/ui/ui-controller.js?v=20.20'
+    '/lib/aes.js?v=20.21',
+    '/lib/min2phase.js?v=20.21',
+    '/lib/three.min.js?v=20.21',
+    '/lib/echarts.min.js?v=20.21',
+    '/src/bluetooth/gan-bluetooth.js?v=20.21',
+    '/src/audio/audio-synth.js?v=20.21',
+    '/src/core/cube-engine.js?v=20.21',
+    '/src/core/alg-database.js?v=20.21',
+    '/src/core/method-analyzer.js?v=20.21',
+    '/src/core/timer-engine.js?v=20.21',
+    '/src/renderers/renderer-3d.js?v=20.21',
+    '/src/renderers/renderer-2d.js?v=20.21',
+    '/src/ui/chart-engine.js?v=20.21',
+    '/src/ui/ui-controller.js?v=20.21'
 ];
 
 

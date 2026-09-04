@@ -485,7 +485,7 @@ body.style-flat .badge-disconnected {
 
 /* 1.7 Windows 98 Classic (经典复古灰风格) */
 body.style-win98, body.theme-win98 {
-    --bg-primary: #008080; /* Win98 Classic Teal Desktop */
+    --bg-primary: #C0C0C0; /* Win98 Window Gray - No Teal Desktop */
     --bg-surface: #C0C0C0; /* Win98 Dialog / Window Gray */
     --bg-surface-elevated: #D4D0C8; /* Surface Light Gray */
     --bg-surface-hover: #DCD8D0;
@@ -505,87 +505,280 @@ body.style-win98, body.theme-win98 {
     --shadow-subtle: none;
 }
 
+/* Entire App as a Single Windows 98 Window */
 body.style-win98,
 body.theme-win98 {
-    background-color: #008080;
+    background-color: #C0C0C0 !important;
     font-family: var(--font-sans);
     color: #000000;
+    box-shadow: inset 1px 1px 0px #DFDFDF, inset 2px 2px 0px #FFFFFF, inset -1px -1px 0px #0a0a0a, inset -2px -2px 0px #808080 !important;
+    border: 1px solid #C0C0C0 !important;
+    padding: 2px !important;
+    min-height: 100vh;
+    box-sizing: border-box;
 }
 
-/* Win98 Window Containers */
-body.style-win98 .card-collapsible,
-body.style-win98 .arena-card,
-body.style-win98 .modal-card,
-body.theme-win98 .card-collapsible,
-body.theme-win98 .arena-card,
-body.theme-win98 .modal-card {
-    background-color: #C0C0C0;
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf, inset -2px -2px #808080, inset 2px 2px #ffffff !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    padding: 3px !important;
-}
-
+/* Window Header Container */
 body.style-win98 .app-header,
 body.theme-win98 .app-header {
-    background-color: #C0C0C0;
+    background-color: #C0C0C0 !important;
     border: none !important;
-    border-bottom: 2px solid #808080 !important;
     border-radius: 0 !important;
-    box-shadow: inset 1px 1px 0 #ffffff !important;
+    box-shadow: none !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    width: 100% !important;
+}
+
+/* Top Row: The Windows 98 Window Titlebar */
+body.style-win98 .header-top-row,
+body.theme-win98 .header-top-row {
+    background: linear-gradient(90deg, #000080 0%, #1084D0 100%) !important;
+    color: #FFFFFF !important;
+    min-height: 28px !important;
+    height: 28px !important;
+    max-height: 28px !important;
+    padding: 2px 4px 2px 6px !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    user-select: none !important;
+}
+
+body.style-win98 .header-brand,
+body.theme-win98 .header-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.35rem !important;
 }
 
 body.style-win98 .brand-title,
 body.theme-win98 .brand-title {
-    color: #000000;
-    font-weight: 700;
+    color: #FFFFFF !important;
+    font-family: var(--font-sans) !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0 !important;
+    line-height: 1 !important;
 }
 
-/* Win98 Blue Gradient Titlebars */
-body.style-win98 .collapsible-header,
-body.style-win98 .modal-header,
-body.theme-win98 .collapsible-header,
-body.theme-win98 .modal-header {
-    background: linear-gradient(90deg, #000080 0%, #1084D0 100%) !important;
+body.style-win98 .brand-svg,
+body.theme-win98 .brand-svg {
+    stroke: #FFFFFF !important;
     color: #FFFFFF !important;
-    min-height: 28px !important;
+    width: 15px !important;
+    height: 15px !important;
+}
+
+body.style-win98 .app-version-badge,
+body.theme-win98 .app-version-badge {
+    background-color: #C0C0C0 !important;
+    color: #000000 !important;
+    font-family: var(--font-sans) !important;
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    padding: 1px 4px !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: inset -1px -1px #ffffff, inset 1px 1px #808080 !important;
+    line-height: 1 !important;
+}
+
+body.style-win98 .header-actions,
+body.theme-win98 .header-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+}
+
+body.style-win98 .header-actions .btn-icon-square,
+body.theme-win98 .header-actions .btn-icon-square {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    background-color: #C0C0C0 !important;
+    color: #000000 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+body.style-win98 .header-actions .btn-icon-square svg,
+body.theme-win98 .header-actions .btn-icon-square svg {
+    stroke: #000000 !important;
+    color: #000000 !important;
+    width: 12px !important;
+    height: 12px !important;
+}
+
+body.style-win98 .header-actions .btn-icon-square:active,
+body.theme-win98 .header-actions .btn-icon-square:active {
+    box-shadow: inset -1px -1px #ffffff, inset 1px 1px #0a0a0a, inset -2px -2px #dfdfdf, inset 2px 2px #808080 !important;
+    transform: translate(1px, 1px) !important;
+}
+
+/* Win98 Property Sheet Tabs Strip */
+body.style-win98 .app-nav-tabs,
+body.theme-win98 .app-nav-tabs {
+    display: flex !important;
+    align-items: flex-end !important;
+    gap: 3px !important;
+    background-color: #C0C0C0 !important;
+    padding: 6px 10px 0 10px !important;
+    margin: 0 !important;
+    border: none !important;
+    border-bottom: 2px solid #FFFFFF !important;
+    border-radius: 0 !important;
+    position: relative !important;
+    z-index: 2 !important;
+    min-height: 36px !important;
+    height: 36px !important;
+    box-sizing: border-box !important;
+    box-shadow: none !important;
+}
+
+/* Inactive Tab - Closed at bottom */
+body.style-win98 .nav-tab-btn,
+body.theme-win98 .nav-tab-btn {
+    position: relative !important;
+    top: 0 !important;
+    background-color: #C0C0C0 !important;
+    color: #000000 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    border-top: 1px solid #FFFFFF !important;
+    border-left: 1px solid #FFFFFF !important;
+    border-right: 1px solid #000000 !important;
+    border-bottom: 1px solid #FFFFFF !important;
+    box-shadow: inset 1px 1px 0 #FFFFFF, inset -1px 0 0 #808080, inset -2px 0 0 #000000 !important;
+    font-family: var(--font-sans) !important;
+    font-size: 0.78rem !important;
+    font-weight: 400 !important;
+    padding: 3px 12px 2px 12px !important;
+    margin-bottom: 0px !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+    transition: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.35rem !important;
+    box-sizing: border-box !important;
+}
+
+body.style-win98 .nav-tab-btn:hover,
+body.theme-win98 .nav-tab-btn:hover {
+    color: #000000 !important;
+    background-color: #D4D0C8 !important;
+}
+
+/* Active Tab - Open at bottom (开口，与下方内容无缝连通) */
+body.style-win98 .nav-tab-btn.active,
+body.theme-win98 .nav-tab-btn.active {
+    position: relative !important;
+    top: -2px !important;
+    background-color: #C0C0C0 !important;
+    color: #000000 !important;
+    font-weight: 700 !important;
+    margin-bottom: -2px !important;
+    padding: 4px 14px 6px 14px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    border-top: 1px solid #FFFFFF !important;
+    border-left: 1px solid #FFFFFF !important;
+    border-right: 1px solid #000000 !important;
+    border-bottom: 2px solid #C0C0C0 !important; /* 开口关键：底边与背景同色完全抹平分割线 */
+    box-shadow: inset 1px 1px 0 #FFFFFF, inset -1px 0 0 #808080, inset -2px 0 0 #000000 !important;
+    z-index: 10 !important;
+}
+
+body.style-win98 .nav-tab-btn.active svg,
+body.theme-win98 .nav-tab-btn.active svg {
+    stroke: #000080 !important;
+}
+
+/* Window Content Area */
+body.style-win98 .app-main,
+body.theme-win98 .app-main {
+    background-color: #C0C0C0 !important;
+    padding: 8px 10px 16px 10px !important;
+    position: relative !important;
+    z-index: 1 !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Win98 Dialog Section Group Boxes */
+body.style-win98 .card-collapsible,
+body.style-win98 .arena-card,
+body.theme-win98 .card-collapsible,
+body.theme-win98 .arena-card {
+    background-color: #C0C0C0 !important;
+    border: 1px solid #808080 !important;
+    border-radius: 0 !important;
+    box-shadow: inset 1px 1px 0 #FFFFFF, 1px 1px 0 #FFFFFF !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 3px !important;
+    margin-bottom: 0.65rem !important;
+}
+
+/* Section Group Box Headers */
+body.style-win98 .collapsible-header,
+body.theme-win98 .collapsible-header {
+    background: #D4D0C8 !important;
+    color: #000000 !important;
+    min-height: 26px !important;
     padding: 3px 6px !important;
     border: none !important;
+    border-bottom: 1px solid #808080 !important;
+    box-shadow: inset 0 1px 0 #FFFFFF !important;
     border-radius: 0 !important;
 }
 
 body.style-win98 .collapsible-title,
-body.style-win98 .modal-title,
-body.theme-win98 .collapsible-title,
-body.theme-win98 .modal-title {
-    color: #FFFFFF !important;
+body.theme-win98 .collapsible-title {
+    color: #000000 !important;
     font-family: var(--font-sans) !important;
     font-weight: 700 !important;
-    font-size: 0.82rem !important;
+    font-size: 0.8rem !important;
     letter-spacing: 0 !important;
     text-transform: none !important;
 }
 
 body.style-win98 .collapsible-title svg,
-body.style-win98 .modal-header svg,
-body.theme-win98 .collapsible-title svg,
-body.theme-win98 .modal-header svg {
-    stroke: #FFFFFF !important;
-    color: #FFFFFF !important;
+body.theme-win98 .collapsible-title svg {
+    stroke: #000000 !important;
+    color: #000000 !important;
     filter: none !important;
 }
 
-/* Inactive Window Titlebar (Collapsed) */
 body.style-win98 .card-collapsible.collapsed .collapsible-header,
 body.theme-win98 .card-collapsible.collapsed .collapsible-header {
-    background: linear-gradient(90deg, #808080 0%, #B5B5B5 100%) !important;
+    background: #C0C0C0 !important;
+    border-bottom: none !important;
 }
 
-/* Win98 Titlebar & Header Buttons */
+/* Collapsible Panel Toggle Button */
 body.style-win98 .btn-panel-toggle,
 body.theme-win98 .btn-panel-toggle {
     background-color: #C0C0C0 !important;
@@ -606,6 +799,40 @@ body.theme-win98 .card-collapsible.collapsed .btn-panel-toggle {
     background-color: #C0C0C0 !important;
     color: #000000 !important;
     border: none !important;
+}
+
+/* Win98 Modal Dialogs (Floating Secondary Windows) */
+body.style-win98 .modal-card,
+body.theme-win98 .modal-card {
+    background-color: #C0C0C0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #dfdfdf, inset -2px -2px #808080, inset 2px 2px #ffffff, 2px 2px 0px #000000 !important;
+    padding: 3px !important;
+}
+
+body.style-win98 .modal-header,
+body.theme-win98 .modal-header {
+    background: linear-gradient(90deg, #000080 0%, #1084D0 100%) !important;
+    color: #FFFFFF !important;
+    min-height: 26px !important;
+    padding: 3px 6px !important;
+    border: none !important;
+    border-radius: 0 !important;
+}
+
+body.style-win98 .modal-title,
+body.theme-win98 .modal-title {
+    color: #FFFFFF !important;
+    font-family: var(--font-sans) !important;
+    font-weight: 700 !important;
+    font-size: 0.82rem !important;
+}
+
+body.style-win98 .modal-header svg,
+body.theme-win98 .modal-header svg {
+    stroke: #FFFFFF !important;
+    color: #FFFFFF !important;
 }
 
 body.style-win98 .modal-header button,
@@ -635,56 +862,6 @@ body.theme-win98 .modal-header .btn-icon-square svg {
     stroke: #000000 !important;
     width: 12px !important;
     height: 12px !important;
-}
-
-/* Win98 Property Sheet Tabs */
-body.style-win98 .app-nav-tabs,
-body.theme-win98 .app-nav-tabs {
-    background-color: #C0C0C0;
-    border: none;
-    border-bottom: 2px solid #808080;
-    border-radius: 0;
-    padding: 3px 4px 0 4px;
-    gap: 3px;
-    box-shadow: none;
-}
-
-body.style-win98 .nav-tab-btn,
-body.theme-win98 .nav-tab-btn {
-    background-color: #C0C0C0;
-    color: #000000;
-    border: none;
-    border-radius: 0;
-    box-shadow: inset -1px 0 #0a0a0a, inset 1px 1px #ffffff, inset -2px 0 #808080, inset 2px 2px #dfdfdf;
-    font-family: var(--font-sans);
-    font-size: 0.78rem;
-    font-weight: 400;
-    padding: 4px 10px;
-    margin-bottom: -1px;
-    transition: none;
-}
-
-body.style-win98 .nav-tab-btn:hover,
-body.theme-win98 .nav-tab-btn:hover {
-    color: #000000;
-    background-color: #D4D0C8;
-}
-
-body.style-win98 .nav-tab-btn.active,
-body.theme-win98 .nav-tab-btn.active {
-    background-color: #C0C0C0 !important;
-    color: #000000 !important;
-    font-weight: 700 !important;
-    box-shadow: inset -1px 0 #0a0a0a, inset 1px 1px #ffffff, inset -2px 0 #808080, inset 2px 2px #dfdfdf !important;
-    border-bottom: 2px solid #C0C0C0 !important;
-    margin-top: -2px;
-    padding-top: 6px;
-    z-index: 2;
-}
-
-body.style-win98 .nav-tab-btn.active svg,
-body.theme-win98 .nav-tab-btn.active svg {
-    stroke: #000080 !important;
 }
 
 /* Win98 Module Toggle Toolbar */

@@ -1,4 +1,4 @@
-# Rubik Vision (v20.20)
+# Rubik Vision (v20.21)
 
 > Next-generation Bluetooth smart cube timer, reconstruction engine, and speedcubing analytics platform.
 
