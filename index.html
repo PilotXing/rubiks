@@ -473,7 +473,7 @@
                         </div>
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <span id="practice-case-moves" style="font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted);">0 moves</span>
-                            <button id="btn-reset-practice" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">🔄 Reset</button>
+                            <button id="btn-reset-practice" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">Reset</button>
                         </div>
                     </div>
 
@@ -628,7 +628,7 @@
             </div>
             <div class="modal-footer" style="display: flex; align-items: center; justify-content: space-between;">
                 <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                    <button id="btn-modal-connect" class="btn btn-primary btn-sm">🔌 搜索并连接魔方</button>
+                    <button id="btn-modal-connect" class="btn btn-primary btn-sm">搜索并连接魔方</button>
                     <button id="btn-modal-disconnect" class="btn btn-danger btn-sm" style="display: none;">断开连接 (Disconnect)</button>
                     <button id="btn-modal-recalibrate" class="btn btn-secondary btn-sm">设为复原态 (Set Solved)</button>
                 </div>
@@ -657,8 +657,8 @@
                         <button id="btn-save-mac" class="btn btn-primary btn-sm">Save</button>
                     </div>
                     <div style="display: flex; gap: 0.4rem; margin-top: 0.45rem; flex-wrap: wrap;">
-                        <button type="button" class="btn btn-secondary btn-sm btn-mac-preset" data-mac="0c:3d:5e:be:8e:95" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;">🎲 GAN iCarry 4 (0c:3d:5e:be:8e:95)</button>
-                        <button type="button" class="btn btn-secondary btn-sm btn-mac-preset" data-mac="9c:7f:64:50:d4:69" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;">🎲 GANicE3 (9c:7f:64:50:d4:69)</button>
+                        <button type="button" class="btn btn-secondary btn-sm btn-mac-preset" data-mac="0c:3d:5e:be:8e:95" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;">GAN iCarry 4 (0c:3d:5e:be:8e:95)</button>
+                        <button type="button" class="btn btn-secondary btn-sm btn-mac-preset" data-mac="9c:7f:64:50:d4:69" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;">GANicE3 (9c:7f:64:50:d4:69)</button>
                     </div>
                     <small style="color: var(--text-muted); margin-top: 0.35rem; display: block;">默认: <code>0c:3d:5e:be:8e:95</code> (GAN iCarry 4)。点击上方预设按钮可一键切换并保存。</small>
                 </div>
@@ -668,7 +668,7 @@
                         <strong style="font-size: 0.85rem; display: block;">蓝牙通信详情与诊断日志</strong>
                         <small style="color: var(--text-muted);">查看蓝牙数据包抓包、握手状态与实时解密日志</small>
                     </div>
-                    <button id="btn-open-bt-log-from-settings" type="button" class="btn btn-secondary btn-sm" style="font-size: 0.76rem; white-space: nowrap;">📋 查看蓝牙日志</button>
+                    <button id="btn-open-bt-log-from-settings" type="button" class="btn btn-secondary btn-sm" style="font-size: 0.76rem; white-space: nowrap;">查看蓝牙日志</button>
                 </div>
 
                 <!-- Move Counting Metric Setting (Requirement: Does X2 count as 1 or 2) -->
@@ -737,12 +737,12 @@
                         <span>打乱视轨移动动画与速度曲线 (Reel Motion Curve):</span>
                     </label>
                     <select id="select-reel-motion-curve" class="form-control">
-                        <option value="apple" selected>🍎 苹果流体弹簧 (Apple Fluid Spring - 0.28s 推荐)</option>
-                        <option value="snappy">⚡ 极致疾速 / 极速跟手 (Ultra Snappy - 0.15s)</option>
-                        <option value="mechanical">🎯 纯粹机械 / 干净利落 (Crisp Mechanical - 0.20s)</option>
-                        <option value="bouncy">💫 灵动弹性 / 动感果冻 (Bouncy Jelly - 0.35s)</option>
-                        <option value="silky">🌊 柔和丝滑 / 顺滑阻尼 (Silky Smooth - 0.42s)</option>
-                        <option value="instant">⚡ 零延迟瞬间到位 (Instant Jump - 0s)</option>
+                        <option value="apple" selected>苹果流体弹簧 (Apple Fluid Spring - 0.28s 推荐)</option>
+                        <option value="snappy">极致疾速 / 极速跟手 (Ultra Snappy - 0.15s)</option>
+                        <option value="mechanical">纯粹机械 / 干净利落 (Crisp Mechanical - 0.20s)</option>
+                        <option value="bouncy">灵动弹性 / 动感果冻 (Bouncy Jelly - 0.35s)</option>
+                        <option value="silky">柔和丝滑 / 顺滑阻尼 (Silky Smooth - 0.42s)</option>
+                        <option value="instant">零延迟瞬间到位 (Instant Jump - 0s)</option>
                     </select>
                     <small style="color: var(--text-muted);">调节转动魔方时视轨卡片横向居中滑动的响应速度与物理加速度曲线。</small>
                 </div>
@@ -810,14 +810,14 @@
                         <span>强调主题色 (Accent Color):</span>
                     </label>
                     <select id="select-accent-color">
-                        <option value="emerald">🟢 翡翠绿 (Emerald Green - 默认)</option>
-                        <option value="turquoise">💎 绿松石青 (Flat Turquoise - 经典)</option>
-                        <option value="blue">🔵 苹果蓝 (Apple / System Blue)</option>
-                        <option value="purple">🟣 罗兰紫 (Electric Violet)</option>
-                        <option value="cyan">🔷 霓虹青 (Cyber Cyan)</option>
-                        <option value="amber">🟠 暖阳橙 (Sunset Amber)</option>
-                        <option value="crimson">🔴 极速红 (Crimson Red)</option>
-                        <option value="rose">🌸 樱花粉 (Sakura Rose)</option>
+                        <option value="emerald">翡翠绿 (Emerald Green - 默认)</option>
+                        <option value="turquoise">绿松石青 (Flat Turquoise - 经典)</option>
+                        <option value="blue">苹果蓝 (Apple / System Blue)</option>
+                        <option value="purple">罗兰紫 (Electric Violet)</option>
+                        <option value="cyan">霓虹青 (Cyber Cyan)</option>
+                        <option value="amber">暖阳橙 (Sunset Amber)</option>
+                        <option value="crimson">极速红 (Crimson Red)</option>
+                        <option value="rose">樱花粉 (Sakura Rose)</option>
                     </select>
                     <!-- Quick Swatch Buttons -->
                     <div class="color-palette-swatches" id="color-palette-swatches">
@@ -1121,15 +1121,15 @@
     <script src="lib/three.min.js?v=20.17"></script>
     <script src="lib/echarts.min.js?v=20.17"></script>
 
+    <!-- Bluetooth Hardware & Audio -->
+    <script src="src/bluetooth/gan-bluetooth.js?v=20.17"></script>
+    <script src="src/audio/audio-synth.js?v=20.17"></script>
+
     <!-- Core Engines & Analyzers -->
     <script src="src/core/cube-engine.js?v=20.17"></script>
     <script src="src/core/alg-database.js?v=20.17"></script>
     <script src="src/core/method-analyzer.js?v=20.17"></script>
     <script src="src/core/timer-engine.js?v=20.17"></script>
-
-    <!-- Bluetooth Hardware & Audio -->
-    <script src="src/bluetooth/gan-bluetooth.js?v=20.17"></script>
-    <script src="src/audio/audio-synth.js?v=20.17"></script>
 
     <!-- Visualizers & UI -->
     <script src="src/renderers/renderer-3d.js?v=20.17"></script>
@@ -1146,7 +1146,14 @@
 
                 let refreshing = false;
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    if (!refreshing) {
+                    if (refreshing) return;
+                    const isBusy = typeof window.__isTimerActive === 'function' && window.__isTimerActive();
+                    if (isBusy) {
+                        window.__pendingSwReload = true;
+                        if (typeof window.__showToast === 'function') {
+                            window.__showToast('发现新版本，将在本轮计时结束后自动更新');
+                        }
+                    } else {
                         refreshing = true;
                         window.location.reload();
                     }

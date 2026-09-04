@@ -1718,6 +1718,12 @@ body.theme-light .card-collapsible.collapsed .btn-panel-toggle {
     transform: none !important;
 }
 
+.reel-step-item.step-hidden {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
 /* Active current step in center - Exact same size, font, and color as queue, no inverted box, no scaling, no shadow */
 .reel-step-item.step-active {
     min-width: unset !important;

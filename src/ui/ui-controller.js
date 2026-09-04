@@ -274,11 +274,15 @@ document.addEventListener('DOMContentLoaded', () => {
         ro.observe(elements.cube3dContainer);
     }
 
-    if (elements.canvasTrendMain && window.ChartEngine) {
-        trendChart = new ChartEngine.TrendChart(elements.canvasTrendMain);
-    }
-    if (elements.canvasTpsGraph && window.ChartEngine) {
-        movementChart = new ChartEngine.SolveMovementChart(elements.canvasTpsGraph);
+    try {
+        if (elements.canvasTrendMain && window.ChartEngine) {
+            trendChart = new ChartEngine.TrendChart(elements.canvasTrendMain);
+        }
+        if (elements.canvasTpsGraph && window.ChartEngine) {
+            movementChart = new ChartEngine.SolveMovementChart(elements.canvasTpsGraph);
+        }
+    } catch (chartErr) {
+        console.warn('Optional ChartEngine initialization failed, continuing bootstrap:', chartErr);
     }
 
     // State Variables: Style & Color Themes (Orthogonal Multi-Switching)
@@ -843,7 +847,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (idx < activeIdx) {
                 cls = 'step-done';
-                if (idx < activeIdx - 1) farCls = 'step-far';
+                if (idx < activeIdx - scrambleVisiblePrev) {
+                    farCls = 'step-far step-hidden';
+                } else if (idx < activeIdx - 1) {
+                    farCls = 'step-far';
+                }
             } else if (idx === activeIdx) {
                 if (isDeviated && correctionMoves && correctionMoves.length > 0) {
                     cls = 'step-correction';
@@ -859,7 +867,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else {
                 cls = 'step-pending';
-                if (idx > activeIdx + 2) farCls = 'step-far';
+                if (idx > activeIdx + scrambleVisibleNext) {
+                    farCls = 'step-far step-hidden';
+                } else if (idx > activeIdx + Math.min(2, scrambleVisibleNext)) {
+                    farCls = 'step-far';
+                }
             }
 
             trackItemsHtml += `<div class="reel-step-item ${cls} ${farCls} ${colorCls}" data-idx="${idx}">${content}</div>`;
@@ -875,7 +887,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>·</span>
                 <span>剩余 <strong class="progress-highlight">${remainingCount}</strong> 步</span>
                 <span style="opacity: 0.65;">(${pct}%)</span>
-                <button class="btn-enter-scramble-fs" title="进入全屏打乱模式 (Fullscreen Scramble)" type="button">⛶ 全屏</button>
+                <button class="btn-enter-scramble-fs" title="进入全屏打乱模式 (Fullscreen Scramble)" type="button">全屏</button>
             </div>
         `;
 
@@ -992,7 +1004,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         
                         if (idx < activeIdx) {
                             cls = 'step-done';
-                            if (idx < activeIdx - 1) farCls = 'step-far';
+                            if (idx < activeIdx - scrambleVisiblePrev) {
+                                farCls = 'step-far step-hidden';
+                            } else if (idx < activeIdx - 1) {
+                                farCls = 'step-far';
+                            }
                             item.className = `reel-step-item ${cls} ${farCls} ${colorCls}`;
                             item.textContent = origMove;
                         } else if (idx === activeIdx) {
@@ -1014,7 +1030,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
                         } else {
                             cls = 'step-pending';
-                            if (idx > activeIdx + 2) farCls = 'step-far';
+                            if (idx > activeIdx + scrambleVisibleNext) {
+                                farCls = 'step-far step-hidden';
+                            } else if (idx > activeIdx + Math.min(2, scrambleVisibleNext)) {
+                                farCls = 'step-far';
+                            }
                             item.className = `reel-step-item ${cls} ${farCls} ${colorCls}`;
                             item.textContent = origMove;
                         }
@@ -1031,7 +1051,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span>·</span>
                             <span>剩余 <strong class="progress-highlight">${remainingCount}</strong> 步</span>
                             <span style="opacity: 0.65;">(${pct}%)</span>
-                            <button class="btn-enter-scramble-fs" title="进入全屏打乱模式 (Fullscreen Scramble)" type="button">⛶ 全屏</button>
+                            <button class="btn-enter-scramble-fs" title="进入全屏打乱模式 (Fullscreen Scramble)" type="button">全屏</button>
                         `;
                     }
 
@@ -1135,7 +1155,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const textToCopy = currentScramble.trim();
         if (navigator.clipboard && navigator.clipboard.writeText) {
             navigator.clipboard.writeText(textToCopy).then(() => {
-                showToast('✓ 已复制当前打乱公式');
+                showToast('已复制当前打乱公式');
                 triggerHaptic('light');
             }).catch(() => {
                 fallbackCopyScramble(textToCopy);
@@ -1155,7 +1175,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ta.select();
             document.execCommand('copy');
             document.body.removeChild(ta);
-            showToast('✓ 已复制当前打乱公式');
+            showToast('已复制当前打乱公式');
             triggerHaptic('light');
         } catch (_) {
             showToast('打乱: ' + text);
@@ -1170,7 +1190,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tracker.resetProgress();
         if (bluetooth) bluetooth.requestReset();
         updateScrambleStatus();
-        showToast('✓ 已将魔方设为复原态');
+        showToast('已将魔方设为复原态');
         triggerHaptic('medium');
     }
 
@@ -1184,6 +1204,8 @@ document.addEventListener('DOMContentLoaded', () => {
         let startY = null;
         let startTime = 0;
         let isDragging = false;
+        let axisLock = null;
+        let isCancelled = false;
         let currentOffset = 0;
         let isAnimating = false;
 
@@ -1213,20 +1235,31 @@ document.addEventListener('DOMContentLoaded', () => {
             currentOffset = metrics.baseOffset;
             startTime = performance.now();
             isDragging = false;
+            axisLock = null;
+            isCancelled = false;
             setTrackPosition(metrics.baseOffset, false);
         });
 
         viewport.addEventListener('pointermove', (e) => {
-            if (startX === null || isAnimating) return;
+            if (startX === null || isCancelled || isAnimating) return;
             const deltaX = e.clientX - startX;
             const deltaY = e.clientY - startY;
 
-            if (!isDragging && Math.abs(deltaX) > 6 && Math.abs(deltaX) > Math.abs(deltaY)) {
-                isDragging = true;
-                try { viewport.setPointerCapture(e.pointerId); } catch (_) {}
+            if (axisLock === null) {
+                const dist = Math.hypot(deltaX, deltaY);
+                if (dist > 8) {
+                    if (Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
+                        axisLock = 'horizontal';
+                        isDragging = true;
+                        try { viewport.setPointerCapture(e.pointerId); } catch (_) {}
+                    } else {
+                        axisLock = 'vertical';
+                        isDragging = false;
+                    }
+                }
             }
 
-            if (isDragging) {
+            if (axisLock === 'horizontal') {
                 e.preventDefault();
                 const metrics = getCarouselMetrics();
                 let moveX = deltaX;
@@ -1239,17 +1272,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        const handlePointerEnd = (e) => {
+        const handlePointerCancel = (e) => {
+            if (startX === null) return;
+            isCancelled = true;
+            isDragging = false;
+            try { viewport.releasePointerCapture(e.pointerId); } catch (_) {}
+            const metrics = getCarouselMetrics();
+            setTrackPosition(metrics.baseOffset, true, 0.18, 'cubic-bezier(0.2, 0.9, 0.3, 1)');
+            startX = null;
+            startY = null;
+            axisLock = null;
+        };
+
+        const handlePointerUp = (e) => {
             if (startX === null || isAnimating) return;
             const metrics = getCarouselMetrics();
             const elapsed = Math.max(1, performance.now() - startTime);
             const deltaX = currentOffset - metrics.baseOffset;
             const velocity = deltaX / elapsed; // px/ms
 
-            if (isDragging) {
-                isDragging = false;
-                try { viewport.releasePointerCapture(e.pointerId); } catch (_) {}
+            try { viewport.releasePointerCapture(e.pointerId); } catch (_) {}
 
+            if (axisLock === 'horizontal') {
+                isDragging = false;
                 const threshold = Math.min(metrics.width * 0.18, 60);
 
                 // 1. 从右往左滑 (Swipe from Right to Left / deltaX < -threshold 或 velocity < -0.28) -> 切换到下一个
@@ -1307,17 +1352,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 else {
                     setTrackPosition(metrics.baseOffset, true, 0.18, 'cubic-bezier(0.2, 0.9, 0.3, 1)');
                 }
-            } else {
-                // 3. 点击卡片 (Tap without dragging) -> 复制当前公式
-                copyCurrentScramble();
+            } else if (axisLock === null && !isCancelled) {
+                // 3. 点击卡片 (Tap without dragging): 严格要求低位移和短时按压
+                const totalDist = Math.hypot(e.clientX - startX, e.clientY - startY);
+                if (totalDist < 10 && elapsed < 350) {
+                    copyCurrentScramble();
+                }
             }
+            // 若 axisLock === 'vertical'，为竖向滚动，不触发任何业务动作
 
+            isDragging = false;
             startX = null;
             startY = null;
+            axisLock = null;
+            isCancelled = false;
         };
 
-        viewport.addEventListener('pointerup', handlePointerEnd);
-        viewport.addEventListener('pointercancel', handlePointerEnd);
+        viewport.addEventListener('pointerup', handlePointerUp);
+        viewport.addEventListener('pointercancel', handlePointerCancel);
     }
 
     initScrambleGesture();
@@ -1559,10 +1611,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.btCapsuleLabel) elements.btCapsuleLabel.textContent = '连接中...';
             if (elements.btnModalConnect) {
                 elements.btnModalConnect.disabled = true;
-                elements.btnModalConnect.textContent = '⏳ 正在连接...';
+                elements.btnModalConnect.textContent = '正在连接...';
             }
             appendBtLog('system', '正在启动蓝牙设备扫描 (Web Bluetooth API)...');
-            appendBtLog('system', '💡 [提示] 请在连接时【转动魔方几下】以唤醒魔方蓝牙广播（防止魔方休眠无法建立通信）');
+            appendBtLog('system', '[提示] 请在连接时【转动魔方几下】以唤醒魔方蓝牙广播（防止魔方休眠无法建立通信）');
             await bluetooth.connect();
         } catch (err) {
             console.error("Connection failed:", err);
@@ -1573,7 +1625,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.btCapsuleLabel) elements.btCapsuleLabel.textContent = '连接魔方';
             appendBtLog('err', `连接失败: ${err.name || 'Error'}: ${err.message || err}`);
             if (err.name === 'NetworkError' || (err.message && err.message.includes('Connection attempt failed'))) {
-                appendBtLog('warn', '💡 [原因排查与解决]：');
+                appendBtLog('warn', '[原因排查与解决]：');
                 appendBtLog('warn', '  1. 魔方休眠：智能魔方静置约 30 秒会自动关闭蓝牙进入休眠，请转动魔方任意一层几下将其唤醒，然后立即重试连接。');
                 appendBtLog('warn', '  2. 被其他软件占用：请确认手机后台没有开启 CubeStation、微信魔方小程序或其他已连接魔方的软件。');
                 appendBtLog('warn', '  3. 手机蓝牙偶发卡死：若多次超时，请在手机下拉菜单中关闭蓝牙再重新打开。');
@@ -1585,7 +1637,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             if (elements.btnModalConnect) {
                 elements.btnModalConnect.disabled = false;
-                elements.btnModalConnect.textContent = isCubeConnected ? '已连接' : '🔌 搜索并连接魔方';
+                elements.btnModalConnect.textContent = isCubeConnected ? '已连接' : '搜索并连接魔方';
             }
         }
     }
@@ -1957,7 +2009,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         syncAllModuleUIs();
+
+        if (window.__pendingSwReload) {
+            showToast('新版本已就绪，正在更新...');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1200);
+        }
     }
+
+    window.__isTimerActive = () => timer && (timer.state === 'RUNNING' || timer.state === 'INSPECTION');
+    window.__showToast = showToast;
 
     // Recalibrate / Set Solved
     if (elements.btnRecalibrate) {
@@ -1989,8 +2051,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const dateStr = new Date(s.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             let timeClass = '';
             let timeText = s.formattedTime;
-            if (s.penalty === -1) { timeClass = 'stat-dnf'; timeText = 'DNF'; }
-            else if (s.penalty === 2) { timeClass = 'stat-plus2'; timeText = `${s.formattedTime}+`; }
+            if (s.penalty === -1) {
+                timeClass = 'stat-dnf';
+                timeText = 'DNF';
+            } else if (s.penalty === 2000 || s.penalty === 2) {
+                timeClass = 'stat-plus2';
+                timeText = (s.formattedTime && s.formattedTime.endsWith('+')) ? s.formattedTime : `${s.formattedTime}+`;
+            }
 
             const movesCount = (CubeEngine && typeof CubeEngine.countMoves === 'function')
                 ? CubeEngine.countMoves(s.moves, currentMoveMetric)
@@ -3492,6 +3559,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (e.code === 'Space') {
             e.preventDefault();
+            if (e.repeat) return;
             if (currentView === 'view-timer') {
                 if (timer.state === 'IDLE' || timer.state === 'READY' || timer.state === 'SCRAMBLING') {
                     if (timer.inspectionEnabled) timer.startInspection();
@@ -3571,7 +3639,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     syncAllModuleUIs();
     try {
-        setNewScramble();
+        setNewScramble(currentScramble, true);
     } catch (e) {
         console.error('Initial setNewScramble error:', e);
     }
