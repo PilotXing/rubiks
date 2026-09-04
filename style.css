@@ -1351,9 +1351,24 @@ body {
 }
 
 .card-collapsible.collapsed .btn-panel-toggle {
-    background-color: rgba(245, 158, 11, 0.15);
-    border-color: rgba(245, 158, 11, 0.5);
-    color: #FBBF24;
+    background-color: var(--accent-subtle);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    font-weight: 700;
+}
+
+.card-collapsible.collapsed .btn-panel-toggle:hover {
+    background-color: var(--accent-primary);
+    color: #FFFFFF;
+    border-color: var(--accent-primary);
+}
+
+body.style-light .card-collapsible.collapsed .btn-panel-toggle,
+body.theme-light .card-collapsible.collapsed .btn-panel-toggle {
+    background-color: var(--accent-subtle);
+    border-color: var(--accent-primary);
+    color: var(--accent-hover, var(--accent-primary));
+    font-weight: 700;
 }
 
 /* Scramble Box */
