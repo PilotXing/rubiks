@@ -732,6 +732,20 @@
 - [x] **Version Upgrade**:
     - Bumped to `v20.4` (sw.js cache `rubiks-timer-v20.4`).
 
+## 04 SEP Windowed 5-Slot Scramble Reel & Network-First Cache Architecture (v20.6)
+- [x] **Windowed 5-Slot Symmetrical Reel Architecture (窗口固定 5 槽位绝对居中架构)**:
+    - Root cause: Rendering all 21 steps on a single continuous track with `transform: translate3d(-Xpx)` caused cumulative drift because varying step widths (56~64px, 90px+ correction badges, font scaling) and missing following steps on later moves shifted the active step progressively to the right (+280px+ by step 19, running completely off-screen).
+    - Replaced 21-element shifting track with a windowed 5-slot symmetrical layout:
+      `[Slot -2 (54px)] [Slot -1 (60px)] [Slot 0: Active Move (Centered)] [Slot +1 (60px)] [Slot +2 (54px)]`
+    - Locked Slot 0 to the exact 50% horizontal center via CSS Flexbox (`justify-content: center; margin: 0 auto;`).
+    - At start (Step 0), left slots are empty placeholders; at end (Step 19), right slots are empty placeholders.
+    - Zero cumulative math error possible: the active move is geometrically pinned to the card center across all steps (Step 0 to final step).
+- [x] **Network-First Service Worker Strategy for Code Assets (代码资源全面转为 Network-First)**:
+    - Changed SW caching strategy for HTML, JS, and CSS to Network-First.
+    - Fixed `ignoreSearch` cache bug that prevented query-string updates (`?v=...`) from updating client scripts.
+- [x] **Version Upgrade**:
+    - Bumped to `v20.6` (sw.js cache `rubiks-timer-v20.6`).
+
 
 
 

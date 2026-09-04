@@ -1,5 +1,5 @@
 // Service Worker for Rubik Vision Bluetooth Timer
-const CACHE_NAME = 'rubiks-timer-v20.4';
+const CACHE_NAME = 'rubiks-timer-v20.6';
 const ASSETS = [
     '/',
     '/index.html',
@@ -45,8 +45,16 @@ self.addEventListener('activate', (evt) => {
 self.addEventListener('fetch', (evt) => {
     if (evt.request.method !== 'GET') return;
 
-    // For HTML navigation requests: Network-First to immediately pick up new versions, fallback to Cache
-    if (evt.request.mode === 'navigate' || evt.request.destination === 'document' || evt.request.url.endsWith('index.html') || evt.request.url.endsWith('/')) {
+    const url = new URL(evt.request.url);
+    const isCodeAsset = evt.request.mode === 'navigate' ||
+                        evt.request.destination === 'document' ||
+                        url.pathname.endsWith('.html') ||
+                        url.pathname.endsWith('.js') ||
+                        url.pathname.endsWith('.css') ||
+                        url.pathname.endsWith('/');
+
+    // For Code Assets (HTML, JS, CSS): Network-First to immediately apply updates, fallback to Cache when offline
+    if (isCodeAsset) {
         evt.respondWith(
             fetch(evt.request).then((networkResponse) => {
                 if (networkResponse && networkResponse.status === 200) {
@@ -57,16 +65,17 @@ self.addEventListener('fetch', (evt) => {
                 }
                 return networkResponse;
             }).catch(() => {
-                return caches.match('/index.html', { ignoreSearch: true }) || caches.match(evt.request, { ignoreSearch: true });
+                return caches.match(evt.request) || caches.match('/index.html', { ignoreSearch: true });
             })
         );
         return;
     }
 
-    // For other static assets (JS, CSS, images): Stale-While-Revalidate / Cache-First
+    // For static images / media: Cache-First, fallback to Network
     evt.respondWith(
-        caches.match(evt.request, { ignoreSearch: true }).then((cachedResponse) => {
-            const fetchPromise = fetch(evt.request).then((networkResponse) => {
+        caches.match(evt.request).then((cachedResponse) => {
+            if (cachedResponse) return cachedResponse;
+            return fetch(evt.request).then((networkResponse) => {
                 if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
                     const responseToCache = networkResponse.clone();
                     caches.open(CACHE_NAME).then((cache) => {
@@ -74,11 +83,7 @@ self.addEventListener('fetch', (evt) => {
                     });
                 }
                 return networkResponse;
-            }).catch(() => {
-                if (cachedResponse) return cachedResponse;
             });
-
-            return cachedResponse || fetchPromise;
         })
     );
 });

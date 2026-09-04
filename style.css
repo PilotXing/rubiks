@@ -1603,29 +1603,22 @@ body {
     overflow: hidden;
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
     height: 76px;
-    mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 2%, rgba(0,0,0,1) 98%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 2%, rgba(0,0,0,1) 98%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 4%, rgba(0,0,0,1) 96%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,1) 4%, rgba(0,0,0,1) 96%, transparent 100%);
 }
 
 .scramble-reel-track {
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    justify-content: center;
     position: relative;
-    margin-left: 50%;
-    left: 0;
-    top: 0;
-    width: max-content;
+    width: 100%;
+    max-width: 560px;
     height: 100%;
-    transform: translate3d(var(--track-x, 0px), 0, 0);
-    will-change: transform;
-    transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+    margin: 0 auto;
     white-space: nowrap;
-}
-
-.scramble-reel-track.is-dragging {
-    transition: none !important;
 }
 
 .scramble-reel-track.error-shake {
@@ -1633,12 +1626,47 @@ body {
 }
 
 @keyframes scramble-error-shake {
-    0%, 100% { transform: translate3d(var(--track-x, 0px), 0, 0); }
-    15% { transform: translate3d(calc(var(--track-x, 0px) - 10px), 0, 0); }
-    30% { transform: translate3d(calc(var(--track-x, 0px) + 9px), 0, 0); }
-    45% { transform: translate3d(calc(var(--track-x, 0px) - 6px), 0, 0); }
-    60% { transform: translate3d(calc(var(--track-x, 0px) + 5px), 0, 0); }
-    75% { transform: translate3d(calc(var(--track-x, 0px) - 2px), 0, 0); }
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    15% { transform: translate3d(-10px, 0, 0); }
+    30% { transform: translate3d(9px, 0, 0); }
+    45% { transform: translate3d(-6px, 0, 0); }
+    60% { transform: translate3d(5px, 0, 0); }
+    75% { transform: translate3d(-2px, 0, 0); }
+}
+
+/* Symmetrical 5-slot window containers */
+.reel-slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+.reel-slot.slot--2,
+.reel-slot.slot-2 {
+    width: 54px;
+    flex: 0 0 54px;
+}
+
+.reel-slot.slot--1,
+.reel-slot.slot-1 {
+    width: 60px;
+    flex: 0 0 60px;
+}
+
+/* Center Active Slot - strictly locked to center */
+.reel-slot.slot-0 {
+    width: auto;
+    min-width: 68px;
+    max-width: 150px;
+    flex: 0 0 auto;
+    margin: 0 4px;
+}
+
+.reel-slot.slot-empty {
+    visibility: hidden;
+    pointer-events: none;
 }
 
 .reel-step-item {
@@ -1646,61 +1674,81 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 52px;
-    margin: 0 3px;
     box-sizing: border-box;
-    border-radius: 8px;
     font-family: var(--font-mono);
     font-weight: 800;
-    font-size: 1.35rem;
     line-height: 1;
-    color: var(--text-secondary);
-    background: transparent;
-    transition: all 0.24s cubic-bezier(0.22, 1, 0.36, 1);
-    flex-shrink: 0;
     position: relative;
+    user-select: none;
+    transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1), opacity 0.2s ease;
 }
 
 /* Done past steps */
 .reel-step-item.step-done {
     color: var(--text-muted);
     opacity: 0.35;
-    transform: scale(0.84);
+    font-size: 1.35rem;
+    transform: scale(0.86);
+}
+
+.reel-slot.slot--1 .reel-step-item.step-done {
+    opacity: 0.45;
+    transform: scale(0.88);
+}
+
+.reel-slot.slot--2 .reel-step-item.step-done {
+    opacity: 0.22;
+    transform: scale(0.78);
 }
 
 /* Active current step in center */
 .reel-step-item.step-active {
-    width: 52px;
-    height: 58px;
-    margin: 0 3px;
-    font-size: 1.85rem;
+    min-width: 56px;
+    height: 60px;
+    padding: 0 0.5rem;
+    font-size: 1.9rem;
     font-weight: 900;
     color: #FFFFFF;
-    background: rgba(16, 185, 129, 0.22);
+    background: rgba(16, 185, 129, 0.24);
     border: 2px solid var(--accent-primary);
-    border-radius: 10px;
+    border-radius: 12px;
     box-shadow: 0 0 20px rgba(16, 185, 129, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    transform: scale(1.06);
+    transform: scale(1.04);
     opacity: 1;
     z-index: 5;
 }
 
 /* Half-turn (1/2) in-progress */
 .reel-step-item.step-half-active {
-    width: 52px;
-    height: 58px;
-    margin: 0 3px;
-    font-size: 1.65rem;
+    min-width: 72px;
+    height: 60px;
+    padding: 0 0.6rem;
+    font-size: 1.6rem;
     font-weight: 900;
-    color: #60A5FA;
-    background: rgba(59, 130, 246, 0.24);
-    border: 2px dashed rgba(96, 165, 250, 0.85);
-    border-radius: 10px;
-    box-shadow: 0 0 18px rgba(59, 130, 246, 0.35);
+    color: #F59E0B;
+    background: rgba(245, 158, 11, 0.22);
+    border: 2px solid #F59E0B;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.42);
     transform: scale(1.04);
     opacity: 1;
     z-index: 5;
+}
+
+/* Upcoming steps */
+.reel-step-item.step-pending {
+    font-size: 1.45rem;
+    color: var(--text-secondary);
+}
+
+.reel-slot.slot-1 .reel-step-item.step-pending {
+    opacity: 0.85;
+    transform: scale(0.94);
+}
+
+.reel-slot.slot-2 .reel-step-item.step-pending {
+    opacity: 0.45;
+    transform: scale(0.82);
 }
 
 /* Error Correction Capsule in Center */
@@ -3155,7 +3203,7 @@ body.is-scrambling .scramble-reel-viewport {
     height: clamp(56px, 12vw, 76px) !important;
 }
 
-body.is-scrambling .reel-step-item {
+body.is-scrambling .reel-step-item.step-active {
     font-size: clamp(2.2rem, 9vw, 3.4rem) !important;
     line-height: 1;
 }
@@ -3276,8 +3324,19 @@ body.is-scrambling .cube-3d-stage {
         height: clamp(52px, 15vh, 74px) !important;
     }
 
-    body.is-scrambling .reel-step-item {
+    body.is-scrambling .reel-step-item.step-active {
         font-size: clamp(2.2rem, 12vh, 3.2rem) !important;
+    }
+
+    body.is-scrambling .reel-slot.slot--2,
+    body.is-scrambling .reel-slot.slot-2 {
+        width: clamp(48px, 6vw, 64px);
+        flex: 0 0 clamp(48px, 6vw, 64px);
+    }
+    body.is-scrambling .reel-slot.slot--1,
+    body.is-scrambling .reel-slot.slot-1 {
+        width: clamp(54px, 7vw, 70px);
+        flex: 0 0 clamp(54px, 7vw, 70px);
     }
 
     body.is-scrambling #card-cube-views {
@@ -3399,10 +3458,7 @@ body.is-solving .timer-digits {
         height: 72px;
     }
     .reel-step-item {
-        width: 56px;
-        height: 52px;
         font-size: 1.45rem;
-        margin: 0 4px;
     }
     .timer-digits {
         font-size: clamp(2.8rem, 14vw, 5.5rem);

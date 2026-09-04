@@ -726,73 +726,61 @@ document.addEventListener('DOMContentLoaded', () => {
         return rows.map(rowSpans => `<div class="scramble-row">${rowSpans.join('')}</div>`).join('');
     }
 
+    function renderReelSlotsHTML(moves, activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, isDeviated = false) {
+        const totalMoves = moves.length;
+        const clampedActiveIdx = Math.min(Math.max(0, activeIdx), Math.max(0, totalMoves - 1));
+        const isCorrectionMode = isDeviated && correctionMoves && correctionMoves.length > 0 && correctionMoves.length <= 2;
+
+        let html = '';
+        // 5 fixed symmetrical slots: rel = -2, -1, 0, +1, +2
+        for (let rel = -2; rel <= 2; rel++) {
+            const idx = clampedActiveIdx + rel;
+            if (idx < 0 || idx >= totalMoves) {
+                html += `<div class="reel-slot slot-${rel} slot-empty" aria-hidden="true"></div>`;
+                continue;
+            }
+
+            const move = moves[idx];
+            const colorCls = getMoveColorClass(move);
+
+            if (rel < 0) {
+                html += `<div class="reel-slot slot-${rel}"><div class="reel-step-item step-done ${colorCls}">${move}</div></div>`;
+            } else if (rel === 0) {
+                if (isCorrectionMode) {
+                    const undoMove = correctionMoves[0];
+                    const nextMove = correctionMoves.length > 1 ? correctionMoves[1] : (moves[idx] || '');
+                    html += `
+                        <div class="reel-slot slot-0">
+                            <div class="reel-step-item step-active ${colorCls}" style="width: auto; min-width: 90px; padding: 0 0.6rem;">
+                                <div class="reel-correction-badge">
+                                    <span class="reel-correction-undo">${undoMove}</span>
+                                    <span class="reel-correction-arrow">➔</span>
+                                    <span class="reel-correction-next">${nextMove}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (isHalfTurn) {
+                    const label = remainingOnFace ? `${remainingOnFace} (½)` : `${move} (½)`;
+                    html += `<div class="reel-slot slot-0"><div class="reel-step-item step-half-active ${colorCls}">${label}</div></div>`;
+                } else {
+                    html += `<div class="reel-slot slot-0"><div class="reel-step-item step-active ${colorCls}">${move}</div></div>`;
+                }
+            } else {
+                // rel > 0
+                html += `<div class="reel-slot slot-${rel}"><div class="reel-step-item step-pending ${colorCls}">${move}</div></div>`;
+            }
+        }
+        return html;
+    }
+
     function renderScrambleReelHTML(scrambleStr, activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, isDeviated = false) {
         if (!scrambleStr) return '<span class="scramble-empty-hint">Loading scramble...</span>';
         const moves = scrambleStr.trim().split(/\s+/).filter(Boolean);
         if (moves.length === 0) return '<span class="scramble-empty-hint">Loading scramble...</span>';
 
         const totalMoves = moves.length;
-        const visiblePrev = scrambleVisiblePrev;
-        const visibleNext = scrambleVisibleNext;
-
-        let trackItemsHtml = '';
-        const isCorrectionMode = isDeviated && correctionMoves && correctionMoves.length > 0 && correctionMoves.length <= 2;
-
-        moves.forEach((move, idx) => {
-            let cls = 'step-pending';
-            let label = move;
-            const colorCls = getMoveColorClass(move);
-            let inlineStyle = '';
-
-            if (idx < activeIdx) {
-                cls = 'step-done';
-                const rel = activeIdx - idx;
-                if (rel <= visiblePrev) {
-                    inlineStyle = 'opacity: 0.35; transform: scale(0.84);';
-                } else {
-                    inlineStyle = 'opacity: 0; visibility: hidden; pointer-events: none;';
-                }
-            } else if (idx === activeIdx) {
-                if (isCorrectionMode) {
-                    cls = 'step-active';
-                    const undoMove = correctionMoves[0];
-                    const nextMove = correctionMoves.length > 1 ? correctionMoves[1] : (moves[activeIdx] || '');
-                    label = `
-                        <div class="reel-correction-badge">
-                            <span class="reel-correction-undo">${undoMove}</span>
-                            <span class="reel-correction-arrow">➔</span>
-                            <span class="reel-correction-next">${nextMove}</span>
-                        </div>
-                    `;
-                    inlineStyle = 'width: auto; min-width: 90px; padding: 0 0.6rem; opacity: 1;';
-                } else if (isHalfTurn) {
-                    cls = 'step-half-active';
-                    label = remainingOnFace ? `${remainingOnFace} (½)` : `${move} (½)`;
-                    inlineStyle = 'opacity: 1;';
-                } else {
-                    cls = 'step-active';
-                    inlineStyle = 'opacity: 1;';
-                }
-            } else {
-                // idx > activeIdx
-                const rel = idx - activeIdx;
-                if (rel <= visibleNext) {
-                    const opacity = Math.max(0.28, 0.95 - (rel - 1) * 0.14);
-                    const scale = Math.max(0.72, 1.0 - (rel - 1) * 0.04);
-                    inlineStyle = `opacity: ${opacity}; transform: scale(${scale});`;
-                } else {
-                    inlineStyle = 'opacity: 0; visibility: hidden; pointer-events: none;';
-                }
-            }
-
-            trackItemsHtml += `<div class="reel-step-item ${cls} ${colorCls}" style="${inlineStyle}">${label}</div>`;
-        });
-
-        // Calculate horizontal offset so active item is mathematically at center:
-        // Track has margin-left: 50% (placing left edge at 50% viewport).
-        // Then translate left by exactly (clampedActiveIdx * 50 + 25)px!
-        const clampedActiveIdx = Math.min(activeIdx, Math.max(0, totalMoves - 1));
-        const offsetPx = - (clampedActiveIdx * 50 + 25);
+        const slotsHtml = renderReelSlotsHTML(moves, activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, isDeviated);
 
         // Footer progress sub-label
         const completedCount = Math.min(activeIdx, totalMoves);
@@ -827,8 +815,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
             <div class="scramble-reel-container">
                 <div class="scramble-reel-viewport">
-                    <div class="scramble-reel-track" style="--track-x: ${offsetPx}px; transform: translate3d(${offsetPx}px, 0, 0);">
-                        ${trackItemsHtml}
+                    <div class="scramble-reel-track">
+                        ${slotsHtml}
                     </div>
                 </div>
                 ${footerHtml}
@@ -907,72 +895,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Center Active Card
         if (carouselElements.cardCurrent) {
             const currentTrack = carouselElements.cardCurrent.querySelector('.scramble-reel-track');
-            const existingMoves = carouselElements.cardCurrent.querySelectorAll('.reel-step-item');
             const moves = (currentStr || '').trim().split(/\s+/).filter(Boolean);
             
-            if (currentTrack && existingMoves.length === moves.length && scrambleDisplayStyle !== 'grid') {
-                // In-place fluid update with customizable motion curve preset
-                const clampedActiveIdx = Math.min(activeIdx, Math.max(0, moves.length - 1));
-                const offsetPx = - (clampedActiveIdx * 50 + 25);
-                const motionCfg = getReelMotionConfig();
-                currentTrack.style.transition = motionCfg.css;
-                currentTrack.style.transform = `translate3d(${offsetPx}px, 0, 0)`;
-                currentTrack.style.setProperty('--track-x', `${offsetPx}px`);
-
-                const visiblePrev = scrambleVisiblePrev;
-                const visibleNext = scrambleVisibleNext;
-                const isCorrectionMode = isDeviated && !isRepathed && correctionMoves && correctionMoves.length > 0 && correctionMoves.length <= 3;
-
-                existingMoves.forEach((item, idx) => {
-                    let cls = 'reel-step-item';
-                    const colorCls = getMoveColorClass(moves[idx]);
-                    let inlineStyle = '';
-                    if (idx < activeIdx) {
-                        cls += ' step-done';
-                        const rel = activeIdx - idx;
-                        if (rel <= visiblePrev) {
-                            inlineStyle = 'opacity: 0.35; transform: scale(0.84);';
-                        } else {
-                            inlineStyle = 'opacity: 0; visibility: hidden; pointer-events: none;';
-                        }
-                        item.textContent = moves[idx];
-                    } else if (idx === activeIdx) {
-                        if (isCorrectionMode) {
-                            cls += ' step-active';
-                            const undoMove = correctionMoves.join(' ');
-                            const nextMove = moves[activeIdx] || '';
-                            item.innerHTML = `
-                                <div class="reel-correction-badge">
-                                    <span class="reel-correction-undo">${undoMove}</span>
-                                    <span class="reel-correction-arrow">➔</span>
-                                    <span class="reel-correction-next">${nextMove}</span>
-                                </div>
-                            `;
-                            inlineStyle = 'width: auto; min-width: 90px; padding: 0 0.6rem; opacity: 1;';
-                        } else if (isHalfTurn) {
-                            cls += ' step-half-active';
-                            item.textContent = remainingOnFace ? `${remainingOnFace} (½)` : `${moves[idx]} (½)`;
-                            inlineStyle = 'opacity: 1;';
-                        } else {
-                            cls += ' step-active';
-                            item.textContent = moves[idx];
-                            inlineStyle = 'opacity: 1;';
-                        }
-                    } else {
-                        cls += ' step-pending';
-                        const rel = idx - activeIdx;
-                        if (rel <= visibleNext) {
-                            const opacity = Math.max(0.28, 0.95 - (rel - 1) * 0.14);
-                            const scale = Math.max(0.72, 1.0 - (rel - 1) * 0.04);
-                            inlineStyle = `opacity: ${opacity}; transform: scale(${scale});`;
-                        } else {
-                            inlineStyle = 'opacity: 0; visibility: hidden; pointer-events: none;';
-                        }
-                        item.textContent = moves[idx];
-                    }
-                    item.className = `${cls} ${colorCls}`;
-                    item.style.cssText = inlineStyle;
-                });
+            if (currentTrack && moves.length > 0 && scrambleDisplayStyle !== 'grid') {
+                // Update 5-slot window directly - Slot 0 is physically centered at all times
+                currentTrack.innerHTML = renderReelSlotsHTML(moves, activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, isDeviated);
 
                 // Update footer progress text
                 const completedCount = Math.min(activeIdx, moves.length);
