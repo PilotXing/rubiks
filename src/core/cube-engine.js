@@ -44,6 +44,33 @@
     MOVE_MAP["U"] = 0; MOVE_MAP["R"] = 3; MOVE_MAP["F"] = 6;
     MOVE_MAP["D"] = 9; MOVE_MAP["L"] = 12; MOVE_MAP["B"] = 15;
 
+    /**
+     * Return the production CSS state for a step in the scramble reel.
+     * Kept here as a pure function so rendering and regression tests share it.
+     */
+    function getScrambleStepClasses(idx, activeIdx, visiblePrev = 1, visibleNext = 5) {
+        const previous = Math.max(0, Number(visiblePrev) || 0);
+        const next = Math.max(0, Number(visibleNext) || 0);
+
+        if (idx < activeIdx) {
+            return {
+                cls: 'step-done',
+                farCls: idx < activeIdx - previous
+                    ? 'step-far step-hidden'
+                    : (idx < activeIdx - 1 ? 'step-far' : '')
+            };
+        }
+        if (idx === activeIdx) {
+            return { cls: 'step-active', farCls: '' };
+        }
+        return {
+            cls: 'step-pending',
+            farCls: idx > activeIdx + next
+                ? 'step-far step-hidden'
+                : (idx > activeIdx + Math.min(2, next) ? 'step-far' : '')
+        };
+    }
+
     // Corner and Edge Facelet Mappings (Kociemba standard representation)
     const CORNER_FACELET_MAP = [
         [8, 9, 20],   // URF (U8, R0, F2) -> [U8, R9, F20]
@@ -1032,6 +1059,7 @@
         normalizeMove,
         invertMove,
         invertMoves,
+        getScrambleStepClasses,
         RubiksCube,
         countMoves,
         generateWcaScramble,

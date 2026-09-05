@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ScrambleTracker = CubeEngine.ScrambleProgressTracker;
     const generateWcaScramble = CubeEngine.generateWcaScramble;
     const generateWcaScrambleWithFirstMove = CubeEngine.generateWcaScrambleWithFirstMove;
+    const getScrambleStepClasses = CubeEngine.getScrambleStepClasses;
     const formatTime = TimerEngine.formatTime;
 
     const bluetooth = new GanBluetooth.GanBluetoothAdapter({
@@ -312,6 +313,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof mainMovementChart !== 'undefined' && mainMovementChart && typeof mainMovementChart.render === 'function') {
             mainMovementChart.render();
         }
+
+        // Theme-specific borders and padding can change the carousel card width.
+        // Re-measure after the new styles have been applied so the active card
+        // remains centered without requiring a reload or orientation change.
+        requestAnimationFrame(() => {
+            updateCarouselCards();
+            const { baseOffset } = getCarouselMetrics();
+            setTrackPosition(baseOffset, false);
+        });
     }
 
     applyThemeAndStyle(currentUiStyle, currentAccentColor);
@@ -842,19 +852,18 @@ document.addEventListener('DOMContentLoaded', () => {
         let trackItemsHtml = '';
 
         moves.forEach((move, idx) => {
-            let cls = 'step-pending';
-            let farCls = '';
+            const stepClasses = getScrambleStepClasses(
+                idx,
+                activeIdx,
+                scrambleVisiblePrev,
+                scrambleVisibleNext
+            );
+            let cls = stepClasses.cls;
+            const farCls = stepClasses.farCls;
             let content = move;
             const colorCls = getMoveColorClass(move);
 
-            if (idx < activeIdx) {
-                cls = 'step-done';
-                if (idx < activeIdx - scrambleVisiblePrev) {
-                    farCls = 'step-far step-hidden';
-                } else if (idx < activeIdx - 1) {
-                    farCls = 'step-far';
-                }
-            } else if (idx === activeIdx) {
+            if (idx === activeIdx) {
                 if (isDeviated && correctionMoves && correctionMoves.length > 0) {
                     cls = 'step-correction';
                     const nextCorrection = correctionMoves[0];
@@ -866,13 +875,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     content = `<span class="step-half-base">${move}</span><span class="step-half-guide">再转 ${label}</span>`;
                 } else {
                     cls = 'step-active';
-                }
-            } else {
-                cls = 'step-pending';
-                if (idx > activeIdx + scrambleVisibleNext) {
-                    farCls = 'step-far step-hidden';
-                } else if (idx > activeIdx + Math.min(2, scrambleVisibleNext)) {
-                    farCls = 'step-far';
                 }
             }
 
@@ -1001,16 +1003,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     existingItems.forEach((item, idx) => {
                         const origMove = moves[idx];
                         const colorCls = getMoveColorClass(origMove);
-                        let cls = 'step-pending';
-                        let farCls = '';
+                        const stepClasses = getScrambleStepClasses(
+                            idx,
+                            activeIdx,
+                            scrambleVisiblePrev,
+                            scrambleVisibleNext
+                        );
+                        let cls = stepClasses.cls;
+                        const farCls = stepClasses.farCls;
                         
                         if (idx < activeIdx) {
-                            cls = 'step-done';
-                            if (idx < activeIdx - scrambleVisiblePrev) {
-                                farCls = 'step-far step-hidden';
-                            } else if (idx < activeIdx - 1) {
-                                farCls = 'step-far';
-                            }
                             item.className = `reel-step-item ${cls} ${farCls} ${colorCls}`;
                             item.textContent = origMove;
                         } else if (idx === activeIdx) {
@@ -1031,12 +1033,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 item.textContent = origMove;
                             }
                         } else {
-                            cls = 'step-pending';
-                            if (idx > activeIdx + scrambleVisibleNext) {
-                                farCls = 'step-far step-hidden';
-                            } else if (idx > activeIdx + Math.min(2, scrambleVisibleNext)) {
-                                farCls = 'step-far';
-                            }
                             item.className = `reel-step-item ${cls} ${farCls} ${colorCls}`;
                             item.textContent = origMove;
                         }

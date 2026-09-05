@@ -1,27 +1,27 @@
 // Service Worker for Rubik Vision Bluetooth Timer
-const CACHE_NAME = 'rubiks-timer-v20.25';
+const CACHE_NAME = 'rubiks-timer-v20.26';
 const ASSETS = [
     '/',
     '/index.html',
-    '/style.css?v=20.25',
+    '/style.css?v=20.26',
     '/manifest.json',
     '/icon.svg',
     '/icon-192.png',
     '/icon-512.png',
-    '/lib/aes.js?v=20.24',
-    '/lib/min2phase.js?v=20.24',
-    '/lib/three.min.js?v=20.24',
-    '/lib/echarts.min.js?v=20.24',
-    '/src/bluetooth/gan-bluetooth.js?v=20.24',
-    '/src/audio/audio-synth.js?v=20.24',
-    '/src/core/cube-engine.js?v=20.24',
-    '/src/core/alg-database.js?v=20.24',
-    '/src/core/method-analyzer.js?v=20.24',
-    '/src/core/timer-engine.js?v=20.24',
-    '/src/renderers/renderer-3d.js?v=20.24',
-    '/src/renderers/renderer-2d.js?v=20.24',
-    '/src/ui/chart-engine.js?v=20.24',
-    '/src/ui/ui-controller.js?v=20.24'
+    '/lib/aes.js?v=20.26',
+    '/lib/min2phase.js?v=20.26',
+    '/lib/three.min.js?v=20.26',
+    '/lib/echarts.min.js?v=20.26',
+    '/src/bluetooth/gan-bluetooth.js?v=20.26',
+    '/src/audio/audio-synth.js?v=20.26',
+    '/src/core/cube-engine.js?v=20.26',
+    '/src/core/alg-database.js?v=20.26',
+    '/src/core/method-analyzer.js?v=20.26',
+    '/src/core/timer-engine.js?v=20.26',
+    '/src/renderers/renderer-3d.js?v=20.26',
+    '/src/renderers/renderer-2d.js?v=20.26',
+    '/src/ui/chart-engine.js?v=20.26',
+    '/src/ui/ui-controller.js?v=20.26'
 ];
 
 
@@ -67,8 +67,18 @@ self.addEventListener('fetch', (evt) => {
                     });
                 }
                 return networkResponse;
-            }).catch(() => {
-                return caches.match(evt.request) || caches.match('/index.html', { ignoreSearch: true });
+            }).catch(async () => {
+                const cachedResponse = await caches.match(evt.request, { ignoreSearch: true });
+                if (cachedResponse) return cachedResponse;
+
+                const isDocumentRequest = evt.request.mode === 'navigate' ||
+                                          evt.request.destination === 'document' ||
+                                          url.pathname.endsWith('.html') ||
+                                          url.pathname.endsWith('/');
+                if (isDocumentRequest) {
+                    return caches.match('/index.html', { ignoreSearch: true });
+                }
+                return Response.error();
             })
         );
         return;

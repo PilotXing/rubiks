@@ -36,6 +36,26 @@
         ? cancelAnimationFrame
         : (id => clearTimeout(id));
 
+    function resolveBaseTimeMs(solve) {
+        if (!solve) return 0;
+        if (typeof solve.baseTimeMs === 'number' && solve.baseTimeMs > 0) {
+            return solve.baseTimeMs;
+        }
+        if (typeof solve.calibratedTimeMs === 'number' && solve.calibratedTimeMs > 0) {
+            return solve.calibratedTimeMs;
+        }
+        if (solve.penalty === Penalty.PLUS_TWO && solve.finalTimeMs > 2000) {
+            return solve.finalTimeMs - 2000;
+        }
+        if ((solve.penalty == null || solve.penalty === Penalty.NONE) && solve.finalTimeMs > 0) {
+            return solve.finalTimeMs;
+        }
+        if (typeof solve.rawTimeMs === 'number' && solve.rawTimeMs > 0) {
+            return solve.rawTimeMs;
+        }
+        return typeof solve.finalTimeMs === 'number' && solve.finalTimeMs > 0 ? solve.finalTimeMs : 0;
+    }
+
     /**
      * Format milliseconds into standard speedcubing time display (e.g. 9.42, 1:12.35)
      */
@@ -79,7 +99,8 @@
     }
 
     /**
-     * Calculate WCA Average of N (Ao5, Ao12, etc.)
+     * Calculate a speedcubing average.
+     * Mo3 is untrimmed; Ao5 and larger trim the best/worst 5% (rounded up).
      */
     function calcAverage(timesArray) {
         if (!timesArray || timesArray.length === 0) return null;
@@ -94,10 +115,17 @@
             return calcMo3(timesArray);
         }
 
+        // Ao4 is not a WCA format. Treat it as an untrimmed mean so the
+        // custom AoX control still has deterministic, unsurprising behavior.
+        if (timesArray.length < 5) {
+            if (timesArray.some(t => t < 0)) return -1;
+            const sum = timesArray.reduce((a, b) => a + b, 0);
+            return sum / timesArray.length;
+        }
+
         const dnfCount = timesArray.filter(t => t < 0).length;
-        // WCA rules: 1 DNF allowed in Ao5 and Ao12 (counts as slowest, trimmed out)
-        const maxDnfs = timesArray.length >= 5 ? 1 : 0;
-        if (dnfCount > maxDnfs) return -1; // DNF
+        const trimCount = Math.ceil(timesArray.length * 0.05);
+        if (dnfCount > trimCount) return -1;
 
         // Sort times, treating DNF (< 0) as largest
         const sorted = timesArray.slice().sort((a, b) => {
@@ -106,8 +134,6 @@
             return a - b;
         });
 
-        // Trim 1 fastest and 1 slowest (standard Ao5 and Ao12)
-        const trimCount = 1;
         const trimmed = sorted.slice(trimCount, sorted.length - trimCount);
 
         if (trimmed.some(t => t < 0)) return -1;
@@ -167,11 +193,7 @@
             const solve = this.solves.find(s => s.id === solveId);
             if (!solve) return;
 
-            const baseTime = (typeof solve.baseTimeMs === 'number' && solve.baseTimeMs > 0)
-                ? solve.baseTimeMs
-                : ((typeof solve.rawTimeMs === 'number' && solve.rawTimeMs > 0)
-                    ? solve.rawTimeMs
-                    : (solve.penalty === Penalty.PLUS_TWO ? solve.finalTimeMs - 2000 : solve.finalTimeMs));
+            const baseTime = resolveBaseTimeMs(solve);
 
             if (penaltyType === '+2') {
                 if (solve.penalty === Penalty.PLUS_TWO) {
@@ -352,7 +374,10 @@
         exportCsTimerJSON() {
             // csTimer JSON structure: { "session1": [ [ [penalty, timeInMs], scramble, comment, timestamp ] ] }
             const sessionData = this.solves.map(s => {
-                const timeVal = s.finalTimeMs > 0 ? Math.round(s.finalTimeMs) : -1;
+                // csTimer stores the penalty separately and adds it when rendering.
+                // Always export the unpenalized base time to avoid applying +2 twice,
+                // and preserve the underlying time for DNF records.
+                const timeVal = Math.round(resolveBaseTimeMs(s));
                 const penaltyFlag = s.penalty === Penalty.PLUS_TWO ? 2000 : (s.penalty === Penalty.DNF ? -1 : 0);
                 return [
                     [penaltyFlag, timeVal],

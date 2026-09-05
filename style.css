@@ -2224,6 +2224,40 @@ body {
     flex-shrink: 0;
 }
 
+.cube-views-heading + div,
+#btn-reset-3d-cam {
+    flex-shrink: 0;
+}
+
+#btn-reset-3d-cam {
+    white-space: nowrap;
+}
+
+@media (max-width: 380px) {
+    .cube-views-heading-detail {
+        display: none;
+    }
+
+    #card-cube-views .collapsible-header {
+        padding-left: 0.65rem;
+        padding-right: 0.65rem;
+    }
+}
+
+@media (max-width: 340px) {
+    .app-version-badge {
+        display: none !important;
+    }
+
+    .header-actions {
+        gap: 0.25rem;
+    }
+
+    #card-cube-views .collapsible-title {
+        font-size: 0.74rem;
+    }
+}
+
 .collapsible-body {
     padding: 0.85rem;
     transition: max-height 0.25s ease, opacity 0.2s ease;
@@ -4688,4 +4722,3 @@ body.is-solving .timer-digits {
     overflow-y: auto;
     width: 100%;
 }
-

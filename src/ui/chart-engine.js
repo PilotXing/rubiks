@@ -8,14 +8,18 @@
 
 (function(root, factory) {
     if (typeof define === 'function' && define.amd) {
-        define([], factory);
+        define(['../core/timer-engine'], factory);
     } else if (typeof module === 'object' && module.exports) {
-        module.exports = factory();
+        module.exports = factory(require('../core/timer-engine'));
     } else {
-        root.ChartEngine = factory();
+        root.ChartEngine = factory(root.TimerEngine);
     }
-}(typeof self !== 'undefined' ? self : this, function() {
+}(typeof self !== 'undefined' ? self : this, function(TimerEngine) {
     'use strict';
+
+    if (!TimerEngine || typeof TimerEngine.calcAverage !== 'function') {
+        throw new Error('ChartEngine requires TimerEngine.calcAverage');
+    }
 
     /**
      * Compute AoX array for a list of solves
@@ -30,26 +34,20 @@
             const windowSize = Math.min(i + 1, x);
             const windowSolves = solves.slice(i + 1 - windowSize, i + 1);
 
-            const validTimes = windowSolves
-                .map(s => s.finalTimeMs > 0 ? s.finalTimeMs : s.rawTimeMs)
-                .filter(t => t > 0);
+            const times = windowSolves.map(s => s.finalTimeMs);
+            const validTimes = times.filter(t => t > 0);
 
-            if (validTimes.length === 0) {
-                result.push(null);
-                continue;
-            }
-
-            if (windowSize < x || validTimes.length < 3) {
+            if (windowSize < x) {
                 // If less than X, use arithmetic mean of all available solves
-                const sum = validTimes.reduce((acc, t) => acc + t, 0);
-                result.push(Math.round(sum / validTimes.length));
+                if (validTimes.length === 0) {
+                    result.push(null);
+                } else {
+                    const sum = validTimes.reduce((acc, t) => acc + t, 0);
+                    result.push(Math.round(sum / validTimes.length));
+                }
             } else {
-                // Standard AoX: sort, drop min and max (or 5% trim for large X)
-                const sorted = validTimes.slice().sort((a, b) => a - b);
-                const trimCount = x >= 20 ? Math.ceil(x * 0.05) : 1;
-                const trimmed = sorted.slice(trimCount, sorted.length - trimCount);
-                const sum = trimmed.reduce((acc, t) => acc + t, 0);
-                result.push(Math.round(sum / trimmed.length));
+                const average = TimerEngine.calcAverage(times);
+                result.push(average == null ? null : Math.round(average));
             }
         }
 

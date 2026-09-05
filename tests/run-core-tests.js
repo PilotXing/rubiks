@@ -5,6 +5,8 @@
  */
 
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 
 // 1. Load Core Modules
 let min2phase = null;
@@ -27,6 +29,13 @@ try {
     TimerEngine = require('../src/core/timer-engine');
 } catch (e) {
     console.error('Failed to load timer-engine:', e);
+}
+
+let ChartEngine = null;
+try {
+    ChartEngine = require('../src/ui/chart-engine');
+} catch (e) {
+    console.error('Failed to load chart-engine:', e);
 }
 
 const tests = [];
@@ -81,6 +90,34 @@ test('calcAverage (Ao12): correctly trims 1 fastest & 1 slowest and averages 10'
     // 2 DNFs in Ao12 results in DNF (-1)
     const timesWith2Dnf = [10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, 10000, -1, -1];
     assert.strictEqual(calcAverage(timesWith2Dnf), -1);
+});
+
+test('calcAverage and chart AoX: share generalized 5% trimming and DNF semantics', () => {
+    const { calcAverage } = TimerEngine;
+    const ao25Times = [...Array(23).fill(10000), 100000, 200000];
+    const ao25Solves = ao25Times.map(t => ({ finalTimeMs: t, rawTimeMs: t }));
+
+    // Ao25 trims two values from each end, leaving only the 10-second solves.
+    assert.strictEqual(calcAverage(ao25Times), 10000);
+    assert.strictEqual(ChartEngine.computeAoXSeries(ao25Solves, 25).at(-1), 10000);
+
+    // Two DNFs fit in Ao25's two-result trim; a third must make the average DNF.
+    const twoDnfs = [...Array(23).fill(10000), -1, -1];
+    const threeDnfs = [...Array(22).fill(10000), -1, -1, -1];
+    assert.strictEqual(calcAverage(twoDnfs), 10000);
+    assert.strictEqual(calcAverage(threeDnfs), -1);
+
+    const dnfSolves = threeDnfs.map((t, idx) => ({
+        finalTimeMs: t,
+        rawTimeMs: t < 0 ? 15000 + idx : t
+    }));
+    assert.strictEqual(ChartEngine.computeAoXSeries(dnfSolves, 25).at(-1), -1);
+
+    const mo3WithDnf = [10000, -1, 12000].map(t => ({
+        finalTimeMs: t,
+        rawTimeMs: t < 0 ? 11000 : t
+    }));
+    assert.strictEqual(ChartEngine.computeAoXSeries(mo3WithDnf, 3).at(-1), -1);
 });
 
 test('SolveSession: mock storage and statistics contract consistency', () => {
@@ -191,13 +228,14 @@ test('csTimer export: exports integer milliseconds and correct penalty format', 
     assert.deepStrictEqual(solve1Record[0], [0, 14170]);
     assert.strictEqual(solve1Record[1], "R U R' U'");
 
-    // s2 (+2 penalty, finalTimeMs 14000)
+    // s2 (+2 penalty): csTimer adds the first tuple value while rendering,
+    // so the second value must remain the unpenalized 12000ms base time.
     const solve2Record = parsed.session1[1];
-    assert.deepStrictEqual(solve2Record[0], [2000, 14000]);
+    assert.deepStrictEqual(solve2Record[0], [2000, 12000]);
 
-    // s3 (DNF penalty, finalTimeMs -1)
+    // s3 (DNF): retain the underlying time for DNF(09.00) display/recovery.
     const solve3Record = parsed.session1[2];
-    assert.deepStrictEqual(solve3Record[0], [-1, -1]);
+    assert.deepStrictEqual(solve3Record[0], [-1, 9000]);
 });
 
 test('min2phase group theory: C^-1 * T solves current cube state C to target T', () => {
@@ -319,28 +357,7 @@ test('TimerController: WCA inspection +2 penalty carryover and DNF', () => {
 });
 
 test('Scramble lookahead: step visibility matches visiblePrev and visibleNext parameters', () => {
-    function computeStepClasses(idx, activeIdx, visiblePrev, visibleNext) {
-        let cls = 'step-pending';
-        let farCls = '';
-        if (idx < activeIdx) {
-            cls = 'step-done';
-            if (idx < activeIdx - visiblePrev) {
-                farCls = 'step-far step-hidden';
-            } else if (idx < activeIdx - 1) {
-                farCls = 'step-far';
-            }
-        } else if (idx === activeIdx) {
-            cls = 'step-active';
-        } else {
-            cls = 'step-pending';
-            if (idx > activeIdx + visibleNext) {
-                farCls = 'step-far step-hidden';
-            } else if (idx > activeIdx + Math.min(2, visibleNext)) {
-                farCls = 'step-far';
-            }
-        }
-        return { cls, farCls };
-    }
+    const computeStepClasses = CubeEngine.getScrambleStepClasses;
 
     // Active = 5, visiblePrev = 1, visibleNext = 3
     // idx = 3 (< 5 - 1) -> hidden
@@ -353,6 +370,26 @@ test('Scramble lookahead: step visibility matches visiblePrev and visibleNext pa
     assert.strictEqual(computeStepClasses(8, 5, 1, 3).farCls, 'step-far');
     // idx = 9 (> 5 + 3) -> hidden
     assert.strictEqual(computeStepClasses(9, 5, 1, 3).farCls, 'step-far step-hidden');
+});
+
+test('Offline cache: every local CSS/JS URL in index is precached exactly', () => {
+    const rootDir = path.resolve(__dirname, '..');
+    const html = fs.readFileSync(path.join(rootDir, 'index.html'), 'utf8');
+    const sw = fs.readFileSync(path.join(rootDir, 'sw.js'), 'utf8');
+    const htmlAssets = [...html.matchAll(/(?:src|href)=["']([^"']+\.(?:js|css)(?:\?[^"']*)?)["']/g)]
+        .map(match => '/' + match[1].replace(/^\//, ''));
+    const cachedAssets = new Set(
+        [...sw.matchAll(/["'](\/[^"']+\.(?:js|css)(?:\?[^"']*)?)["']/g)]
+            .map(match => match[1])
+    );
+
+    assert.deepStrictEqual(
+        htmlAssets.filter(asset => !cachedAssets.has(asset)),
+        [],
+        'index.html contains CSS/JS URLs that are missing from the service-worker precache'
+    );
+    assert(!sw.includes("caches.match(evt.request) || caches.match('/index.html'"),
+        'asset failures must not fall back to index.html');
 });
 
 // -------------------------------------------------------------
