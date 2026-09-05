@@ -698,7 +698,7 @@ body.theme-win98 .app-nav-tabs {
     align-items: flex-end !important;
     gap: 3px !important;
     background-color: #C0C0C0 !important;
-    padding: 6px 10px 0 10px !important;
+    padding: 6px 6px 0 6px !important;
     margin: 0 !important;
     border: none !important;
     border-bottom: 1px solid #FFFFFF !important;
@@ -773,16 +773,22 @@ body.theme-win98 .nav-tab-btn.active svg {
     stroke: #000080 !important;
 }
 
-/* Window Content Area */
+/* Window Content Area - Windows 98 Property Sheet Body (Connected to Tab Strip) */
 body.style-win98 .app-main,
 body.theme-win98 .app-main {
     background-color: #C0C0C0 !important;
-    padding: 8px 10px 16px 10px !important;
+    padding: 10px 8px 16px 8px !important;
     position: relative !important;
     z-index: 1 !important;
     box-sizing: border-box !important;
-    width: 100% !important;
-    max-width: 100% !important;
+    width: calc(100% - 12px) !important;
+    max-width: calc(100% - 12px) !important;
+    margin: 0 6px 6px 6px !important;
+    border-left: 1px solid #FFFFFF !important;
+    border-right: 1px solid #000000 !important;
+    border-bottom: 1px solid #000000 !important;
+    border-top: none !important;
+    box-shadow: inset 1px 0 0 #DFDFDF, inset -1px -1px 0 #808080 !important;
 }
 
 /* Win98 Dialog Section Group Boxes */
