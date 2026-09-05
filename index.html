@@ -34,7 +34,7 @@
                     </svg>
                 </span>
                 <span class="brand-title">Rubik Vision</span>
-                <span id="app-version-badge" class="badge app-version-badge">v20.21</span>
+                <span id="app-version-badge" class="badge app-version-badge">v20.22</span>
             </div>
 
             <div class="header-actions">
@@ -182,18 +182,25 @@
 
                 <!-- 2. Inline Latest Solve Summary Breakdown & Performance Curve (Directly Below Timer) -->
                 <div id="main-solve-breakdown-card" class="card-collapsible" style="display: none;">
-                    <div class="collapsible-header" style="display: flex; align-items: center; justify-content: space-between; gap: 0.4rem; padding: 0.4rem 0.6rem;">
-                        <div id="main-solve-telemetry-bar" style="display: flex; align-items: center; gap: 0.35rem 0.45rem; flex-wrap: wrap; flex: 1;">
+                    <div class="collapsible-header">
+                        <span class="collapsible-title">
+                            <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                            最新复原阶段分析 (Solve Breakdown)
+                        </span>
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                            <button class="btn-panel-toggle" data-target="main-solve-breakdown-card" title="折叠/展开">
+                                <svg class="svg-icon svg-chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                <span class="toggle-text">收起</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="collapsible-body" style="padding: 0.35rem 0.4rem;">
+                        <!-- Top Telemetry Summary Bar (Moves, Time, TPS) -->
+                        <div id="main-solve-telemetry-bar" style="display: flex; align-items: center; justify-content: flex-start; gap: 0.4rem 0.6rem; flex-wrap: wrap; margin-bottom: 0.4rem; padding: 0.2rem 0.3rem;">
                             <span id="main-stat-moves" class="breakdown-stat-pill highlight-moves" title="本次复原步数">--步</span>
                             <span id="main-stat-time" class="breakdown-stat-pill highlight-time" title="本次复原时间">--s</span>
                             <span id="main-stat-tps" class="breakdown-stat-pill highlight-tps" title="本次复原 TPS">-- TPS</span>
                         </div>
-                        <button class="btn-panel-toggle" data-target="main-solve-breakdown-card" title="折叠/展开" style="flex-shrink: 0;">
-                            <svg class="svg-icon svg-chevron" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                            <span class="toggle-text">收起</span>
-                        </button>
-                    </div>
-                    <div class="collapsible-body" style="padding: 0.35rem 0.4rem;">
                         <!-- Full-Width High-Density Performance Curve with On-Curve Stage Metrics -->
                         <div class="breakdown-chart-wrapper" style="position: relative; width: 100%; background: var(--bg-surface-elevated); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.4rem 0.3rem 0.3rem 0.3rem; box-sizing: border-box;">
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.25rem; padding: 0 0.2rem; flex-wrap: wrap; gap: 0.3rem;">

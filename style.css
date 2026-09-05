@@ -601,7 +601,9 @@ body.theme-win98 .header-actions {
 }
 
 body.style-win98 .header-actions .btn-icon-square,
-body.theme-win98 .header-actions .btn-icon-square {
+body.style-win98 .header-actions #btn-bluetooth-capsule,
+body.theme-win98 .header-actions .btn-icon-square,
+body.theme-win98 .header-actions #btn-bluetooth-capsule {
     width: 20px !important;
     height: 20px !important;
     min-width: 20px !important;
@@ -617,6 +619,33 @@ body.theme-win98 .header-actions .btn-icon-square {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
+    gap: 0 !important;
+}
+
+body.style-win98 .header-actions #btn-bluetooth-capsule.connected,
+body.theme-win98 .header-actions #btn-bluetooth-capsule.connected,
+body.style-win98 .header-actions #btn-bluetooth-capsule.connecting,
+body.theme-win98 .header-actions #btn-bluetooth-capsule.connecting,
+body.style-win98 .header-actions #btn-bluetooth-capsule.disconnected,
+body.theme-win98 .header-actions #btn-bluetooth-capsule.disconnected {
+    width: 20px !important;
+    height: 20px !important;
+    min-width: 20px !important;
+    min-height: 20px !important;
+    max-width: 20px !important;
+    max-height: 20px !important;
+    padding: 0 !important;
+    background-color: #C0C0C0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf !important;
+}
+
+body.style-win98 .header-actions #btn-bluetooth-capsule .header-battery-val,
+body.theme-win98 .header-actions #btn-bluetooth-capsule .header-battery-val,
+body.style-win98 .header-actions #btn-bluetooth-capsule .bt-connected-dot,
+body.theme-win98 .header-actions #btn-bluetooth-capsule .bt-connected-dot {
+    display: none !important;
 }
 
 body.style-win98 .header-actions .btn-icon-square svg,
@@ -643,7 +672,7 @@ body.theme-win98 .app-nav-tabs {
     padding: 6px 10px 0 10px !important;
     margin: 0 !important;
     border: none !important;
-    border-bottom: 2px solid #FFFFFF !important;
+    border-bottom: 1px solid #FFFFFF !important;
     border-radius: 0 !important;
     position: relative !important;
     z-index: 2 !important;
@@ -694,18 +723,18 @@ body.theme-win98 .nav-tab-btn:hover {
 body.style-win98 .nav-tab-btn.active,
 body.theme-win98 .nav-tab-btn.active {
     position: relative !important;
-    top: -2px !important;
+    top: 0 !important;
     background-color: #C0C0C0 !important;
     color: #000000 !important;
     font-weight: 700 !important;
-    margin-bottom: -2px !important;
-    padding: 4px 14px 6px 14px !important;
-    height: 32px !important;
-    min-height: 32px !important;
+    margin-bottom: -1px !important;
+    padding: 5px 14px 7px 14px !important;
+    height: 33px !important;
+    min-height: 33px !important;
     border-top: 1px solid #FFFFFF !important;
     border-left: 1px solid #FFFFFF !important;
     border-right: 1px solid #000000 !important;
-    border-bottom: 2px solid #C0C0C0 !important; /* 开口关键：底边与背景同色完全抹平分割线 */
+    border-bottom: 1px solid #C0C0C0 !important; /* 开口关键：底边与背景同色完全抹平分割线 */
     box-shadow: inset 1px 1px 0 #FFFFFF, inset -1px 0 0 #808080, inset -2px 0 0 #000000 !important;
     z-index: 10 !important;
 }
@@ -778,20 +807,36 @@ body.theme-win98 .card-collapsible.collapsed .collapsible-header {
     border-bottom: none !important;
 }
 
-/* Collapsible Panel Toggle Button */
+/* Collapsible Panel Toggle Button & Header Buttons */
 body.style-win98 .btn-panel-toggle,
-body.theme-win98 .btn-panel-toggle {
+body.theme-win98 .btn-panel-toggle,
+body.style-win98 .collapsible-header .btn,
+body.theme-win98 .collapsible-header .btn {
     background-color: #C0C0C0 !important;
     color: #000000 !important;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: inset -1px -1px #0a0a0a, inset 1px 1px #ffffff, inset -2px -2px #808080, inset 2px 2px #dfdfdf !important;
     font-family: var(--font-sans) !important;
-    font-size: 0.72rem !important;
-    font-weight: 700 !important;
-    min-height: 20px !important;
-    padding: 1px 6px !important;
+    font-size: 0.74rem !important;
+    font-weight: 400 !important;
+    height: 22px !important;
+    min-height: 22px !important;
+    padding: 1px 8px !important;
     line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.3rem !important;
+}
+
+body.style-win98 .collapsible-header .btn svg,
+body.theme-win98 .collapsible-header .btn svg,
+body.style-win98 .collapsible-header .btn-panel-toggle svg,
+body.theme-win98 .collapsible-header .btn-panel-toggle svg {
+    width: 12px !important;
+    height: 12px !important;
+    stroke: #000000 !important;
 }
 
 body.style-win98 .card-collapsible.collapsed .btn-panel-toggle,
