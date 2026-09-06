@@ -1923,7 +1923,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     bluetooth.on('move', (moveEvent) => {
         resetBtInactivityTimer();
-        sound.playScrambleTick();
 
         physicalCube.applyMove(moveEvent.move);
         const faceletStr = physicalCube.getFacelets();

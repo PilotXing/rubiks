@@ -248,16 +248,10 @@
         }
 
         /**
-         * Pleasant tactile click on each scramble move
+         * Tactile click on move - disabled to avoid conflict with metronome
          */
         playScrambleTick() {
-            if (!this.enabled) return;
-            this.initContext();
-            if (!this.ctx) return;
-
-            // Dual micro click: high pop
-            this.playTone(1400, 'sine', 0.03, 0, 0.4);
-            this.playTone(880, 'triangle', 0.025, 0.01, 0.3);
+            // Disabled: eliminate turn click sound conflicts with metronome
         }
 
         /**
