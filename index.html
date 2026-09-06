@@ -58,6 +58,16 @@
                     <span id="cube-battery-val" style="display: none;">--%</span>
                 </button>
 
+                <!-- Button: Metronome Square Icon Button -->
+                <button id="btn-metronome" class="btn btn-icon-square btn-secondary btn-sm" title="节拍器 (Metronome)" type="button">
+                    <svg class="svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2L4 22h16L12 2z"></path>
+                        <line x1="12" y1="18" x2="16.5" y2="8" stroke-width="2.2"></line>
+                        <circle cx="16.5" cy="8" r="1.5" fill="currentColor"></circle>
+                    </svg>
+                    <span id="metronome-armed-dot" class="metronome-armed-dot" style="display: none;"></span>
+                </button>
+
                 <!-- Button 2: Settings Square Icon Button -->
                 <button id="btn-settings" class="btn btn-icon-square btn-secondary btn-sm" title="设置 (Settings)" type="button">
                     <svg class="svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -648,6 +658,85 @@
                     <button id="btn-modal-recalibrate" class="btn btn-secondary btn-sm">设为复原态 (Set Solved)</button>
                 </div>
                 <button class="btn btn-secondary btn-sm" onclick="document.getElementById('modal-bluetooth-log').classList.remove('active')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Metronome Settings (节拍器) -->
+    <div id="modal-metronome" class="modal-backdrop">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 class="modal-title" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <svg class="svg-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2L4 22h16L12 2z"></path>
+                        <line x1="12" y1="18" x2="16.5" y2="8" stroke-width="2.2"></line>
+                        <circle cx="16.5" cy="8" r="1.5" fill="currentColor"></circle>
+                    </svg>
+                    <span>节拍器设置 (Metronome)</span>
+                </h3>
+                <button id="btn-close-metronome" class="btn-close-modal" type="button">&times;</button>
+            </div>
+            <div class="modal-body" style="display: flex; flex-direction: column; gap: 1.1rem;">
+                <!-- ARM 开关 -->
+                <div class="setting-item" style="display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div class="setting-label" style="font-weight: 700;">自动启动 (ARM)</div>
+                        <div class="setting-desc" style="font-size: 0.78rem; color: var(--text-muted);">打乱开始与复原计时开始时自动以设定节拍发声</div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-metronome-arm">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <!-- BPS 设置 -->
+                <div class="setting-item">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+                        <span class="setting-label" style="font-weight: 700;">节拍速度 (BPS / 转速)</span>
+                        <div style="display: flex; align-items: baseline; gap: 0.35rem;">
+                            <span id="metronome-bps-val" style="font-family: var(--font-mono); font-size: 1.15rem; font-weight: 700; color: var(--accent-primary);">2.5</span>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">BPS</span>
+                            <span id="metronome-bpm-val" style="font-size: 0.75rem; color: var(--text-muted);">(150 BPM)</span>
+                        </div>
+                    </div>
+                    <input type="range" id="slider-metronome-bps" min="0.5" max="10.0" step="0.1" value="2.5" style="width: 100%;">
+                    <div class="metronome-quick-bps" style="display: flex; gap: 0.4rem; margin-top: 0.45rem; flex-wrap: wrap;">
+                        <button class="btn btn-xs btn-secondary btn-bps-preset" data-bps="1.5" type="button">1.5</button>
+                        <button class="btn btn-xs btn-secondary btn-bps-preset" data-bps="2.0" type="button">2.0</button>
+                        <button class="btn btn-xs btn-secondary btn-bps-preset" data-bps="2.5" type="button">2.5</button>
+                        <button class="btn btn-xs btn-secondary btn-bps-preset" data-bps="3.0" type="button">3.0</button>
+                        <button class="btn btn-xs btn-secondary btn-bps-preset" data-bps="4.0" type="button">4.0</button>
+                        <button class="btn btn-xs btn-secondary btn-bps-preset" data-bps="5.0" type="button">5.0</button>
+                        <button class="btn btn-xs btn-secondary btn-bps-preset" data-bps="6.0" type="button">6.0</button>
+                    </div>
+                </div>
+
+                <!-- 声音设置 -->
+                <div class="setting-item">
+                    <label class="setting-label" style="font-weight: 700; display: block; margin-bottom: 0.4rem;">节拍声音 (Sound Tone)</label>
+                    <select id="select-metronome-sound" class="select-input" style="width: 100%;">
+                        <option value="woodblock">经典木鱼 (Woodblock - 推荐)</option>
+                        <option value="beep">数字电子音 (Digital Beep)</option>
+                        <option value="tick">机械嘀嗒 (Mechanical Tick)</option>
+                        <option value="cowbell">金属响铃 (Cowbell)</option>
+                    </select>
+                </div>
+
+                <!-- 音量设置 -->
+                <div class="setting-item">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.35rem;">
+                        <span class="setting-label" style="font-weight: 700;">音量 (Volume)</span>
+                        <span id="metronome-vol-val" style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted);">80%</span>
+                    </div>
+                    <input type="range" id="slider-metronome-vol" min="0" max="100" step="5" value="80" style="width: 100%;">
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; align-items: center; justify-content: space-between;">
+                <button id="btn-metronome-test" class="btn btn-secondary btn-sm" type="button">
+                    <span id="metronome-test-icon">▶</span>
+                    <span id="metronome-test-label">试听节拍</span>
+                </button>
+                <button id="btn-metronome-done" class="btn btn-primary btn-sm" type="button">完成</button>
             </div>
         </div>
     </div>

@@ -60,8 +60,24 @@ document.addEventListener('DOMContentLoaded', () => {
         btnClearBtLog: document.getElementById('btn-clear-bt-log'),
         btnModalConnect: document.getElementById('btn-modal-connect'),
         btnModalDisconnect: document.getElementById('btn-modal-disconnect'),
-        btnModalRecalibrate: document.getElementById('btn-modal-recalibrate'),
         btnOpenBtLogFromSettings: document.getElementById('btn-open-bt-log-from-settings'),
+
+        // Metronome Elements
+        btnMetronome: document.getElementById('btn-metronome'),
+        metronomeArmedDot: document.getElementById('metronome-armed-dot'),
+        modalMetronome: document.getElementById('modal-metronome'),
+        btnCloseMetronome: document.getElementById('btn-close-metronome'),
+        btnMetronomeDone: document.getElementById('btn-metronome-done'),
+        toggleMetronomeArm: document.getElementById('toggle-metronome-arm'),
+        sliderMetronomeBps: document.getElementById('slider-metronome-bps'),
+        metronomeBpsVal: document.getElementById('metronome-bps-val'),
+        metronomeBpmVal: document.getElementById('metronome-bpm-val'),
+        selectMetronomeSound: document.getElementById('select-metronome-sound'),
+        sliderMetronomeVol: document.getElementById('slider-metronome-vol'),
+        metronomeVolVal: document.getElementById('metronome-vol-val'),
+        btnMetronomeTest: document.getElementById('btn-metronome-test'),
+        metronomeTestIcon: document.getElementById('metronome-test-icon'),
+        metronomeTestLabel: document.getElementById('metronome-test-label'),
 
         // Scramble Box & Timer Arena
         scrambleBox: document.getElementById('scramble-box'),
@@ -850,60 +866,92 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const totalMoves = moves.length;
         let trackItemsHtml = '';
+        let overallChipsHtml = '';
 
-        moves.forEach((move, idx) => {
-            const stepClasses = getScrambleStepClasses(
-                idx,
-                activeIdx,
-                scrambleVisiblePrev,
-                scrambleVisibleNext
-            );
-            let cls = stepClasses.cls;
-            const farCls = stepClasses.farCls;
-            let content = move;
-            const colorCls = getMoveColorClass(move);
-
-            if (idx === activeIdx) {
-                if (isDeviated && correctionMoves && correctionMoves.length > 0) {
-                    cls = 'step-correction';
-                    const nextCorrection = correctionMoves[0];
-                    const corrColor = getMoveColorClass(nextCorrection);
-                    content = nextCorrection;
-                } else if (isHalfTurn && showExpandedDirection) {
-                    cls = 'step-half-active';
-                    const label = remainingOnFace || move;
-                    content = `<span class="step-half-base">${move}</span><span class="step-half-guide">再转 ${label}</span>`;
-                } else {
-                    cls = 'step-active';
-                }
+        if (isDeviated && correctionMoves && correctionMoves.length > 0) {
+            // 1. Completed moves before deviation
+            for (let i = 0; i < activeIdx; i++) {
+                const move = moves[i];
+                const colorCls = getMoveColorClass(move);
+                const stepClasses = getScrambleStepClasses(i, activeIdx, scrambleVisiblePrev, scrambleVisibleNext);
+                trackItemsHtml += `<div class="reel-step-item ${stepClasses.cls} ${stepClasses.farCls} ${colorCls}" data-idx="${i}">${move}</div>`;
+                overallChipsHtml += `<span class="overall-move-chip done ${colorCls}">${move}</span>`;
             }
 
-            trackItemsHtml += `<div class="reel-step-item ${cls} ${farCls} ${colorCls}" data-idx="${idx}">${content}</div>`;
-        });
+            // 2. Insert correction move(s) right at the current active position
+            correctionMoves.forEach((corrMove, cIdx) => {
+                const corrColor = getMoveColorClass(corrMove);
+                const isCurrentCorr = (cIdx === 0);
+                const cls = isCurrentCorr ? 'step-active step-correction step-rewind' : 'step-pending step-correction';
+                trackItemsHtml += `
+                    <div class="reel-step-item ${cls} ${corrColor}" data-corr-idx="${cIdx}">
+                        <span class="step-undo-icon">⟲</span>
+                        <span class="step-corr-move">${corrMove}</span>
+                        <span class="step-corr-tag">反转纠错</span>
+                    </div>
+                `;
+                overallChipsHtml += `<span class="overall-move-chip correction ${isCurrentCorr ? 'active' : 'pending'} ${corrColor}">⟲${corrMove}</span>`;
+            });
+
+            // 3. Pushed-back original remaining moves (starting with the target move for this step)
+            for (let i = activeIdx; i < totalMoves; i++) {
+                const move = moves[i];
+                const colorCls = getMoveColorClass(move);
+                trackItemsHtml += `<div class="reel-step-item step-pending step-pushed-back ${colorCls}" data-idx="${i}">${move}</div>`;
+                overallChipsHtml += `<span class="overall-move-chip pending ${colorCls}">${move}</span>`;
+            }
+        } else {
+            // Standard non-deviated sequence
+            moves.forEach((move, idx) => {
+                const stepClasses = getScrambleStepClasses(
+                    idx,
+                    activeIdx,
+                    scrambleVisiblePrev,
+                    scrambleVisibleNext
+                );
+                let cls = stepClasses.cls;
+                const farCls = stepClasses.farCls;
+                let content = move;
+                const colorCls = getMoveColorClass(move);
+
+                if (idx === activeIdx) {
+                    if (isHalfTurn && showExpandedDirection) {
+                        cls = 'step-half-active';
+                        const label = remainingOnFace || move;
+                        content = `<span class="step-half-base">${move}</span><span class="step-half-guide">再转 ${label}</span>`;
+                    } else {
+                        cls = 'step-active';
+                    }
+                }
+
+                trackItemsHtml += `<div class="reel-step-item ${cls} ${farCls} ${colorCls}" data-idx="${idx}">${content}</div>`;
+            });
+
+            moves.forEach((move, idx) => {
+                let stCls = 'pending';
+                if (idx < activeIdx) stCls = 'done';
+                else if (idx === activeIdx) stCls = 'active';
+                const colorCls = getMoveColorClass(move);
+                overallChipsHtml += `<span class="overall-move-chip ${stCls} ${colorCls}">${move}</span>`;
+            });
+        }
 
         // Footer progress sub-label
         const completedCount = Math.min(activeIdx, totalMoves);
         const remainingCount = Math.max(0, totalMoves - completedCount);
         const pct = Math.round((completedCount / totalMoves) * 100);
+        const statusNote = (isDeviated && correctionMoves && correctionMoves.length > 0)
+            ? `<span style="color: #EF4444; font-weight: 700;">(纠错回退中)</span>`
+            : `<span style="opacity: 0.65;">(${pct}%)</span>`;
         const footerHtml = `
             <div class="scramble-reel-footer">
                 <span>已完成 <strong class="progress-highlight">${completedCount}</strong> 步</span>
                 <span>·</span>
                 <span>剩余 <strong class="progress-highlight">${remainingCount}</strong> 步</span>
-                <span style="opacity: 0.65;">(${pct}%)</span>
+                ${statusNote}
                 <button class="btn-enter-scramble-fs" title="进入全屏打乱模式 (Fullscreen Scramble)" type="button">全屏</button>
             </div>
         `;
-
-        // Overall View Mini Bar (displays all moves with current move highlighted)
-        let overallChipsHtml = '';
-        moves.forEach((move, idx) => {
-            let stCls = 'pending';
-            if (idx < activeIdx) stCls = 'done';
-            else if (idx === activeIdx) stCls = 'active';
-            const colorCls = getMoveColorClass(move);
-            overallChipsHtml += `<span class="overall-move-chip ${stCls} ${colorCls}">${move}</span>`;
-        });
 
         const overallHtml = `
             <div class="scramble-overall-container" title="打乱公式全览">
@@ -998,7 +1046,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (currentTrack && moves.length > 0 && scrambleDisplayStyle !== 'grid') {
                 const existingItems = currentTrack.querySelectorAll('.reel-step-item');
-                if (existingItems.length === moves.length) {
+                if (existingItems.length === moves.length && !isDeviated) {
                     // Smooth in-place DOM update preserving CSS slide animation
                     existingItems.forEach((item, idx) => {
                         const origMove = moves[idx];
@@ -1016,13 +1064,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             item.className = `reel-step-item ${cls} ${farCls} ${colorCls}`;
                             item.textContent = origMove;
                         } else if (idx === activeIdx) {
-                            if (isDeviated && correctionMoves && correctionMoves.length > 0) {
-                                cls = 'step-correction';
-                                const nextCorrection = correctionMoves[0];
-                                const corrColor = getMoveColorClass(nextCorrection);
-                                item.className = `reel-step-item ${cls} ${corrColor}`;
-                                item.textContent = nextCorrection;
-                            } else if (isHalfTurn && showExpandedDirection) {
+                            if (isHalfTurn && showExpandedDirection) {
                                 cls = 'step-half-active';
                                 const label = remainingOnFace || origMove;
                                 item.className = `reel-step-item ${cls} ${colorCls}`;
@@ -1069,13 +1111,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     carouselElements.cardCurrent.innerHTML = formatScrambleHTML(currentStr, activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, null, isDeviated);
                     carouselElements.cardCurrent.classList.remove('scramble-empty-hint');
                     const newTrack = carouselElements.cardCurrent.querySelector('.scramble-reel-track');
-                    if (newTrack) alignReelTrack(newTrack, activeIdx, false);
+                    if (newTrack) {
+                        if (isDeviated) {
+                            newTrack.classList.remove('error-shake');
+                            void newTrack.offsetWidth;
+                            newTrack.classList.add('error-shake');
+                        }
+                        alignReelTrack(newTrack, activeIdx, true);
+                    }
                 }
             } else {
                 carouselElements.cardCurrent.innerHTML = formatScrambleHTML(currentStr, activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, null, isDeviated);
                 carouselElements.cardCurrent.classList.remove('scramble-empty-hint');
                 const newTrack = carouselElements.cardCurrent.querySelector('.scramble-reel-track');
-                if (newTrack) alignReelTrack(newTrack, activeIdx, false);
+                if (newTrack) {
+                    if (isDeviated) {
+                        newTrack.classList.remove('error-shake');
+                        void newTrack.offsetWidth;
+                        newTrack.classList.add('error-shake');
+                    }
+                    alignReelTrack(newTrack, activeIdx, false);
+                }
             }
         }
 
@@ -1407,6 +1463,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        if (evalResult && !evalResult.isComplete && (evalResult.currentStep > 0 || evalResult.isHalfTurn || evalResult.isDeviated)) {
+            if (sound && sound.metronome && sound.metronome.armed && !sound.metronome.isRunning && timer.state !== 'RUNNING') {
+                sound.metronome.start();
+                updateMetronomeUI();
+            }
+        }
+
         if (evalResult.isComplete) {
             resetScrambleMoveSpeed();
             setScrambleFullscreen(false);
@@ -1428,6 +1491,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             timer.setState('READY');
             sound.playScrambleComplete();
+            if (sound && sound.metronome && sound.metronome.isRunning) {
+                sound.metronome.stop();
+                updateMetronomeUI();
+            }
         } else if (evalResult.isDeviated) {
             setScrambleFullscreen(true);
             setArenaMode('SCRAMBLE');
@@ -1455,7 +1522,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     const remSteps = evalResult.remainingMoves ? evalResult.remainingMoves.length : 0;
                     banner.innerHTML = `<span>偏离超3步，已重算最短路径: <strong>${nextCorrection}</strong> (剩余 ${remSteps} 步)</span>`;
                 } else {
-                    banner.innerHTML = `<span>转动错误，请转动 <strong>${nextCorrection}</strong> 纠错回到打乱步骤</span>`;
+                    const origStepMove = (tracker && tracker.scrambleMoves && tracker.scrambleMoves[evalResult.currentStep]) || '';
+                    banner.innerHTML = `<span>转动错误，请先反转 <strong>${nextCorrection}</strong> 纠错，再转动 <strong>${origStepMove}</strong></span>`;
                 }
                 banner.classList.add('status-warning');
             }
@@ -1924,15 +1992,27 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.mainTimerContainer.classList.add('timer-running');
             elements.liveMovesBadge.parentElement.style.display = 'flex';
             sound.playSolveStart();
+            if (sound && sound.metronome && sound.metronome.armed) {
+                sound.metronome.start();
+                updateMetronomeUI();
+            }
         } else if (state === 'FINISHED') {
             document.body.classList.remove('is-solving');
             elements.mainTimerContainer.classList.remove('timer-running');
             elements.mainTimerContainer.classList.add('timer-finished-flash');
             setTimeout(() => elements.mainTimerContainer.classList.remove('timer-finished-flash'), 1000);
-        } else if (state === 'IDLE') {
+            if (sound && sound.metronome && sound.metronome.isRunning) {
+                sound.metronome.stop();
+                updateMetronomeUI();
+            }
+        } else if (state === 'IDLE' || state === 'STOPPED') {
             document.body.classList.remove('is-solving');
             elements.mainTimerContainer.classList.remove('timer-running');
             elements.liveMovesBadge.parentElement.style.display = 'none';
+            if (sound && sound.metronome && sound.metronome.isRunning) {
+                sound.metronome.stop();
+                updateMetronomeUI();
+            }
         }
     });
 
@@ -1966,6 +2046,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     timer.on('solveFinished', (solve) => {
         sound.playSolveComplete();
+        if (sound && sound.metronome && sound.metronome.isRunning) {
+            sound.metronome.stop();
+            updateMetronomeUI();
+        }
         handleSolveFinishedUI(solve);
     });
 
@@ -3460,9 +3544,136 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 modal.classList.remove('active');
+                if (modal === elements.modalMetronome && sound && sound.metronome && timer.state !== 'RUNNING' && timer.state !== 'SCRAMBLING') {
+                    sound.metronome.stop();
+                    updateMetronomeUI();
+                }
             }
         });
     });
+
+    // -------------------------------------------------------------
+    // Metronome Controller (节拍器)
+    // -------------------------------------------------------------
+    function updateMetronomeUI() {
+        if (!sound || !sound.metronome) return;
+        const m = sound.metronome;
+        if (elements.toggleMetronomeArm) elements.toggleMetronomeArm.checked = m.armed;
+        if (elements.metronomeArmedDot) elements.metronomeArmedDot.style.display = m.armed ? 'block' : 'none';
+        if (elements.sliderMetronomeBps) elements.sliderMetronomeBps.value = m.bps;
+        if (elements.metronomeBpsVal) elements.metronomeBpsVal.textContent = m.bps.toFixed(1);
+        if (elements.metronomeBpmVal) elements.metronomeBpmVal.textContent = `(${Math.round(m.bps * 60)} BPM)`;
+        if (elements.selectMetronomeSound) elements.selectMetronomeSound.value = m.soundType;
+        if (elements.sliderMetronomeVol) elements.sliderMetronomeVol.value = Math.round(m.volume * 100);
+        if (elements.metronomeVolVal) elements.metronomeVolVal.textContent = `${Math.round(m.volume * 100)}%`;
+
+        document.querySelectorAll('.btn-bps-preset').forEach(btn => {
+            const preset = parseFloat(btn.getAttribute('data-bps'));
+            btn.classList.toggle('active', Math.abs(preset - m.bps) < 0.05);
+        });
+
+        if (elements.btnMetronomeTest) {
+            const isPlaying = m.isRunning;
+            if (elements.metronomeTestIcon) elements.metronomeTestIcon.textContent = isPlaying ? '■' : '▶';
+            if (elements.metronomeTestLabel) elements.metronomeTestLabel.textContent = isPlaying ? '停止试听' : '试听节拍';
+        }
+        if (elements.btnMetronome) {
+            elements.btnMetronome.classList.toggle('metronome-ticking', m.isRunning);
+        }
+    }
+
+    if (sound && sound.metronome) {
+        sound.metronome.onBeat = () => {
+            if (elements.btnMetronome) {
+                elements.btnMetronome.classList.add('metronome-ticking');
+            }
+        };
+    }
+
+    if (elements.btnMetronome) {
+        elements.btnMetronome.addEventListener('click', () => {
+            updateMetronomeUI();
+            if (elements.modalMetronome) elements.modalMetronome.classList.add('active');
+        });
+    }
+
+    if (elements.btnCloseMetronome) {
+        elements.btnCloseMetronome.addEventListener('click', () => {
+            if (elements.modalMetronome) elements.modalMetronome.classList.remove('active');
+            if (sound && sound.metronome && timer.state !== 'RUNNING' && timer.state !== 'SCRAMBLING') {
+                sound.metronome.stop();
+                updateMetronomeUI();
+            }
+        });
+    }
+
+    if (elements.btnMetronomeDone) {
+        elements.btnMetronomeDone.addEventListener('click', () => {
+            if (elements.modalMetronome) elements.modalMetronome.classList.remove('active');
+            if (sound && sound.metronome && timer.state !== 'RUNNING' && timer.state !== 'SCRAMBLING') {
+                sound.metronome.stop();
+                updateMetronomeUI();
+            }
+        });
+    }
+
+    if (elements.toggleMetronomeArm) {
+        elements.toggleMetronomeArm.addEventListener('change', () => {
+            if (sound && sound.metronome) {
+                sound.metronome.setArmed(elements.toggleMetronomeArm.checked);
+                updateMetronomeUI();
+                showToast(sound.metronome.armed ? '节拍器已 ARM (打乱/复原自动播放)' : '节拍器已关闭 ARM');
+            }
+        });
+    }
+
+    if (elements.sliderMetronomeBps) {
+        elements.sliderMetronomeBps.addEventListener('input', () => {
+            if (sound && sound.metronome) {
+                sound.metronome.setBps(elements.sliderMetronomeBps.value);
+                updateMetronomeUI();
+            }
+        });
+    }
+
+    document.querySelectorAll('.btn-bps-preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const bps = parseFloat(btn.getAttribute('data-bps'));
+            if (sound && sound.metronome && !isNaN(bps)) {
+                sound.metronome.setBps(bps);
+                updateMetronomeUI();
+            }
+        });
+    });
+
+    if (elements.selectMetronomeSound) {
+        elements.selectMetronomeSound.addEventListener('change', () => {
+            if (sound && sound.metronome) {
+                sound.metronome.setSoundType(elements.selectMetronomeSound.value);
+                sound.metronome.playSingleTick();
+            }
+        });
+    }
+
+    if (elements.sliderMetronomeVol) {
+        elements.sliderMetronomeVol.addEventListener('input', () => {
+            if (sound && sound.metronome) {
+                sound.metronome.setVolume(elements.sliderMetronomeVol.value / 100);
+                if (elements.metronomeVolVal) elements.metronomeVolVal.textContent = `${elements.sliderMetronomeVol.value}%`;
+            }
+        });
+    }
+
+    if (elements.btnMetronomeTest) {
+        elements.btnMetronomeTest.addEventListener('click', () => {
+            if (sound && sound.metronome) {
+                sound.metronome.toggle();
+                updateMetronomeUI();
+            }
+        });
+    }
+
+    updateMetronomeUI();
 
     elements.toggleInspection.addEventListener('change', (e) => {
         timer.inspectionEnabled = e.target.checked;

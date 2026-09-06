@@ -16,12 +16,199 @@
 }(typeof self !== 'undefined' ? self : this, function() {
     'use strict';
 
+    class MetronomeEngine {
+        constructor(soundManager) {
+            this.sound = soundManager;
+            const getStorage = (key, fallback) => {
+                if (typeof localStorage !== 'undefined') {
+                    const v = localStorage.getItem(key);
+                    return v !== null ? v : fallback;
+                }
+                return fallback;
+            };
+
+            this.bps = parseFloat(getStorage('rubiks_metronome_bps', '2.5')) || 2.5;
+            this.armed = getStorage('rubiks_metronome_armed', 'false') === 'true';
+            this.soundType = getStorage('rubiks_metronome_sound', 'woodblock');
+            this.volume = parseFloat(getStorage('rubiks_metronome_vol', '0.8')) || 0.8;
+            this.isRunning = false;
+            this.timerId = null;
+            this.nextNoteTime = 0.0;
+            this.lookahead = 25.0; // ms
+            this.scheduleAheadTime = 0.1; // sec
+            this.beatCount = 0;
+            this.onBeat = null;
+        }
+
+        setBps(val) {
+            const parsed = parseFloat(val);
+            if (!isNaN(parsed) && parsed >= 0.5 && parsed <= 15.0) {
+                this.bps = Math.round(parsed * 10) / 10;
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.setItem('rubiks_metronome_bps', this.bps.toString());
+                }
+            }
+            return this.bps;
+        }
+
+        setArmed(isArmed) {
+            this.armed = !!isArmed;
+            if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('rubiks_metronome_armed', this.armed ? 'true' : 'false');
+            }
+            return this.armed;
+        }
+
+        setSoundType(type) {
+            if (['woodblock', 'beep', 'tick', 'cowbell'].includes(type)) {
+                this.soundType = type;
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.setItem('rubiks_metronome_sound', this.soundType);
+                }
+            }
+            return this.soundType;
+        }
+
+        setVolume(vol) {
+            const parsed = parseFloat(vol);
+            if (!isNaN(parsed)) {
+                this.volume = Math.max(0, Math.min(1, parsed));
+                if (typeof localStorage !== 'undefined') {
+                    localStorage.setItem('rubiks_metronome_vol', this.volume.toString());
+                }
+            }
+            return this.volume;
+        }
+
+        start() {
+            if (this.isRunning) return;
+            this.sound.initContext();
+            if (!this.sound.ctx) return;
+            this.isRunning = true;
+            this.beatCount = 0;
+            this.nextNoteTime = this.sound.ctx.currentTime + 0.03;
+            this._scheduleLoop();
+        }
+
+        stop() {
+            this.isRunning = false;
+            if (this.timerId) {
+                clearTimeout(this.timerId);
+                this.timerId = null;
+            }
+        }
+
+        toggle() {
+            if (this.isRunning) {
+                this.stop();
+            } else {
+                this.start();
+            }
+            return this.isRunning;
+        }
+
+        _scheduleLoop() {
+            if (!this.isRunning) return;
+            const ctx = this.sound.ctx;
+            if (!ctx) return;
+
+            while (this.nextNoteTime < ctx.currentTime + this.scheduleAheadTime) {
+                this.playToneAt(this.nextNoteTime, this.beatCount);
+                const interval = 1.0 / this.bps;
+                this.nextNoteTime += interval;
+                this.beatCount++;
+            }
+
+            this.timerId = setTimeout(() => this._scheduleLoop(), this.lookahead);
+        }
+
+        playToneAt(time, count = 0) {
+            const ctx = this.sound.ctx;
+            if (!ctx) return;
+            const effVol = this.volume * this.sound.volume;
+            if (effVol <= 0.001) return;
+
+            if (this.soundType === 'beep') {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1200, time);
+                gain.gain.setValueAtTime(0.001, time);
+                gain.gain.exponentialRampToValueAtTime(effVol * 0.7, time + 0.004);
+                gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.035);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(time);
+                osc.stop(time + 0.04);
+            } else if (this.soundType === 'tick') {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(2400, time);
+                osc.frequency.exponentialRampToValueAtTime(600, time + 0.015);
+                gain.gain.setValueAtTime(0.001, time);
+                gain.gain.exponentialRampToValueAtTime(effVol * 0.8, time + 0.002);
+                gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.02);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(time);
+                osc.stop(time + 0.025);
+            } else if (this.soundType === 'cowbell') {
+                const osc1 = ctx.createOscillator();
+                const osc2 = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc1.type = 'square';
+                osc2.type = 'triangle';
+                osc1.frequency.setValueAtTime(800, time);
+                osc2.frequency.setValueAtTime(540, time);
+                gain.gain.setValueAtTime(0.001, time);
+                gain.gain.exponentialRampToValueAtTime(effVol * 0.6, time + 0.003);
+                gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.06);
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(ctx.destination);
+                osc1.start(time);
+                osc2.start(time);
+                osc1.stop(time + 0.07);
+                osc2.stop(time + 0.07);
+            } else {
+                // Default: 'woodblock'
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(900, time);
+                osc.frequency.exponentialRampToValueAtTime(450, time + 0.025);
+                gain.gain.setValueAtTime(0.001, time);
+                gain.gain.exponentialRampToValueAtTime(effVol * 0.9, time + 0.003);
+                gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.035);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(time);
+                osc.stop(time + 0.04);
+            }
+
+            if (this.onBeat) {
+                const delayMs = Math.max(0, (time - ctx.currentTime) * 1000);
+                setTimeout(() => {
+                    if (this.isRunning && this.onBeat) this.onBeat(count);
+                }, delayMs);
+            }
+        }
+
+        playSingleTick() {
+            this.sound.initContext();
+            if (!this.sound.ctx) return;
+            this.playToneAt(this.sound.ctx.currentTime + 0.01, 0);
+        }
+    }
+
     class SoundManager {
         constructor() {
             this.ctx = null;
             this.enabled = true;
             this.volume = 0.7; // 0.0 to 1.0
             this.voiceEnabled = true;
+            this.metronome = new MetronomeEngine(this);
         }
 
         initContext() {
@@ -146,5 +333,7 @@
         }
     }
 
-    return new SoundManager();
+    const soundManagerInstance = new SoundManager();
+    soundManagerInstance.MetronomeEngine = MetronomeEngine;
+    return soundManagerInstance;
 }));
