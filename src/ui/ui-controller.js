@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnClearBtLog: document.getElementById('btn-clear-bt-log'),
         btnModalConnect: document.getElementById('btn-modal-connect'),
         btnModalDisconnect: document.getElementById('btn-modal-disconnect'),
+        btnModalRecalibrate: document.getElementById('btn-modal-recalibrate'),
         btnOpenBtLogFromSettings: document.getElementById('btn-open-bt-log-from-settings'),
 
         // Metronome Elements
@@ -1243,7 +1244,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (renderer2D) renderer2D.updateFacelets(faceletStr);
         tracker.resetProgress();
         if (bluetooth) bluetooth.requestReset();
-        updateScrambleStatus();
+        const evalResult = tracker.setCurrentCubeState(physicalCube.cp, physicalCube.co, physicalCube.ep, physicalCube.eo);
+        updateScrambleStatus(evalResult);
+        updateCarouselCards(0);
         showToast('已将魔方设为复原态');
         triggerHaptic('medium');
     }
@@ -1899,7 +1902,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 timer.stopTimer();
             }
         } else if (timer.state !== 'READY' && timer.state !== 'INSPECTION') {
-            if (tracker && tracker.currentStep > 0) {
+            if (tracker) {
                 const evalResult = tracker.setCurrentCubeState(data.cp, data.co, data.ep, data.eo);
                 updateScrambleStatus(evalResult);
             }
