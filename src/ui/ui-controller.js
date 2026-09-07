@@ -473,6 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Battery-Saver Inactivity Timeout (Default 2 minutes / 120 seconds)
     let btInactivityTimeoutSec = parseInt(localStorage.getItem('bt_inactivity_timeout') ?? '120', 10);
     let btInactivityTimer = null;
+    let btAutoDisconnectedReason = null;
 
     function resetBtInactivityTimer() {
         if (btInactivityTimer) {
@@ -484,6 +485,9 @@ document.addEventListener('DOMContentLoaded', () => {
             btInactivityTimer = setTimeout(() => {
                 if (bluetooth && bluetooth.state === 'CONNECTED') {
                     console.log(`[Bluetooth] Inactivity timeout (${btInactivityTimeoutSec}s) reached. Disconnecting to save cube battery.`);
+                    btAutoDisconnectedReason = 'battery_saver';
+                    appendBtLog('warn', `魔方无操作已达 ${btInactivityTimeoutSec} 秒，自动断开连接以节省电量 (Battery Saver)`);
+                    showToast('魔方长时间未活动，已自动断开连接以节省电量');
                     bluetooth.disconnect();
                     if (elements.cubeStatusBadge) {
                         elements.cubeStatusBadge.innerHTML = '<span class="status-dot"></span> Disconnected (Battery Saver)';
@@ -1859,17 +1863,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.btModalBatteryVal) elements.btModalBatteryVal.textContent = '--%';
             if (elements.btModalBatteryFill) elements.btModalBatteryFill.style.width = '0%';
             if (elements.btModalStatusBadge) {
-                elements.btModalStatusBadge.innerHTML = '<span class="status-dot"></span> Disconnected';
+                elements.btModalStatusBadge.innerHTML = btAutoDisconnectedReason === 'battery_saver'
+                    ? '<span class="status-dot"></span> Disconnected (Battery Saver)'
+                    : '<span class="status-dot"></span> Disconnected';
                 elements.btModalStatusBadge.className = 'badge badge-disconnected';
             }
             if (elements.btnModalConnect) elements.btnModalConnect.style.display = 'inline-flex';
             if (elements.btnModalDisconnect) elements.btnModalDisconnect.style.display = 'none';
             if (elements.cubeStatusBadge) {
-                elements.cubeStatusBadge.innerHTML = '<span class="status-dot"></span> Disconnected';
+                elements.cubeStatusBadge.innerHTML = btAutoDisconnectedReason === 'battery_saver'
+                    ? '<span class="status-dot"></span> Disconnected (Battery Saver)'
+                    : '<span class="status-dot"></span> Disconnected';
                 elements.cubeStatusBadge.className = 'badge badge-disconnected';
             }
             if (elements.cubeBatteryBadge) elements.cubeBatteryBadge.style.display = 'none';
-            appendBtLog('warn', '蓝牙连接已断开');
+            appendBtLog('warn', btAutoDisconnectedReason === 'battery_saver' ? '蓝牙连接已自动断开 (节能省电)' : '蓝牙连接已断开');
+            btAutoDisconnectedReason = null;
         }
     });
 
@@ -1891,7 +1900,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     bluetooth.on('facelets', (data) => {
-        resetBtInactivityTimer();
         physicalCube.setState(data.cp, data.co, data.ep, data.eo);
         const faceletStr = physicalCube.getFacelets();
         if (renderer3D) renderer3D.updateFacelets(faceletStr);
