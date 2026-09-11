@@ -651,7 +651,48 @@
             this.moveHistory.push(move);
             this.currentCube.applyMove(move);
 
-            // 1. Direct Move-Stream Tracking (High-Responsiveness Primary Driver)
+            // 1. Direct Move-Stream & Deviation Stack Tracking
+            if (this.isDeviated && this.correctionMoves.length > 0) {
+                const expectedCorrection = this.correctionMoves[0];
+                if (move === expectedCorrection) {
+                    // User successfully executed the active correction move
+                    this.correctionMoves.shift();
+                    if (this.correctionMoves.length === 0) {
+                        this.isDeviated = false;
+                    }
+                } else {
+                    // User made another wrong turn while in correction: push inverse to front of stack
+                    const newInv = invertMove(move);
+                    this.correctionMoves.unshift(newInv);
+                }
+
+                if (!this.isDeviated) {
+                    return {
+                        isComplete: false,
+                        isDeviated: false,
+                        isHalfTurn: this.isHalfTurn,
+                        halfFace: this.halfFace,
+                        remainingOnFace: this.remainingOnFace,
+                        currentStep: this.currentStep,
+                        totalSteps: this.scrambleMoves.length,
+                        correctionMoves: [],
+                        remainingMoves: this.scrambleMoves.slice(this.currentStep),
+                        wrongMove: null
+                    };
+                } else {
+                    return {
+                        isComplete: false,
+                        isDeviated: true,
+                        currentStep: this.currentStep,
+                        totalSteps: this.scrambleMoves.length,
+                        fullScrambleString: this.scrambleString,
+                        correctionMoves: [...this.correctionMoves],
+                        remainingMoves: [...this.correctionMoves, ...this.scrambleMoves.slice(this.currentStep)],
+                        wrongMove: move
+                    };
+                }
+            }
+
             if (this.currentStep < this.scrambleMoves.length) {
                 const targetMove = this.scrambleMoves[this.currentStep];
                 const targetFace = targetMove.charAt(0);
@@ -709,7 +750,7 @@
                                 this.remainingOnFace = null;
                                 this.halfTurnDirection = null;
                             } else {
-                                // Wrong turn undone back to 0 or another position
+                                // Wrong turn undone back to 0
                                 this.isHalfTurn = false;
                                 this.halfFace = null;
                                 this.remainingOnFace = null;
@@ -717,23 +758,19 @@
                                 this.wasReverseCancelled = true;
                             }
                         } else {
-                            // Wrong direction on target face: compute exact rotation to reach targetMove!
-                            let neededOnFace = targetMove;
-                            const targetState = (this.expectedStates && this.currentStep + 1 < this.expectedStates.length)
-                                ? this.expectedStates[this.currentStep + 1]
-                                : null;
-                            if (targetState) {
-                                for (const cand of [targetFace, targetFace + "'", targetFace + "2"]) {
-                                    if (this.currentCube.clone().applyMove(cand).equals(targetState)) {
-                                        neededOnFace = cand;
-                                        break;
-                                    }
-                                }
-                            }
-                            this.isHalfTurn = true;
-                            this.halfFace = targetFace;
-                            this.halfTurnDirection = move;
-                            this.remainingOnFace = neededOnFace;
+                            // Wrong direction on target 90-degree face
+                            this.isDeviated = true;
+                            this.correctionMoves = [invertMove(move)];
+                            return {
+                                isComplete: false,
+                                isDeviated: true,
+                                currentStep: this.currentStep,
+                                totalSteps: this.scrambleMoves.length,
+                                fullScrambleString: this.scrambleString,
+                                correctionMoves: [...this.correctionMoves],
+                                remainingMoves: [...this.correctionMoves, ...this.scrambleMoves.slice(this.currentStep)],
+                                wrongMove: move
+                            };
                         }
                     }
 
@@ -764,77 +801,44 @@
                         correctionMoves: [],
                         remainingMoves: this.scrambleMoves.slice(this.currentStep)
                     };
+                } else {
+                    // Wrong face turned: insert inverse correction into stack without solver repathing
+                    this.isDeviated = true;
+                    this.correctionMoves = [invertMove(move)];
+                    return {
+                        isComplete: false,
+                        isDeviated: true,
+                        currentStep: this.currentStep,
+                        totalSteps: this.scrambleMoves.length,
+                        fullScrambleString: this.scrambleString,
+                        correctionMoves: [...this.correctionMoves],
+                        remainingMoves: [...this.correctionMoves, ...this.scrambleMoves.slice(this.currentStep)],
+                        wrongMove: move
+                    };
                 }
             }
 
-            // 2. Full State & Deviation Fallback
+            // Fallback if cube already reached target
+            if (this.currentCube.equals(this.targetCube)) {
+                this.isComplete = true;
+                this.isDeviated = false;
+                this.isHalfTurn = false;
+                return {
+                    isComplete: true,
+                    isDeviated: false,
+                    isHalfTurn: false,
+                    currentStep: this.scrambleMoves.length,
+                    totalSteps: this.scrambleMoves.length,
+                    correctionMoves: [],
+                    remainingMoves: []
+                };
+            }
+
             return this.evaluateState();
         }
 
-        repathRemaining(completedMoves, remainingMoves) {
-            this.scrambleMoves = [...completedMoves, ...remainingMoves];
-            this.scrambleString = this.scrambleMoves.join(' ');
-            this.currentStep = completedMoves.length;
-
-            // Reconstruct expectedStates and stepInfo starting from current physical cube state
-            this.expectedStates = [];
-            this.stepInfo = [];
-
-            // 1. Build states for completed moves from solved state
-            const simCube = new RubiksCube();
-            this.expectedStates.push(simCube.clone());
-            for (let i = 0; i < completedMoves.length; i++) {
-                const m = completedMoves[i];
-                const face = m.charAt(0);
-                const isDouble = m.endsWith('2');
-
-                const stateF = simCube.clone().applyMove(face);
-                const stateF2 = simCube.clone().applyMove(face + "2");
-                const stateFPrime = simCube.clone().applyMove(face + "'");
-
-                simCube.applyMove(m);
-                this.expectedStates.push(simCube.clone());
-                this.stepInfo.push({
-                    move: m,
-                    face: face,
-                    isDouble: isDouble,
-                    stateF: stateF,
-                    stateF2: stateF2,
-                    stateFPrime: stateFPrime,
-                    targetState: simCube.clone()
-                });
-            }
-
-            // 2. Build states for remaining moves starting from the current physical cube state
-            const currSim = this.currentCube.clone();
-            this.expectedStates[this.currentStep] = currSim.clone();
-
-            for (let i = 0; i < remainingMoves.length; i++) {
-                const m = remainingMoves[i];
-                const face = m.charAt(0);
-                const isDouble = m.endsWith('2');
-
-                const stateF = currSim.clone().applyMove(face);
-                const stateF2 = currSim.clone().applyMove(face + "2");
-                const stateFPrime = currSim.clone().applyMove(face + "'");
-
-                currSim.applyMove(m);
-                this.expectedStates.push(currSim.clone());
-                this.stepInfo.push({
-                    move: m,
-                    face: face,
-                    isDouble: isDouble,
-                    stateF: stateF,
-                    stateF2: stateF2,
-                    stateFPrime: stateFPrime,
-                    targetState: currSim.clone()
-                });
-            }
-            this.targetCube = currSim.clone();
-        }
-
         evaluateState() {
-            // 1. Check if solved to target
+            // Check if solved to target
             if (this.currentCube.equals(this.targetCube)) {
                 this.isComplete = true;
                 this.isDeviated = false;
@@ -854,7 +858,19 @@
 
             this.isComplete = false;
 
-            // 2. Check if currentCube matches any full-step state (scan backwards from end for furthest matching step)
+            if (this.isDeviated && this.correctionMoves.length > 0) {
+                return {
+                    isComplete: false,
+                    isDeviated: true,
+                    currentStep: this.currentStep,
+                    totalSteps: this.scrambleMoves.length,
+                    fullScrambleString: this.scrambleString,
+                    correctionMoves: [...this.correctionMoves],
+                    remainingMoves: [...this.correctionMoves, ...this.scrambleMoves.slice(this.currentStep)]
+                };
+            }
+
+            // Check if currentCube matches any full-step state
             let matchedStep = -1;
             for (let i = this.expectedStates.length - 1; i >= 0; i--) {
                 if (this.currentCube.equals(this.expectedStates[i])) {
@@ -882,159 +898,6 @@
                 };
             }
 
-            // 3. Check if currentCube matches an intermediate rotational state on the expected face for any step
-            for (let i = 0; i < this.stepInfo.length; i++) {
-                const info = this.stepInfo[i];
-                const targetState = info.targetState;
-
-                let matchedCandidate = false;
-                let remainingOnFace = null;
-
-                if (this.currentCube.equals(info.stateF)) {
-                    matchedCandidate = true;
-                    if (targetState.equals(info.stateF2)) remainingOnFace = info.face;
-                    else if (targetState.equals(info.stateFPrime)) remainingOnFace = info.face + "2";
-                } else if (this.currentCube.equals(info.stateF2)) {
-                    matchedCandidate = true;
-                    if (targetState.equals(info.stateF)) remainingOnFace = info.face;
-                    else if (targetState.equals(info.stateFPrime)) remainingOnFace = info.face + "'";
-                } else if (this.currentCube.equals(info.stateFPrime)) {
-                    matchedCandidate = true;
-                    if (targetState.equals(info.stateF)) remainingOnFace = info.face + "2";
-                    else if (targetState.equals(info.stateF2)) remainingOnFace = info.face + "'";
-                }
-
-                if (matchedCandidate && remainingOnFace) {
-                    this.isDeviated = false;
-                    this.isHalfTurn = true;
-                    this.halfFace = info.face;
-                    this.remainingOnFace = remainingOnFace;
-                    this.currentStep = i;
-                    this.correctionMoves = [];
-                    const remainingMoves = [remainingOnFace, ...this.scrambleMoves.slice(i + 1)];
-                    return {
-                        isComplete: false,
-                        isDeviated: false,
-                        isHalfTurn: true,
-                        halfFace: info.face,
-                        remainingOnFace: remainingOnFace,
-                        currentStep: i,
-                        totalSteps: this.scrambleMoves.length,
-                        correctionMoves: [],
-                        remainingMoves: remainingMoves
-                    };
-                }
-            }
-
-            // 4. Quick single-move lookahead on active face
-            if (this.currentStep < this.scrambleMoves.length) {
-                const expectedNextState = this.expectedStates[this.currentStep + 1];
-                const expMove = this.scrambleMoves[this.currentStep];
-                const face = expMove.charAt(0);
-
-                for (const candidate of [face, face + "'", face + "2"]) {
-                    const testCube = this.currentCube.clone().applyMove(candidate);
-                    if (testCube.equals(expectedNextState)) {
-                        this.isDeviated = false;
-                        this.isHalfTurn = true;
-                        this.halfFace = face;
-                        this.remainingOnFace = candidate;
-                        this.correctionMoves = [];
-                        const remainingMoves = [candidate, ...this.scrambleMoves.slice(this.currentStep + 1)];
-                        return {
-                            isComplete: false,
-                            isDeviated: false,
-                            isHalfTurn: true,
-                            halfFace: face,
-                            remainingOnFace: candidate,
-                            currentStep: this.currentStep,
-                            totalSteps: this.scrambleMoves.length,
-                            correctionMoves: [],
-                            remainingMoves: remainingMoves
-                        };
-                    }
-                }
-            }
-
-            // 5. Deviation & Error Correction Logic
-            // Check distance back to the current scramble track:
-            const targetCurrent = (this.expectedStates && this.currentStep < this.expectedStates.length)
-                ? this.expectedStates[this.currentStep]
-                : null;
-            const targetNext = (this.expectedStates && this.currentStep + 1 < this.expectedStates.length)
-                ? this.expectedStates[this.currentStep + 1]
-                : null;
-
-            const corrToCurrent = targetCurrent ? getCorrectionMoves(this.currentCube, targetCurrent) : [];
-            const corrToNext = targetNext ? getCorrectionMoves(this.currentCube, targetNext) : [];
-
-            let shortestBackToTrack = [];
-            if (corrToNext.length > 0 && (corrToCurrent.length === 0 || corrToNext.length < corrToCurrent.length)) {
-                shortestBackToTrack = corrToNext;
-            } else {
-                shortestBackToTrack = corrToCurrent;
-            }
-
-            // Case A: Deviation within 3 moves (<= 3 moves)
-            // Follow formula correction logic: DO NOT repath; guide user back onto the original formula!
-            if (shortestBackToTrack.length > 0 && shortestBackToTrack.length <= 3) {
-                this.isDeviated = true;
-                this.isHalfTurn = false;
-                this.correctionMoves = shortestBackToTrack;
-                return {
-                    isComplete: false,
-                    isDeviated: true,
-                    repathed: false,
-                    currentStep: this.currentStep,
-                    totalSteps: this.scrambleMoves.length,
-                    fullScrambleString: this.scrambleString, // Original formula unchanged!
-                    correctionMoves: shortestBackToTrack,
-                    remainingMoves: [shortestBackToTrack[0], ...this.scrambleMoves.slice(this.currentStep)]
-                };
-            }
-
-            // Case B: Deviation exceeds 3 moves (> 3 moves)
-            // Directly compute the SHORTEST path from current cube state to the CURRENT SCRAMBLE TARGET (this.targetCube),
-            // NOT generating a brand new scramble!
-            if (shortestBackToTrack.length > 3 && (this.currentStep > 0 || (this.moveHistory && this.moveHistory.length > 0))) {
-                const pathToTarget = getCorrectionMoves(this.currentCube, this.targetCube);
-                if (pathToTarget && pathToTarget.length > 0) {
-                    const completedMoves = this.scrambleMoves.slice(0, this.currentStep);
-                    this.repathRemaining(completedMoves, pathToTarget);
-
-                    this.isDeviated = true;
-                    this.isHalfTurn = false;
-                    this.correctionMoves = pathToTarget;
-
-                    return {
-                        isComplete: false,
-                        isDeviated: true,
-                        repathed: true,
-                        currentStep: this.currentStep,
-                        totalSteps: this.scrambleMoves.length,
-                        fullScrambleString: this.scrambleString, // Updated with shortest path to original target!
-                        correctionMoves: pathToTarget,
-                        remainingMoves: pathToTarget
-                    };
-                }
-            }
-
-            // Fallback if cube already reached target
-            if (this.currentCube.equals(this.targetCube)) {
-                this.isComplete = true;
-                this.isDeviated = false;
-                this.isHalfTurn = false;
-                return {
-                    isComplete: true,
-                    isDeviated: false,
-                    isHalfTurn: false,
-                    currentStep: this.scrambleMoves.length,
-                    totalSteps: this.scrambleMoves.length,
-                    correctionMoves: [],
-                    remainingMoves: []
-                };
-            }
-
             this.isDeviated = false;
             this.isHalfTurn = false;
             return {
@@ -1043,7 +906,6 @@
                 isHalfTurn: false,
                 currentStep: this.currentStep,
                 totalSteps: this.scrambleMoves.length,
-                fullScrambleString: this.scrambleString,
                 correctionMoves: [],
                 remainingMoves: this.scrambleMoves.slice(this.currentStep)
             };

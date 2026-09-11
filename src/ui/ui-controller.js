@@ -1566,26 +1566,13 @@ document.addEventListener('DOMContentLoaded', () => {
             showExpandedDirection = false;
             if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
 
-            if (evalResult.repathed && evalResult.fullScrambleString && evalResult.fullScrambleString !== currentScramble) {
-                currentScramble = evalResult.fullScrambleString;
-                timer.setScramble(currentScramble);
-                if (scrambleHistory.length > 0 && scrambleHistoryIndex >= 0 && scrambleHistoryIndex < scrambleHistory.length) {
-                    scrambleHistory[scrambleHistoryIndex] = currentScramble;
-                }
-            }
-
             const nextCorrection = (evalResult.correctionMoves && evalResult.correctionMoves.length > 0)
                 ? evalResult.correctionMoves[0]
                 : ((evalResult.remainingMoves && evalResult.remainingMoves.length > 0) ? evalResult.remainingMoves[0] : '');
 
             if (banner) {
-                if (evalResult.repathed) {
-                    const remSteps = evalResult.remainingMoves ? evalResult.remainingMoves.length : 0;
-                    banner.innerHTML = `<span>偏离超3步，已重算最短路径: <strong>${nextCorrection}</strong> (剩余 ${remSteps} 步)</span>`;
-                } else {
-                    const origStepMove = (tracker && tracker.scrambleMoves && tracker.scrambleMoves[evalResult.currentStep]) || '';
-                    banner.innerHTML = `<span>转动错误，请先反转 <strong>${nextCorrection}</strong> 纠错，再转动 <strong>${origStepMove}</strong></span>`;
-                }
+                const origStepMove = (tracker && tracker.scrambleMoves && tracker.scrambleMoves[evalResult.currentStep]) || '';
+                banner.innerHTML = `<span>转动错误，请反转 <strong>${nextCorrection}</strong> 纠错，再转动 <strong>${origStepMove}</strong></span>`;
                 banner.classList.add('status-warning');
             }
             if (elements.timerStateBadge) {
@@ -1606,7 +1593,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             wasDeviated = true;
-            renderScrambleDisplay(evalResult.currentStep, evalResult.correctionMoves || [], false, null, null, true, !!evalResult.repathed);
+            renderScrambleDisplay(evalResult.currentStep, evalResult.correctionMoves || [], false, null, null, true, false);
         } else if (evalResult.isHalfTurn) {
             setScrambleFullscreen(true);
             setArenaMode('SCRAMBLE');

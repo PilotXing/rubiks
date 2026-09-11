@@ -514,6 +514,58 @@ test('ScrambleTape.sync: handles real-time cube stream, wrong moves at step 7, a
     assert.strictEqual(tape.items[10].status, 'active');
 });
 
+test('ScrambleProgressTracker: continuous wrong move stack without solver recalculation or repath', () => {
+    const tracker = new CubeEngine.ScrambleProgressTracker();
+    const scramble = "R U R' U' R' F R2 U' R' U' R U R' F'";
+    tracker.setScramble(scramble);
+
+    // 1. Turn first move correctly: R
+    let res = tracker.onCubeMove('R');
+    assert.strictEqual(res.isDeviated, false);
+    assert.strictEqual(res.currentStep, 1);
+
+    // 2. Turn 4 consecutive wrong moves (B, D, L, F)
+    res = tracker.onCubeMove('B');
+    assert.strictEqual(res.isDeviated, true);
+    assert.deepStrictEqual(res.correctionMoves, ["B'"]);
+
+    res = tracker.onCubeMove('D');
+    assert.strictEqual(res.isDeviated, true);
+    assert.deepStrictEqual(res.correctionMoves, ["D'", "B'"]);
+
+    res = tracker.onCubeMove('L');
+    assert.strictEqual(res.isDeviated, true);
+    assert.deepStrictEqual(res.correctionMoves, ["L'", "D'", "B'"]);
+
+    res = tracker.onCubeMove('F');
+    assert.strictEqual(res.isDeviated, true);
+    assert.deepStrictEqual(res.correctionMoves, ["F'", "L'", "D'", "B'"]);
+    assert.strictEqual(tracker.scrambleString, scramble, 'Original scramble formula must NEVER be altered or repathed');
+
+    // 3. Unwind all 4 wrong moves in exact reverse order (F', L', D', B')
+    res = tracker.onCubeMove("F'");
+    assert.strictEqual(res.isDeviated, true);
+    assert.deepStrictEqual(res.correctionMoves, ["L'", "D'", "B'"]);
+
+    res = tracker.onCubeMove("L'");
+    assert.strictEqual(res.isDeviated, true);
+    assert.deepStrictEqual(res.correctionMoves, ["D'", "B'"]);
+
+    res = tracker.onCubeMove("D'");
+    assert.strictEqual(res.isDeviated, true);
+    assert.deepStrictEqual(res.correctionMoves, ["B'"]);
+
+    res = tracker.onCubeMove("B'");
+    assert.strictEqual(res.isDeviated, false);
+    assert.deepStrictEqual(res.correctionMoves, []);
+    assert.strictEqual(res.currentStep, 1);
+
+    // 4. Continue with original step 1 (U)
+    res = tracker.onCubeMove('U');
+    assert.strictEqual(res.isDeviated, false);
+    assert.strictEqual(res.currentStep, 2);
+});
+
 // -------------------------------------------------------------
 // Runner
 // -------------------------------------------------------------
