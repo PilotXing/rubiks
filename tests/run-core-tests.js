@@ -390,6 +390,14 @@ test('Offline cache: every local CSS/JS URL in index is precached exactly', () =
     );
     assert(!sw.includes("caches.match(evt.request) || caches.match('/index.html'"),
         'asset failures must not fall back to index.html');
+
+    // Verify version synchronization
+    const badgeMatch = html.match(/id="app-version-badge"[^>]*>([^<]+)<\/span>/);
+    const swVersionMatch = sw.match(/const CACHE_NAME = 'rubiks-timer-(v[^']+)';/);
+    assert(badgeMatch, 'app-version-badge must exist in index.html');
+    assert(swVersionMatch, 'CACHE_NAME version must exist in sw.js');
+    assert.strictEqual(badgeMatch[1], swVersionMatch[1],
+        `Version badge (${badgeMatch[1]}) in index.html must match CACHE_NAME (${swVersionMatch[1]}) in sw.js`);
 });
 
 // -------------------------------------------------------------
