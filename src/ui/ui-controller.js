@@ -785,6 +785,44 @@ document.addEventListener('DOMContentLoaded', () => {
         cardNext: document.getElementById('scramble-card-next'),
     };
 
+    let mainScrambleTape = null;
+    let practiceScrambleTape = null;
+
+    function getMainScrambleTape() {
+        if (!mainScrambleTape && typeof ScrambleTape !== 'undefined') {
+            const container = document.getElementById('scramble-text');
+            const footer = document.querySelector('.scramble-reel-footer');
+            const overallBox = document.querySelector('.scramble-overall-sequence');
+            if (container) {
+                mainScrambleTape = new ScrambleTape({
+                    container,
+                    footerEl: footer,
+                    overallBoxEl: overallBox,
+                    visiblePrev: scrambleVisiblePrev,
+                    visibleNext: scrambleVisibleNext
+                });
+            }
+        }
+        return mainScrambleTape;
+    }
+
+    function getPracticeScrambleTape() {
+        if (!practiceScrambleTape && typeof ScrambleTape !== 'undefined') {
+            const container = elements.practiceReelBox || document.getElementById('practice-reel-box');
+            const footer = elements.practiceReelFooter || document.getElementById('practice-reel-footer');
+            const overallBox = elements.practiceOverallBox || document.getElementById('practice-overall-box');
+            if (container) {
+                practiceScrambleTape = new ScrambleTape({
+                    container,
+                    footerEl: footer,
+                    overallBoxEl: overallBox,
+                    mode: 'practice'
+                });
+            }
+        }
+        return practiceScrambleTape;
+    }
+
     function showToast(message, duration = 1600) {
         let container = document.getElementById('toast-container');
         if (!container) {
@@ -1300,8 +1338,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         timer.setState('SCRAMBLING');
         setArenaMode('SCRAMBLE');
-        if (carouselElements.cardCurrent) {
-            carouselElements.cardCurrent.innerHTML = formatScrambleHTML(currentScramble, 0);
+        const tape = getMainScrambleTape();
+        if (tape) {
+            tape.setScramble(currentScramble);
         }
         updateScrambleStatus(evalResult);
         updateCarouselCards(0);
@@ -3202,7 +3241,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderPracticeReelUI(activeStepIdx = 0, isDeviation = false, nextExpectedMove = null) {
         if (!activePracticeCase) return;
-        const compiled = AlgDatabase.compileAlgorithm ? AlgDatabase.compileAlgorithm(activePracticeCase.alg) : [];
+        const pTape = getPracticeScrambleTape();
+        if (pTape) {
+            if (activeStepIdx === 0 && !isDeviation) {
+                pTape.setScramble(activePracticeCase.alg);
+            } else if (isDeviation && nextExpectedMove) {
+                const lastMove = (practiceMoves && practiceMoves.length > 0) ? practiceMoves[practiceMoves.length - 1] : '';
+                pTape.onWrongMove(lastMove, nextExpectedMove);
+            } else {
+                pTape.align(activeStepIdx, true);
+            }
+            return;
+        }
         const moves = compiled.length > 0 ? compiled.map(s => s.displayMove) : activePracticeCase.alg.trim().split(/\s+/).filter(Boolean);
         const totalMoves = moves.length;
 

@@ -38,6 +38,13 @@ try {
     console.error('Failed to load chart-engine:', e);
 }
 
+let ScrambleTapeModule = null;
+try {
+    ScrambleTapeModule = require('../src/ui/scramble-tape');
+} catch (e) {
+    console.error('Failed to load scramble-tape:', e);
+}
+
 const tests = [];
 function test(name, fn) {
     tests.push({ name, fn });
@@ -398,6 +405,58 @@ test('Offline cache: every local CSS/JS URL in index is precached exactly', () =
     assert(swVersionMatch, 'CACHE_NAME version must exist in sw.js');
     assert.strictEqual(badgeMatch[1], swVersionMatch[1],
         `Version badge (${badgeMatch[1]}) in index.html must match CACHE_NAME (${swVersionMatch[1]}) in sw.js`);
+});
+
+test('ScrambleTape: correct moves advance active slot, wrong moves insert [W(done), W\'(active)] and shift right', () => {
+    assert(ScrambleTapeModule && ScrambleTapeModule.ScrambleTape, 'ScrambleTape must be exported');
+    const { ScrambleTape } = ScrambleTapeModule;
+
+    const tape = new ScrambleTape();
+    tape.setScramble("L2 D2 R2 B2");
+
+    assert.strictEqual(tape.items.length, 4);
+    assert.strictEqual(tape.getActiveMove(), 'L2');
+    assert.strictEqual(tape.items[0].status, 'active');
+    assert.strictEqual(tape.items[1].status, 'pending');
+
+    // 1. Correct move L2 completed
+    tape.onCorrectMove();
+    assert.strictEqual(tape.getActiveMove(), 'D2');
+    assert.strictEqual(tape.items[0].move, 'L2');
+    assert.strictEqual(tape.items[0].status, 'done');
+    assert.strictEqual(tape.items[1].move, 'D2');
+    assert.strictEqual(tape.items[1].status, 'active');
+
+    // 2. Wrong move U executed instead of D2
+    tape.onWrongMove('U', "U'");
+    assert.strictEqual(tape.items.length, 6); // L2, U, U', D2, R2, B2
+    assert.strictEqual(tape.getActiveMove(), "U'");
+    assert.strictEqual(tape.items[0].move, 'L2');
+    assert.strictEqual(tape.items[0].status, 'done');
+    assert.strictEqual(tape.items[1].move, 'U');
+    assert.strictEqual(tape.items[1].status, 'done');
+    assert.strictEqual(tape.items[1].isWrong, true);
+    assert.strictEqual(tape.items[2].move, "U'");
+    assert.strictEqual(tape.items[2].status, 'active');
+    assert.strictEqual(tape.items[2].isCorrection, true);
+    assert.strictEqual(tape.items[3].move, 'D2');
+    assert.strictEqual(tape.items[3].status, 'pending');
+
+    // 3. User corrects mistake by turning U'
+    tape.onCorrectMove();
+    assert.strictEqual(tape.getActiveMove(), 'D2');
+    assert.strictEqual(tape.items[2].move, "U'");
+    assert.strictEqual(tape.items[2].status, 'done');
+    assert.strictEqual(tape.items[3].move, 'D2');
+    assert.strictEqual(tape.items[3].status, 'active');
+
+    // 4. User completes target D2, R2, B2
+    tape.onCorrectMove(); // D2
+    assert.strictEqual(tape.getActiveMove(), 'R2');
+    tape.onCorrectMove(); // R2
+    assert.strictEqual(tape.getActiveMove(), 'B2');
+    tape.onCorrectMove(); // B2
+    assert(tape.isComplete(), 'Tape must report complete after all original steps done');
 });
 
 // -------------------------------------------------------------

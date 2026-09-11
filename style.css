@@ -2703,6 +2703,13 @@ body.theme-light .card-collapsible.collapsed .btn-panel-toggle {
     transform: none !important;
 }
 
+.reel-step-item.step-wrong {
+    color: var(--text-muted) !important;
+    opacity: 0.32 !important;
+    text-decoration: line-through;
+    text-decoration-color: #EF4444;
+}
+
 .reel-step-item.step-hidden {
     opacity: 0 !important;
     visibility: hidden !important;
