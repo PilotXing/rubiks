@@ -202,11 +202,13 @@
                 element: null
             };
 
+            const prevOffset = this.currentOffset;
+
             if (this.activeIdx < this.items.length) {
                 this.items[this.activeIdx].status = 'pending';
             }
 
-            // Insert [wrongItem, corrItem] directly before the active slot
+            // Insert [wrongItem, corrItem] directly before active slot
             this.items.splice(this.activeIdx, 0, wrongItem, corrItem);
 
             const targetActiveIdx = this.activeIdx + 1;
@@ -230,6 +232,14 @@
                 }
 
                 this._refreshDOMStates();
+
+                // Seamless offset compensation: freeze existing layout visually then glide right
+                const itemWidth = corrEl.offsetWidth > 0 ? (corrEl.offsetWidth + 8) : 68;
+                const initialCompensatedOffset = prevOffset - (2 * itemWidth);
+                this.track.style.transition = 'none';
+                this.track.style.transform = `translate3d(${initialCompensatedOffset}px, 0, 0)`;
+                void this.track.offsetWidth;
+
                 this.align(this.activeIdx, true);
             }
 

@@ -1164,114 +1164,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Center Active Card
         if (carouselElements.cardCurrent) {
-            const currentTrack = carouselElements.cardCurrent.querySelector('.scramble-reel-track');
-            const moves = (currentStr || '').trim().split(/\s+/).filter(Boolean);
-
-            let prevOffset = null;
-            if (currentTrack) {
-                const match = currentTrack.style.transform.match(/translate3d\(([-\d.]+)px/);
-                if (match) {
-                    prevOffset = parseFloat(match[1]);
-                } else if (typeof window !== 'undefined' && window.getComputedStyle) {
-                    try {
-                        const matrix = window.getComputedStyle(currentTrack).transform;
-                        if (matrix && matrix !== 'none') {
-                            const values = matrix.split('(')[1].split(')')[0].split(',');
-                            prevOffset = parseFloat(values[4]);
-                        }
-                    } catch (_) {}
-                }
-            }
-            
-            if (currentTrack && moves.length > 0 && scrambleDisplayStyle !== 'grid') {
-                const existingItems = currentTrack.querySelectorAll('.reel-step-item');
-                if (existingItems.length === moves.length && !isDeviated) {
-                    // Smooth in-place DOM update preserving CSS slide animation
-                    existingItems.forEach((item, idx) => {
-                        const origMove = moves[idx];
-                        const colorCls = getMoveColorClass(origMove);
-                        const stepClasses = getScrambleStepClasses(
-                            idx,
-                            activeIdx,
-                            scrambleVisiblePrev,
-                            scrambleVisibleNext
-                        );
-                        let cls = stepClasses.cls;
-                        const farCls = stepClasses.farCls;
-                        
-                        if (idx < activeIdx) {
-                            item.className = `reel-step-item ${cls} ${farCls} ${colorCls}`;
-                            item.textContent = origMove;
-                        } else if (idx === activeIdx) {
-                            if (isHalfTurn && showExpandedDirection) {
-                                cls = 'step-half-active';
-                                const label = remainingOnFace || origMove;
-                                item.className = `reel-step-item ${cls} ${colorCls}`;
-                                item.innerHTML = `<span class="step-half-base">${origMove}</span><span class="step-half-guide">再转 ${label}</span>`;
-                            } else {
-                                cls = 'step-active';
-                                item.className = `reel-step-item ${cls} ${colorCls}`;
-                                item.textContent = origMove;
-                            }
-                        } else {
-                            item.className = `reel-step-item ${cls} ${farCls} ${colorCls}`;
-                            item.textContent = origMove;
-                        }
-                    });
-
-                    // Update footer progress text
-                    const completedCount = Math.min(activeIdx, moves.length);
-                    const remainingCount = Math.max(0, moves.length - completedCount);
-                    const pct = Math.round((completedCount / moves.length) * 100);
-                    const footerEl = carouselElements.cardCurrent.querySelector('.scramble-reel-footer');
-                    if (footerEl) {
-                        footerEl.innerHTML = `
-                            <span>已完成 <strong class="progress-highlight">${completedCount}</strong> 步</span>
-                            <span>·</span>
-                            <span>剩余 <strong class="progress-highlight">${remainingCount}</strong> 步</span>
-                            <span style="opacity: 0.65;">(${pct}%)</span>
-                            <button class="btn-enter-scramble-fs" title="进入全屏打乱模式 (Fullscreen Scramble)" type="button">全屏</button>
-                        `;
-                    }
-
-                    // Update overall sequence bar chips
-                    const overallChips = carouselElements.cardCurrent.querySelectorAll('.overall-move-chip');
-                    overallChips.forEach((chip, idx) => {
-                        let stCls = 'pending';
-                        if (idx < activeIdx) stCls = 'done';
-                        else if (idx === activeIdx) stCls = 'active';
-                        const colorCls = getMoveColorClass(moves[idx]);
-                        chip.textContent = moves[idx];
-                        chip.className = `overall-move-chip ${stCls} ${colorCls}`;
-                    });
-
-                    alignReelTrack(currentTrack, activeIdx, true);
-                } else {
-                    carouselElements.cardCurrent.innerHTML = formatScrambleHTML(currentStr, activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, null, isDeviated);
-                    carouselElements.cardCurrent.classList.remove('scramble-empty-hint');
-                    const newTrack = carouselElements.cardCurrent.querySelector('.scramble-reel-track');
-                    if (newTrack) {
-                        if (prevOffset !== null && !isNaN(prevOffset)) {
-                            newTrack.style.transition = 'none';
-                            newTrack.style.transform = `translate3d(${prevOffset}px, 0, 0)`;
-                            newTrack.style.setProperty('--track-curr-x', `${prevOffset}px`);
-                            void newTrack.offsetWidth;
-                        }
-                        alignReelTrack(newTrack, activeIdx, true);
-                    }
-                }
-            } else {
-                carouselElements.cardCurrent.innerHTML = formatScrambleHTML(currentStr, activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, null, isDeviated);
-                carouselElements.cardCurrent.classList.remove('scramble-empty-hint');
-                const newTrack = carouselElements.cardCurrent.querySelector('.scramble-reel-track');
-                if (newTrack) {
-                    if (prevOffset !== null && !isNaN(prevOffset)) {
-                        newTrack.style.transition = 'none';
-                        newTrack.style.transform = `translate3d(${prevOffset}px, 0, 0)`;
-                        newTrack.style.setProperty('--track-curr-x', `${prevOffset}px`);
-                        void newTrack.offsetWidth;
-                    }
-                    alignReelTrack(newTrack, activeIdx, false);
+            const tape = getMainScrambleTape();
+            if (tape) {
+                if (tape.rawScramble !== currentStr) {
+                    tape.setScramble(currentStr);
                 }
             }
         }
@@ -1573,6 +1469,20 @@ document.addEventListener('DOMContentLoaded', () => {
     initScrambleGesture();
 
     function renderScrambleDisplay(activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, isDeviated = false, isRepathed = false) {
+        const tape = getMainScrambleTape();
+        if (tape) {
+            if (isDeviated && correctionMoves && correctionMoves.length > 0) {
+                tape.onWrongMove(lastScrambleMove, correctionMoves[0]);
+            } else if (isHalfTurn) {
+                tape.onHalfTurnProgress(halfFace, remainingOnFace);
+            } else {
+                if (tape.isDeviated) {
+                    tape.onCorrectMove();
+                } else {
+                    tape.align(activeIdx, true);
+                }
+            }
+        }
         updateCarouselCards(activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, isDeviated, isRepathed);
     }
 
