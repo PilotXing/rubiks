@@ -2389,16 +2389,10 @@ body.theme-light .card-collapsible.collapsed .btn-panel-toggle {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-@keyframes scramble-alert-shake {
-    0%, 100% { transform: translateX(0); }
-    20%, 60% { transform: translateX(-4px); }
-    40%, 80% { transform: translateX(4px); }
-}
-
 .scramble-box.scramble-alert-active {
-    animation: scramble-alert-shake 0.35s ease;
-    border-color: rgba(245, 158, 11, 0.7);
-    box-shadow: 0 0 16px rgba(245, 158, 11, 0.3);
+    border-color: rgba(239, 68, 68, 0.75);
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.3);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .scramble-header {
@@ -2665,20 +2659,7 @@ body.theme-light .card-collapsible.collapsed .btn-panel-toggle {
     height: 100%;
     white-space: nowrap;
     will-change: transform;
-    transition: transform var(--reel-transition-dur, 0.22s) var(--reel-transition-ease, cubic-bezier(0.2, 0.9, 0.3, 1));
-}
-
-.scramble-reel-track.error-shake {
-    animation: scramble-error-shake 0.44s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-}
-
-@keyframes scramble-error-shake {
-    0%, 100% { transform: translate3d(var(--track-curr-x, 0px), 0, 0); }
-    15% { transform: translate3d(calc(var(--track-curr-x, 0px) - 10px), 0, 0); }
-    30% { transform: translate3d(calc(var(--track-curr-x, 0px) + 9px), 0, 0); }
-    45% { transform: translate3d(calc(var(--track-curr-x, 0px) - 6px), 0, 0); }
-    60% { transform: translate3d(calc(var(--track-curr-x, 0px) + 5px), 0, 0); }
-    75% { transform: translate3d(calc(var(--track-curr-x, 0px) - 2px), 0, 0); }
+    transition: transform var(--reel-transition-dur, 0.25s) var(--reel-transition-ease, cubic-bezier(0.25, 0.1, 0.25, 1.0));
 }
 
 .reel-step-item {
@@ -2702,7 +2683,7 @@ body.theme-light .card-collapsible.collapsed .btn-panel-toggle {
     border-radius: 0 !important;
     box-shadow: none !important;
     transform: none !important;
-    transition: opacity 0.15s ease, color 0.15s ease;
+    transition: opacity 0.18s ease, color 0.18s ease;
 }
 
 /* Done past steps - Grayed out for easy current position tracking */
@@ -2771,7 +2752,7 @@ body.theme-light .reel-step-item.step-active {
     box-shadow: none !important;
     opacity: 1 !important;
     z-index: 3;
-    animation: step-error-rewind-pulse 0.38s ease-out;
+    animation: step-error-rewind-pulse 0.3s ease-out;
 }
 
 .reel-step-item.step-correction.step-rewind {
@@ -2799,29 +2780,28 @@ body.theme-light .reel-step-item.step-active {
 
 @keyframes step-error-rewind-pulse {
     0% {
-        transform: scale(0.8) translate3d(-15px, 0, 0);
-        opacity: 0.3;
+        transform: scale(0.92);
+        opacity: 0.4;
     }
     50% {
-        transform: scale(1.15);
+        transform: scale(1.04);
+        opacity: 1;
     }
     100% {
-        transform: scale(1) translate3d(0, 0, 0);
+        transform: scale(1);
         opacity: 1;
     }
 }
 
 .reel-step-item.step-pushed-back {
-    animation: scramble-queue-pushback 0.36s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+    animation: scramble-queue-pushback 0.28s ease-out both;
 }
 
 @keyframes scramble-queue-pushback {
     0% {
-        transform: translate3d(-32px, 0, 0);
         opacity: 0.45;
     }
     100% {
-        transform: translate3d(0, 0, 0);
         opacity: 1;
     }
 }
@@ -2831,7 +2811,7 @@ body.theme-light .reel-step-item.step-active {
     color: #EF4444 !important;
     border: 1px solid #EF4444 !important;
     font-weight: 800 !important;
-    animation: step-error-rewind-pulse 0.3s ease-out;
+    animation: step-error-rewind-pulse 0.28s ease-out;
 }
 
 /* Half-turn in-progress with expanded guidance */
@@ -4118,11 +4098,7 @@ body.theme-light .nav-tab-btn.active {
     height: 100%;
     white-space: nowrap;
     will-change: transform;
-    transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
-}
-
-.practice-reel-track.error-shake {
-    animation: scramble-error-shake 0.44s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    transition: transform var(--reel-transition-dur, 0.25s) var(--reel-transition-ease, cubic-bezier(0.25, 0.1, 0.25, 1.0));
 }
 
 .practice-reel-footer {

@@ -384,29 +384,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const REEL_CURVE_PRESETS = {
         apple: {
-            durationSec: 0.28,
-            curve: 'cubic-bezier(0.22, 1, 0.36, 1)',
-            css: 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)'
+            durationSec: 0.25,
+            curve: 'cubic-bezier(0.25, 0.1, 0.25, 1.0)',
+            css: 'transform 0.25s cubic-bezier(0.25, 0.1, 0.25, 1.0)'
         },
         snappy: {
-            durationSec: 0.15,
-            curve: 'cubic-bezier(0.18, 0.89, 0.32, 1.25)',
-            css: 'transform 0.15s cubic-bezier(0.18, 0.89, 0.32, 1.25)'
+            durationSec: 0.16,
+            curve: 'cubic-bezier(0.25, 0.1, 0.25, 1.0)',
+            css: 'transform 0.16s cubic-bezier(0.25, 0.1, 0.25, 1.0)'
         },
         mechanical: {
             durationSec: 0.20,
-            curve: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
-            css: 'transform 0.20s cubic-bezier(0.25, 0.1, 0.25, 1)'
+            curve: 'cubic-bezier(0.25, 0.1, 0.25, 1.0)',
+            css: 'transform 0.20s cubic-bezier(0.25, 0.1, 0.25, 1.0)'
         },
         bouncy: {
-            durationSec: 0.35,
-            curve: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-            css: 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)'
+            durationSec: 0.32,
+            curve: 'cubic-bezier(0.34, 1.3, 0.64, 1)',
+            css: 'transform 0.32s cubic-bezier(0.34, 1.3, 0.64, 1)'
         },
         silky: {
-            durationSec: 0.42,
-            curve: 'cubic-bezier(0.16, 1, 0.3, 1)',
-            css: 'transform 0.42s cubic-bezier(0.16, 1, 0.3, 1)'
+            durationSec: 0.38,
+            curve: 'cubic-bezier(0.25, 0.1, 0.25, 1.0)',
+            css: 'transform 0.38s cubic-bezier(0.25, 0.1, 0.25, 1.0)'
         },
         instant: {
             durationSec: 0,
@@ -927,16 +927,14 @@ document.addEventListener('DOMContentLoaded', () => {
             let easingCurve;
 
             if (isContinuousTurning) {
-                // Continuous scramble turning: scroll continuously and smoothly without harsh deceleration stop
-                // Duration matches turning interval so moves glide right into each other seamlessly
-                durationSec = Math.max(0.10, Math.min(0.38, (scrambleSmoothedInterval * 0.95) / 1000));
-                // Gentle linear-gliding curve: no harsh snap-to-stop
-                easingCurve = 'cubic-bezier(0.25, 0.35, 0.45, 1.0)';
+                // Continuous scramble turning: glide seamlessly with continuous linear acceleration
+                durationSec = Math.max(0.12, Math.min(0.30, (scrambleSmoothedInterval * 0.95) / 1000));
+                easingCurve = 'cubic-bezier(0.25, 0.1, 0.25, 1.0)';
             } else {
-                // Single move or first move after pause: use gentle transition to position
+                // Single move, rewind, or error recovery: physical linear acceleration onset without abrupt impulse
                 const preset = getReelMotionConfig();
-                durationSec = preset && preset.durationSec > 0 ? preset.durationSec : 0.24;
-                easingCurve = (preset && preset.curve) ? preset.curve : 'cubic-bezier(0.25, 1, 0.5, 1)';
+                durationSec = preset && preset.durationSec > 0 ? preset.durationSec : 0.25;
+                easingCurve = (preset && preset.curve) ? preset.curve : 'cubic-bezier(0.25, 0.1, 0.25, 1.0)';
             }
 
             track.style.transition = `transform ${durationSec.toFixed(3)}s ${easingCurve}`;
@@ -1130,6 +1128,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (carouselElements.cardCurrent) {
             const currentTrack = carouselElements.cardCurrent.querySelector('.scramble-reel-track');
             const moves = (currentStr || '').trim().split(/\s+/).filter(Boolean);
+
+            let prevOffset = null;
+            if (currentTrack) {
+                const match = currentTrack.style.transform.match(/translate3d\(([-\d.]+)px/);
+                if (match) {
+                    prevOffset = parseFloat(match[1]);
+                } else if (typeof window !== 'undefined' && window.getComputedStyle) {
+                    try {
+                        const matrix = window.getComputedStyle(currentTrack).transform;
+                        if (matrix && matrix !== 'none') {
+                            const values = matrix.split('(')[1].split(')')[0].split(',');
+                            prevOffset = parseFloat(values[4]);
+                        }
+                    } catch (_) {}
+                }
+            }
             
             if (currentTrack && moves.length > 0 && scrambleDisplayStyle !== 'grid') {
                 const existingItems = currentTrack.querySelectorAll('.reel-step-item');
@@ -1199,10 +1213,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     carouselElements.cardCurrent.classList.remove('scramble-empty-hint');
                     const newTrack = carouselElements.cardCurrent.querySelector('.scramble-reel-track');
                     if (newTrack) {
-                        if (isDeviated) {
-                            newTrack.classList.remove('error-shake');
+                        if (prevOffset !== null && !isNaN(prevOffset)) {
+                            newTrack.style.transition = 'none';
+                            newTrack.style.transform = `translate3d(${prevOffset}px, 0, 0)`;
+                            newTrack.style.setProperty('--track-curr-x', `${prevOffset}px`);
                             void newTrack.offsetWidth;
-                            newTrack.classList.add('error-shake');
                         }
                         alignReelTrack(newTrack, activeIdx, true);
                     }
@@ -1212,10 +1227,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 carouselElements.cardCurrent.classList.remove('scramble-empty-hint');
                 const newTrack = carouselElements.cardCurrent.querySelector('.scramble-reel-track');
                 if (newTrack) {
-                    if (isDeviated) {
-                        newTrack.classList.remove('error-shake');
+                    if (prevOffset !== null && !isNaN(prevOffset)) {
+                        newTrack.style.transition = 'none';
+                        newTrack.style.transform = `translate3d(${prevOffset}px, 0, 0)`;
+                        newTrack.style.setProperty('--track-curr-x', `${prevOffset}px`);
                         void newTrack.offsetWidth;
-                        newTrack.classList.add('error-shake');
                     }
                     alignReelTrack(newTrack, activeIdx, false);
                 }
@@ -1624,13 +1640,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (scrambleAlertsEnabled && !wasDeviated) {
                 sound.playScrambleWarning();
-                // Trigger physical track error shake
-                const trackEl = document.querySelector('.scramble-reel-track');
-                if (trackEl) {
-                    trackEl.classList.remove('error-shake');
-                    void trackEl.offsetWidth;
-                    trackEl.classList.add('error-shake');
-                }
                 if (elements.scrambleBox) {
                     elements.scrambleBox.classList.remove('scramble-alert-active');
                     void elements.scrambleBox.offsetWidth;
@@ -3509,11 +3518,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Wrong move / deviation
             practiceMistakeCount++;
-            if (elements.practiceReelTrack) {
-                elements.practiceReelTrack.classList.remove('error-shake');
-                void elements.practiceReelTrack.offsetWidth;
-                elements.practiceReelTrack.classList.add('error-shake');
-            }
             if (practiceMistakeCount < 3) {
                 practiceState = 'DEVIATED';
                 elements.practiceStatusBanner.className = 'practice-status-banner status-warning';
