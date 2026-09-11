@@ -322,6 +322,94 @@
             this.overallBoxEl.innerHTML = chipsHtml;
         }
 
+        stepTo(targetOriginalStep) {
+            let targetIdx = this.items.findIndex(it => it.isOriginal && it.origIdx === targetOriginalStep);
+            if (targetIdx === -1) {
+                if (targetOriginalStep >= this.originalMoves.length) {
+                    targetIdx = this.items.length;
+                } else {
+                    targetIdx = 0;
+                }
+            }
+            this.activeIdx = targetIdx;
+            this.items.forEach((item, idx) => {
+                if (idx < this.activeIdx) {
+                    item.status = 'done';
+                } else if (idx === this.activeIdx) {
+                    item.status = 'active';
+                } else {
+                    item.status = 'pending';
+                }
+            });
+            this.isDeviated = this.items.slice(this.activeIdx).some(it => it.isCorrection);
+            this._refreshDOMStates();
+            this.align(this.activeIdx, true);
+            this._updateFooter();
+            this._updateOverallChips();
+        }
+
+        sync(stepIdx, options = {}) {
+            const {
+                isDeviated = false,
+                correctionMoves = [],
+                isHalfTurn = false,
+                halfFace = null,
+                remainingOnFace = null,
+                wrongMove = null,
+                isRepathed = false,
+                fullScrambleString = null
+            } = options;
+
+            if (isRepathed && fullScrambleString && fullScrambleString !== this.rawScramble) {
+                this.setScramble(fullScrambleString);
+                this.stepTo(stepIdx);
+                return;
+            }
+
+            if (isDeviated) {
+                const targetCorr = (correctionMoves && correctionMoves.length > 0) ? correctionMoves[0] : null;
+                if (!targetCorr) return;
+
+                // Check if active item is already this correction
+                if (this.isDeviated && this.items[this.activeIdx] && this.items[this.activeIdx].isCorrection && this.items[this.activeIdx].move === targetCorr) {
+                    return;
+                }
+
+                // Check if user satisfied active correction and next pending is targetCorr:
+                if (this.isDeviated && this.items[this.activeIdx + 1] && this.items[this.activeIdx + 1].isCorrection && this.items[this.activeIdx + 1].move === targetCorr) {
+                    this.onCorrectMove();
+                    return;
+                }
+
+                // Otherwise, new wrong move occurred:
+                const wMove = wrongMove || '?';
+                this.onWrongMove(wMove, targetCorr);
+                return;
+            }
+
+            if (isHalfTurn) {
+                this.onHalfTurnProgress(halfFace, remainingOnFace);
+                return;
+            }
+
+            // Not deviated and not half turn
+            if (this.isDeviated) {
+                // Finished all corrections!
+                this.onCorrectMove();
+            } else {
+                const currItem = this.items[this.activeIdx];
+                const currOrig = (currItem && currItem.isOriginal) ? currItem.origIdx : -1;
+                if (currOrig >= 0 && stepIdx === currOrig + 1) {
+                    this.onCorrectMove();
+                } else if (currOrig >= 0 && stepIdx === currOrig) {
+                    this._refreshDOMStates();
+                    this.align(this.activeIdx, false);
+                } else {
+                    this.stepTo(stepIdx);
+                }
+            }
+        }
+
         getActiveMove() {
             const it = this.items[this.activeIdx];
             return it ? it.move : null;

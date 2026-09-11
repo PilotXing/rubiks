@@ -715,7 +715,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
                 requestAnimationFrame(() => {
                     resize3D();
-                    setTimeout(resize3D, 80);
+                    if (mainScrambleTape) mainScrambleTape.align(undefined, false);
+                    setTimeout(() => {
+                        resize3D();
+                        if (mainScrambleTape) mainScrambleTape.align(undefined, false);
+                    }, 80);
                 });
             }
             if (userTriggered && document.documentElement.requestFullscreen && !document.fullscreenElement) {
@@ -733,7 +737,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
                 requestAnimationFrame(() => {
                     resize3D();
-                    setTimeout(resize3D, 80);
+                    if (mainScrambleTape) mainScrambleTape.align(undefined, false);
+                    setTimeout(() => {
+                        resize3D();
+                        if (mainScrambleTape) mainScrambleTape.align(undefined, false);
+                    }, 80);
                 });
             }
             if (userTriggered && document.exitFullscreen && document.fullscreenElement) {
@@ -1471,17 +1479,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderScrambleDisplay(activeIdx = 0, correctionMoves = [], isHalfTurn = false, halfFace = null, remainingOnFace = null, isDeviated = false, isRepathed = false) {
         const tape = getMainScrambleTape();
         if (tape) {
-            if (isDeviated && correctionMoves && correctionMoves.length > 0) {
-                tape.onWrongMove(lastScrambleMove, correctionMoves[0]);
-            } else if (isHalfTurn) {
-                tape.onHalfTurnProgress(halfFace, remainingOnFace);
-            } else {
-                if (tape.isDeviated) {
-                    tape.onCorrectMove();
-                } else {
-                    tape.align(activeIdx, true);
-                }
-            }
+            tape.sync(activeIdx, {
+                isDeviated,
+                correctionMoves,
+                isHalfTurn,
+                halfFace,
+                remainingOnFace,
+                wrongMove: lastScrambleMove,
+                isRepathed,
+                fullScrambleString: (currentScrambleEvalResult && currentScrambleEvalResult.fullScrambleString) || currentScramble
+            });
         }
         updateCarouselCards(activeIdx, correctionMoves, isHalfTurn, halfFace, remainingOnFace, isDeviated, isRepathed);
     }
@@ -3153,13 +3160,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!activePracticeCase) return;
         const pTape = getPracticeScrambleTape();
         if (pTape) {
-            if (activeStepIdx === 0 && !isDeviation) {
+            if (activeStepIdx === 0 && !isDeviation && pTape.rawScramble !== activePracticeCase.alg) {
                 pTape.setScramble(activePracticeCase.alg);
             } else if (isDeviation && nextExpectedMove) {
                 const lastMove = (practiceMoves && practiceMoves.length > 0) ? practiceMoves[practiceMoves.length - 1] : '';
-                pTape.onWrongMove(lastMove, nextExpectedMove);
+                pTape.sync(activeStepIdx, {
+                    isDeviated: true,
+                    correctionMoves: [nextExpectedMove],
+                    wrongMove: lastMove
+                });
             } else {
-                pTape.align(activeStepIdx, true);
+                pTape.sync(activeStepIdx, {
+                    isDeviated: false
+                });
             }
             return;
         }
@@ -3910,6 +3923,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (mainMovementChart && elements.mainSolveBreakdownCard && elements.mainSolveBreakdownCard.style.display !== 'none') {
             mainMovementChart.render();
+        }
+        if (mainScrambleTape) {
+            mainScrambleTape.align(undefined, false);
+        }
+        if (practiceScrambleTape) {
+            practiceScrambleTape.align(undefined, false);
         }
         const currentTrack = document.querySelector('.scramble-card-current .scramble-reel-track');
         if (currentTrack) {

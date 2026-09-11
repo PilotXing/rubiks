@@ -459,6 +459,61 @@ test('ScrambleTape: correct moves advance active slot, wrong moves insert [W(don
     assert(tape.isComplete(), 'Tape must report complete after all original steps done');
 });
 
+test('ScrambleTape.sync: handles real-time cube stream, wrong moves at step 7, and seamless recovery', () => {
+    const { ScrambleTape } = ScrambleTapeModule;
+    const tape = new ScrambleTape();
+    const scramble = "U L' B' U' F2 U F L2 U L D R2 L2 F2 B2 D";
+    tape.setScramble(scramble);
+
+    assert.strictEqual(tape.getActiveMove(), 'U');
+    assert.strictEqual(tape.items.length, 16);
+
+    // Turn 7 moves correctly: U, L', B', U', F2, U, F
+    for (let step = 1; step <= 7; step++) {
+        tape.sync(step, { isDeviated: false });
+    }
+    assert.strictEqual(tape.getActiveMove(), 'L2');
+    assert.strictEqual(tape.items[7].move, 'L2');
+    assert.strictEqual(tape.items[7].status, 'active');
+    assert.strictEqual(tape.isDeviated, false);
+
+    // At step 7 (L2), user turns wrong move U'
+    tape.sync(7, {
+        isDeviated: true,
+        correctionMoves: ['U'],
+        wrongMove: "U'"
+    });
+    assert.strictEqual(tape.isDeviated, true);
+    assert.strictEqual(tape.getActiveMove(), 'U'); // active correction
+    assert.strictEqual(tape.items.length, 18); // 16 + 2 inserted
+    assert.strictEqual(tape.items[7].move, "U'");
+    assert.strictEqual(tape.items[7].isWrong, true);
+    assert.strictEqual(tape.items[7].status, 'done');
+    assert.strictEqual(tape.items[8].move, 'U');
+    assert.strictEqual(tape.items[8].isCorrection, true);
+    assert.strictEqual(tape.items[8].status, 'active');
+    assert.strictEqual(tape.items[9].move, 'L2');
+    assert.strictEqual(tape.items[9].isOriginal, true);
+    assert.strictEqual(tape.items[9].status, 'pending');
+
+    // User executes correction turn U
+    tape.sync(7, { isDeviated: false });
+    assert.strictEqual(tape.isDeviated, false);
+    assert.strictEqual(tape.getActiveMove(), 'L2');
+    assert.strictEqual(tape.items[8].move, 'U');
+    assert.strictEqual(tape.items[8].status, 'done');
+    assert.strictEqual(tape.items[9].move, 'L2');
+    assert.strictEqual(tape.items[9].status, 'active');
+
+    // User completes L2
+    tape.sync(8, { isDeviated: false });
+    assert.strictEqual(tape.getActiveMove(), 'U');
+    assert.strictEqual(tape.items[9].move, 'L2');
+    assert.strictEqual(tape.items[9].status, 'done');
+    assert.strictEqual(tape.items[10].move, 'U');
+    assert.strictEqual(tape.items[10].status, 'active');
+});
+
 // -------------------------------------------------------------
 // Runner
 // -------------------------------------------------------------
