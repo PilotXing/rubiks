@@ -162,6 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleScrambleAlerts: document.getElementById('toggle-scramble-alerts'),
         toggleSound: document.getElementById('toggle-sound'),
         toggleVoice: document.getElementById('toggle-voice'),
+        toggleWakeLock: document.getElementById('toggle-wake-lock'),
         selectBtTimeout: document.getElementById('select-bt-timeout'),
         selectScrambleDisplayStyle: document.getElementById('select-scramble-display-style'),
         groupScrambleVisibleSteps: document.getElementById('group-scramble-visible-steps'),
@@ -497,6 +498,69 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }, btInactivityTimeoutSec * 1000);
         }
+    }
+
+    // -------------------------------------------------------------
+    // Screen Wake Lock Manager (Keep screen awake during practice and solving)
+    // -------------------------------------------------------------
+    let wakeLockSentinel = null;
+    let wakeLockEnabled = localStorage.getItem('rubiks_wake_lock') !== 'false';
+    let isRequestingWakeLock = false;
+
+    async function requestScreenWakeLock() {
+        if (!wakeLockEnabled) return;
+        if (typeof navigator === 'undefined' || !('wakeLock' in navigator) || !navigator.wakeLock?.request) {
+            return;
+        }
+        if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+            return;
+        }
+        if (wakeLockSentinel && !wakeLockSentinel.released) {
+            return;
+        }
+        if (isRequestingWakeLock) return;
+
+        isRequestingWakeLock = true;
+        try {
+            wakeLockSentinel = await navigator.wakeLock.request('screen');
+            wakeLockSentinel.addEventListener('release', () => {
+                wakeLockSentinel = null;
+            });
+            console.log('[WakeLock] Screen wake lock active.');
+        } catch (err) {
+            console.warn(`[WakeLock] Could not acquire wake lock: ${err.name} - ${err.message}`);
+        } finally {
+            isRequestingWakeLock = false;
+        }
+    }
+
+    async function releaseScreenWakeLock() {
+        if (wakeLockSentinel) {
+            try {
+                await wakeLockSentinel.release();
+            } catch (e) {
+                console.warn('[WakeLock] Error releasing screen wake lock:', e);
+            }
+            wakeLockSentinel = null;
+        }
+    }
+
+    if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && wakeLockEnabled) {
+                requestScreenWakeLock();
+            }
+        });
+    }
+
+    if (typeof window !== 'undefined') {
+        ['click', 'touchstart', 'pointerdown', 'keydown'].forEach(evtName => {
+            window.addEventListener(evtName, () => {
+                if (wakeLockEnabled && (!wakeLockSentinel || wakeLockSentinel.released)) {
+                    requestScreenWakeLock();
+                }
+            }, { passive: true });
+        });
     }
 
     // Helper: Move Color Class Generator (Phase 2)
@@ -1831,6 +1895,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentBatteryLevel !== null) updateHeaderBatteryUI(currentBatteryLevel);
             appendBtLog('system', `已建立蓝牙通信握手: ${name}`);
             resetBtInactivityTimer();
+            requestScreenWakeLock();
             setNewScramble();
         } else if (info.state === 'CONNECTING') {
             if (elements.btnBtCapsule) {
@@ -1934,6 +1999,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     bluetooth.on('move', (moveEvent) => {
         resetBtInactivityTimer();
+        if (wakeLockEnabled && (!wakeLockSentinel || wakeLockSentinel.released)) {
+            requestScreenWakeLock();
+        }
 
         physicalCube.applyMove(moveEvent.move);
         const faceletStr = physicalCube.getFacelets();
@@ -2002,6 +2070,7 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.mainTimerContainer.classList.add('timer-running');
             elements.liveMovesBadge.parentElement.style.display = 'flex';
             sound.playSolveStart();
+            requestScreenWakeLock();
             if (sound && sound.metronome && sound.metronome.armed) {
                 sound.metronome.start();
                 updateMetronomeUI();
@@ -3526,6 +3595,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elements.toggleScrambleAlerts) elements.toggleScrambleAlerts.checked = scrambleAlertsEnabled;
         elements.toggleSound.checked = sound.enabled;
         elements.toggleVoice.checked = sound.voiceEnabled;
+        if (elements.toggleWakeLock) elements.toggleWakeLock.checked = wakeLockEnabled;
         if (elements.selectBtTimeout) elements.selectBtTimeout.value = String(btInactivityTimeoutSec);
         elements.modalSettings.classList.add('active');
     });
@@ -3707,6 +3777,21 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('voice_enabled', String(sound.voiceEnabled));
     });
 
+    if (elements.toggleWakeLock) {
+        elements.toggleWakeLock.checked = wakeLockEnabled;
+        elements.toggleWakeLock.addEventListener('change', (e) => {
+            wakeLockEnabled = e.target.checked;
+            localStorage.setItem('rubiks_wake_lock', String(wakeLockEnabled));
+            if (wakeLockEnabled) {
+                requestScreenWakeLock();
+                showToast('已开启屏幕常亮防息屏');
+            } else {
+                releaseScreenWakeLock();
+                showToast('已关闭屏幕常亮防息屏');
+            }
+        });
+    }
+
     if (elements.selectBtTimeout) {
         elements.selectBtTimeout.value = String(btInactivityTimeoutSec);
         elements.selectBtTimeout.addEventListener('change', (e) => {
@@ -3883,5 +3968,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             updateCarouselCards(0);
         } catch (_) {}
+        requestScreenWakeLock();
     });
 });
