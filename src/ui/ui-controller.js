@@ -501,7 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // -------------------------------------------------------------
-    // Screen Wake Lock Manager (Keep screen awake during practice and solving)
+    // Screen Wake Lock Manager (Keep screen awake only when connected or solving)
     // -------------------------------------------------------------
     let wakeLockSentinel = null;
     let wakeLockEnabled = localStorage.getItem('rubiks_wake_lock') !== 'false';
@@ -542,13 +542,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.warn('[WakeLock] Error releasing screen wake lock:', e);
             }
             wakeLockSentinel = null;
+            console.log('[WakeLock] Screen wake lock released. Normal OS screen sleep restored.');
+        }
+    }
+
+    function updateScreenWakeLockState() {
+        if (!wakeLockEnabled) {
+            releaseScreenWakeLock();
+            return;
+        }
+        const isCubeConnected = bluetooth && bluetooth.state === 'CONNECTED';
+        const isTimerActive = timer && (timer.state === 'RUNNING' || timer.state === 'INSPECTION');
+
+        if (isCubeConnected || isTimerActive) {
+            requestScreenWakeLock();
+        } else {
+            releaseScreenWakeLock();
         }
     }
 
     if (typeof document !== 'undefined') {
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible' && wakeLockEnabled) {
-                requestScreenWakeLock();
+            if (document.visibilityState === 'visible') {
+                updateScreenWakeLockState();
             }
         });
     }
@@ -556,8 +572,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof window !== 'undefined') {
         ['click', 'touchstart', 'pointerdown', 'keydown'].forEach(evtName => {
             window.addEventListener(evtName, () => {
-                if (wakeLockEnabled && (!wakeLockSentinel || wakeLockSentinel.released)) {
-                    requestScreenWakeLock();
+                if (wakeLockEnabled && (bluetooth?.state === 'CONNECTED' || timer?.state === 'RUNNING' || timer?.state === 'INSPECTION')) {
+                    if (!wakeLockSentinel || wakeLockSentinel.released) {
+                        requestScreenWakeLock();
+                    }
                 }
             }, { passive: true });
         });
@@ -1895,7 +1913,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentBatteryLevel !== null) updateHeaderBatteryUI(currentBatteryLevel);
             appendBtLog('system', `已建立蓝牙通信握手: ${name}`);
             resetBtInactivityTimer();
-            requestScreenWakeLock();
+            updateScreenWakeLockState();
             setNewScramble();
         } else if (info.state === 'CONNECTING') {
             if (elements.btnBtCapsule) {
@@ -1944,6 +1962,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (elements.cubeBatteryBadge) elements.cubeBatteryBadge.style.display = 'none';
             appendBtLog('warn', btAutoDisconnectedReason === 'battery_saver' ? '蓝牙连接已自动断开 (节能省电)' : '蓝牙连接已断开');
             btAutoDisconnectedReason = null;
+            updateScreenWakeLockState();
         }
     });
 
@@ -2070,7 +2089,6 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.mainTimerContainer.classList.add('timer-running');
             elements.liveMovesBadge.parentElement.style.display = 'flex';
             sound.playSolveStart();
-            requestScreenWakeLock();
             if (sound && sound.metronome && sound.metronome.armed) {
                 sound.metronome.start();
                 updateMetronomeUI();
@@ -2093,6 +2111,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateMetronomeUI();
             }
         }
+        updateScreenWakeLockState();
     });
 
     function updateTimerDigitsText(text) {
@@ -3782,12 +3801,11 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.toggleWakeLock.addEventListener('change', (e) => {
             wakeLockEnabled = e.target.checked;
             localStorage.setItem('rubiks_wake_lock', String(wakeLockEnabled));
+            updateScreenWakeLockState();
             if (wakeLockEnabled) {
-                requestScreenWakeLock();
-                showToast('已开启屏幕常亮防息屏');
+                showToast('已开启屏幕常亮 (连接魔方或计时期间生效)');
             } else {
-                releaseScreenWakeLock();
-                showToast('已关闭屏幕常亮防息屏');
+                showToast('已关闭屏幕常亮');
             }
         });
     }
@@ -3968,6 +3986,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             updateCarouselCards(0);
         } catch (_) {}
-        requestScreenWakeLock();
+        updateScreenWakeLockState();
     });
 });
