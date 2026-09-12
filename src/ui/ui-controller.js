@@ -1945,11 +1945,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (physicalCube.isSolved()) {
                 timer.stopTimer();
             }
-        } else if (timer.state !== 'READY' && timer.state !== 'INSPECTION') {
-            if (tracker) {
-                const evalResult = tracker.setCurrentCubeState(data.cp, data.co, data.ep, data.eo);
-                updateScrambleStatus(evalResult);
-            }
         }
     });
 

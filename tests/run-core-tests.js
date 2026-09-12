@@ -566,6 +566,49 @@ test('ScrambleProgressTracker: continuous wrong move stack without solver recalc
     assert.strictEqual(res.currentStep, 2);
 });
 
+test('ScrambleProgressTracker: double moves (x2) executed as two single turns (CW or CCW) advance correctly into next move', () => {
+    const tracker = new CubeEngine.ScrambleProgressTracker();
+    const { ScrambleTape } = ScrambleTapeModule;
+    const tape = new ScrambleTape();
+
+    const scramble = "U2 F2 L2 R2 B2 D2";
+    tracker.setScramble(scramble);
+    tape.setScramble(scramble);
+
+    // 1. Step 0 (U2): executed as U (half turn), then U (completes U2)
+    let res = tracker.onCubeMove('U');
+    assert.strictEqual(res.isHalfTurn, true);
+    assert.strictEqual(res.currentStep, 0);
+    tape.sync(res.currentStep, { isHalfTurn: true, halfFace: res.halfFace, remainingOnFace: res.remainingOnFace });
+    assert.strictEqual(tape.getActiveMove(), 'U2');
+
+    // Second U completes U2:
+    res = tracker.onCubeMove('U');
+    assert.strictEqual(res.isHalfTurn, false);
+    assert.strictEqual(res.currentStep, 1);
+    tape.sync(res.currentStep, { isHalfTurn: false });
+    assert.strictEqual(tape.getActiveMove(), 'F2');
+
+    // 2. Step 1 (F2): executed CCW as F' then F'
+    res = tracker.onCubeMove("F'");
+    assert.strictEqual(res.isHalfTurn, true);
+    assert.strictEqual(res.currentStep, 1);
+    tape.sync(res.currentStep, { isHalfTurn: true, halfFace: res.halfFace, remainingOnFace: res.remainingOnFace });
+
+    res = tracker.onCubeMove("F'");
+    assert.strictEqual(res.isHalfTurn, false);
+    assert.strictEqual(res.currentStep, 2);
+    tape.sync(res.currentStep, { isHalfTurn: false });
+    assert.strictEqual(tape.getActiveMove(), 'L2');
+
+    // 3. Step 2 (L2): executed directly as single L2 event
+    res = tracker.onCubeMove("L2");
+    assert.strictEqual(res.isHalfTurn, false);
+    assert.strictEqual(res.currentStep, 3);
+    tape.sync(res.currentStep, { isHalfTurn: false });
+    assert.strictEqual(tape.getActiveMove(), 'R2');
+});
+
 // -------------------------------------------------------------
 // Runner
 // -------------------------------------------------------------
