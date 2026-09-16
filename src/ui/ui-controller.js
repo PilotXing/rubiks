@@ -26,6 +26,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const sound = AudioSynth;
     const tracker = new ScrambleTracker();
 
+    function sendScrambleTelemetry(event, payload = {}) {
+        try {
+            if (typeof fetch !== 'undefined') {
+                fetch('/api/scramble-log', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ event, ...payload }),
+                    keepalive: true
+                }).catch(() => {});
+            }
+        } catch (_) {}
+    }
+
     // Physical and Virtual Cube state tracking
     const physicalCube = new RubiksCube();
 
@@ -230,6 +243,9 @@ document.addEventListener('DOMContentLoaded', () => {
         practiceCaseName: document.getElementById('practice-case-name'),
         practiceCaseGroup: document.getElementById('practice-case-group'),
         practiceCaseMoves: document.getElementById('practice-case-moves'),
+        practiceVisualHeroCanvas: document.getElementById('practice-visual-hero-canvas'),
+        practiceVariantsContainer: document.getElementById('practice-variants-container'),
+        practiceVariantsList: document.getElementById('practice-variants-list'),
         practiceAlgBox: document.getElementById('practice-alg-box'),
         practiceReelBox: document.getElementById('practice-reel-box'),
         practiceReelTrack: document.getElementById('practice-reel-track'),
@@ -1248,6 +1264,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         updateScrambleStatus(evalResult);
         updateCarouselCards(0);
+        sendScrambleTelemetry('new_scramble', {
+            scramble: currentScramble,
+            moves: currentScramble.split(/\s+/).filter(Boolean),
+            totalSteps: currentScramble.split(/\s+/).filter(Boolean).length
+        });
     }
 
     function copyCurrentScramble() {
@@ -1534,6 +1555,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (evalResult.isComplete) {
             resetScrambleMoveSpeed();
             setScrambleFullscreen(false);
+            if (wasDeviated) {
+                sendScrambleTelemetry('deviation_resolved', {
+                    currentStep: evalResult.currentStep
+                });
+            }
+            sendScrambleTelemetry('scramble_complete', {
+                scramble: currentScramble,
+                totalSteps: evalResult.totalSteps
+            });
             wasDeviated = false;
             if (halfTurnTimer) {
                 clearTimeout(halfTurnTimer);
@@ -1581,6 +1611,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             timer.setState('SCRAMBLING');
 
+            if (!wasDeviated) {
+                sendScrambleTelemetry('deviation_triggered', {
+                    currentStep: evalResult.currentStep,
+                    wrongMove: lastScrambleMove,
+                    correctionMoves: evalResult.correctionMoves
+                });
+            }
+
             if (scrambleAlertsEnabled && !wasDeviated) {
                 sound.playScrambleWarning();
                 if (elements.scrambleBox) {
@@ -1597,6 +1635,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (evalResult.isHalfTurn) {
             setScrambleFullscreen(true);
             setArenaMode('SCRAMBLE');
+            if (wasDeviated) {
+                sendScrambleTelemetry('deviation_resolved', {
+                    currentStep: evalResult.currentStep
+                });
+            }
             wasDeviated = false;
             if (elements.scrambleText) elements.scrambleText.classList.remove('scramble-text-hidden');
 
@@ -1647,6 +1690,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             setScrambleFullscreen(true);
             setArenaMode('SCRAMBLE');
+            if (wasDeviated) {
+                sendScrambleTelemetry('deviation_resolved', {
+                    currentStep: evalResult.currentStep
+                });
+            }
             wasDeviated = false;
             if (halfTurnTimer) {
                 clearTimeout(halfTurnTimer);
@@ -2017,6 +2065,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const evalResult = tracker.onCubeMove(moveEvent.move);
             appendBtLog('scramble', `打乱追踪: 收到动作 [${moveEvent.move}], 期望步骤 [${expectedMove}], 进度: ${evalResult.currentStep}/${evalResult.totalSteps} (半转: ${evalResult.isHalfTurn}, 偏离: ${evalResult.isDeviated})`);
             updateScrambleStatus(evalResult);
+
+            const tape = getMainScrambleTape();
+            sendScrambleTelemetry('cube_move', {
+                move: moveEvent.move,
+                hwTimestamp: moveEvent.hardwareTimestamp || null,
+                expectedMove: expectedMove,
+                currentStep: evalResult.currentStep,
+                totalSteps: evalResult.totalSteps,
+                isHalfTurn: evalResult.isHalfTurn,
+                halfFace: evalResult.halfFace,
+                remainingOnFace: evalResult.remainingOnFace,
+                isDeviated: evalResult.isDeviated,
+                correctionMoves: evalResult.correctionMoves,
+                tapeActiveIdx: tape ? tape.activeIdx : null,
+                tapeItems: tape ? tape.items.map(it => ({ id: it.id, move: it.move, status: it.status, isCorr: it.isCorrection, isWrong: it.isWrong })) : null
+            });
         }
     });
 
@@ -3087,11 +3151,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderPracticeCategories() {
         if (!elements.selectAlgCategory || !window.AlgDatabase) return;
-        const categories = AlgDatabase.getCategories();
-        let html = '<option value="ALL">All Categories</option>';
-        categories.forEach(cat => {
-            html += `<option value="${cat}">${cat}</option>`;
-        });
+        const allCases = AlgDatabase.getAllCases ? AlgDatabase.getAllCases() : [];
+        const totalAlgs = allCases.reduce((sum, c) => sum + (c.algs ? c.algs.length : 1), 0);
+        const majorGroups = AlgDatabase.getMajorCategoryGroups ? AlgDatabase.getMajorCategoryGroups() : null;
+        
+        if (!majorGroups) {
+            const categories = AlgDatabase.getCategories();
+            let html = `<option value="ALL">🌟 全部公式库 (${allCases.length} Cases · ${totalAlgs} 解法)</option>`;
+            categories.forEach(cat => {
+                html += `<option value="${cat}">${cat}</option>`;
+            });
+            elements.selectAlgCategory.innerHTML = html;
+            return;
+        }
+
+        let html = `<option value="ALL">🌟 全部公式库 (${allCases.length} Cases · ${totalAlgs} 解法)</option>`;
+        
+        // Quick macro filters
+        html += `<optgroup label="🚀 常用与大类快速筛选">`;
+        html += `<option value="CFOP_ALL">CFOP 全套公式 (PLL + OLL + F2L + 进阶F2L)</option>`;
+        html += `<option value="PLL_ALL">PLL 全部顶层位置置换 (21 Cases)</option>`;
+        html += `<option value="OLL_ALL">OLL 全部顶层方向翻色 (57 Cases)</option>`;
+        html += `<option value="F2L_ALL">F2L 全部前两层 (41基础 + 54进阶)</option>`;
+        html += `<option value="ZBLL_ALL">ZBLL 顶层一步法全套 (472 Cases)</option>`;
+        html += `<option value="CHICHU_ALL">彳亍盲拧三阶全套 (440棱块 + 378角块 + 翻色奇偶)</option>`;
+        html += `</optgroup>`;
+
+        for (const [groupTitle, catList] of Object.entries(majorGroups)) {
+            if (!catList || catList.length === 0) continue;
+            html += `<optgroup label="${groupTitle}">`;
+            catList.forEach(cat => {
+                html += `<option value="${cat}">${cat}</option>`;
+            });
+            html += `</optgroup>`;
+        }
+
         elements.selectAlgCategory.innerHTML = html;
     }
 
@@ -3099,32 +3193,64 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!elements.caseListContainer || !window.AlgDatabase) return;
         const selectedCat = elements.selectAlgCategory ? elements.selectAlgCategory.value : 'ALL';
         const searchQuery = elements.inputSearchAlg ? elements.inputSearchAlg.value.toLowerCase().trim() : '';
+        const cleanSearch = searchQuery.replace(/[^a-z0-9\u4e00-\u9fa5]/gi, '');
 
-        let cases = selectedCat === 'ALL' ? AlgDatabase.getAllCases() : AlgDatabase.getCasesByCategory(selectedCat);
+        let cases = AlgDatabase.getCasesByCategory(selectedCat);
 
         if (searchQuery) {
-            cases = cases.filter(c => c.name.toLowerCase().includes(searchQuery) || c.alg.toLowerCase().includes(searchQuery));
+            cases = cases.filter(c => {
+                if (c.code && (c.code.toLowerCase() === searchQuery || c.code.toLowerCase().includes(searchQuery))) return true;
+                if (c.code && cleanSearch && c.code.toLowerCase().replace(/[^a-z0-9]/gi, '').includes(cleanSearch)) return true;
+                if (c.id && c.id.toLowerCase().includes(searchQuery)) return true;
+                if (c.name && c.name.toLowerCase().includes(searchQuery)) return true;
+                if (c.title && c.title.toLowerCase().includes(searchQuery)) return true;
+                if (c.desc && c.desc.toLowerCase().includes(searchQuery)) return true;
+                if (c.group && c.group.toLowerCase().includes(searchQuery)) return true;
+                if (c.alg && c.alg.toLowerCase().includes(searchQuery)) return true;
+                if (c.algs && c.algs.some(a => a.toLowerCase().includes(searchQuery))) return true;
+                return false;
+            });
         }
 
         let html = '';
         cases.forEach(c => {
             const isSelected = activePracticeCase && activePracticeCase.id === c.id;
+            const algCount = (c.algs && c.algs.length > 0) ? c.algs.length : 1;
+            const algBadge = algCount > 1 ? `<span class="badge badge-move" style="font-size: 0.68rem; padding: 0.1rem 0.35rem; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">${algCount} 解法</span>` : '';
+            
             html += `
                 <div class="case-item ${isSelected ? 'active' : ''}" data-id="${c.id}">
-                    <div style="display: flex; flex-direction: column; gap: 0.15rem;">
-                        <span style="font-weight: 700; font-size: 0.88rem;">${c.name}</span>
-                        <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted);">${c.alg}</span>
+                    <div class="case-thumb-wrap">
+                        <canvas class="case-thumbnail" width="52" height="52" data-id="${c.id}"></canvas>
                     </div>
-                    <span class="badge badge-move" style="font-size: 0.75rem;">${c.moves}m</span>
+                    <div style="display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; flex: 1; margin-right: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                            <span style="font-weight: 700; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.name}</span>
+                            ${algBadge}
+                        </div>
+                        <span style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${c.alg}</span>
+                    </div>
+                    <span class="badge badge-move" style="font-size: 0.75rem; white-space: nowrap;">${c.moves}m</span>
                 </div>
             `;
         });
 
         if (cases.length === 0) {
-            html = `<div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">No cases found matching filter.</div>`;
+            html = `<div style="grid-column: 1 / -1; padding: 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.85rem;">未找到符合条件的公式。请尝试更换搜索词或分类。</div>`;
         }
 
         elements.caseListContainer.innerHTML = html;
+
+        // Render 2D Vector Thumbnails
+        if (window.AlgVisualizer) {
+            elements.caseListContainer.querySelectorAll('.case-thumbnail').forEach(cvs => {
+                const cid = cvs.dataset.id;
+                const caseObj = AlgDatabase.getCaseById(cid);
+                if (caseObj) {
+                    window.AlgVisualizer.renderCase(cvs, caseObj, { width: 52, height: 52 });
+                }
+            });
+        }
 
         elements.caseListContainer.querySelectorAll('.case-item').forEach(item => {
             item.addEventListener('click', () => {
@@ -3135,6 +3261,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!activePracticeCase && cases.length > 0) {
             selectPracticeCase(cases[0].id);
+        } else if (activePracticeCase && elements.practiceVisualHeroCanvas && window.AlgVisualizer) {
+            window.AlgVisualizer.renderCase(elements.practiceVisualHeroCanvas, activePracticeCase, { width: 64, height: 64 });
         }
     }
 
@@ -3241,23 +3369,72 @@ document.addEventListener('DOMContentLoaded', () => {
         track.style.transform = `translate3d(${targetOffset}px, 0, 0)`;
     }
 
-    function selectPracticeCase(caseId) {
+    function selectPracticeCase(caseId, algIndex) {
         if (!window.AlgDatabase) return;
+        if (algIndex !== undefined) {
+            AlgDatabase.setCaseActiveAlg(caseId, algIndex);
+        }
         const c = AlgDatabase.getCaseById(caseId);
         if (!c) return;
 
         activePracticeCase = c;
-        elements.practiceCaseName.textContent = c.name;
+        elements.practiceCaseName.textContent = c.name + (c.title && c.title !== c.name ? ` (${c.title})` : '');
         elements.practiceCaseGroup.textContent = c.group;
         elements.practiceCaseMoves.textContent = `${c.moves} moves`;
+
+        // Render Hero Diagram Preview
+        if (window.AlgVisualizer && elements.practiceVisualHeroCanvas) {
+            window.AlgVisualizer.renderCase(elements.practiceVisualHeroCanvas, c, { width: 60, height: 60 });
+        }
+
+        // Render alternative algorithms variant pills
+        if (elements.practiceVariantsContainer && elements.practiceVariantsList) {
+            const algList = (c.algs && c.algs.length > 0) ? c.algs : [c.alg];
+            if (algList.length > 1) {
+                elements.practiceVariantsContainer.style.display = 'flex';
+                let vHtml = '';
+                algList.forEach((aStr, idx) => {
+                    const isCur = (idx === (c.activeAlgIdx || 0));
+                    const movesCount = aStr ? aStr.split(' ').length : 0;
+                    const label = idx === 0 ? `解法 1 (标准) · ${movesCount}步` : `解法 ${idx + 1} · ${movesCount}步`;
+                    vHtml += `<button class="variant-chip ${isCur ? 'active' : ''}" data-idx="${idx}" title="${aStr}">${label}</button>`;
+                });
+                elements.practiceVariantsList.innerHTML = vHtml;
+
+                elements.practiceVariantsList.querySelectorAll('.variant-chip').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const chosenIdx = parseInt(btn.dataset.idx, 10);
+                        selectPracticeCase(caseId, chosenIdx);
+                    });
+                });
+            } else {
+                elements.practiceVariantsContainer.style.display = 'none';
+                elements.practiceVariantsList.innerHTML = '';
+            }
+        }
 
         // Render colorized alg string fallback
         const tokens = c.alg.split(/\s+/).map(m => `<span class="move-token ${getMoveColorClass(m)}">${m}</span>`).join(' ');
         if (elements.practiceAlgBox) elements.practiceAlgBox.innerHTML = tokens;
 
+        // Update list card active status and thumbnail if alg changed
+        if (elements.caseListContainer) {
+            elements.caseListContainer.querySelectorAll('.case-item').forEach(item => {
+                if (item.dataset.id === caseId) {
+                    item.classList.add('active');
+                    const thumbCvs = item.querySelector('.case-thumbnail');
+                    if (thumbCvs && window.AlgVisualizer) {
+                        window.AlgVisualizer.renderCase(thumbCvs, c, { width: 52, height: 52 });
+                    }
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
         resetPracticeAttempt();
         renderPracticeReelUI(0, false);
-        renderPracticeCaseList();
         renderPracticeHistoryAndTrend();
     }
 

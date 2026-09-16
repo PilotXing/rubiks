@@ -149,38 +149,135 @@
      */
     function normalizeMove(move) {
         if (!move) return '';
-        let m = move.trim();
-        if (m.length === 1) return m;
-        if (m.charAt(1) === '2') return m.charAt(0) + '2';
-        if (m.charAt(1) === "'" || m.charAt(1) === '’') return m.charAt(0) + "'";
-        return m;
+        return move.trim().replace(/[’′]/g, "'");
+    }
+
+    /**
+     * Consolidate simultaneous/consecutive opposite layer turns into middle layer slice moves (M, E, S).
+     * Handles hardware-transmitted dual moves like (R' + L -> M'), (F' + B -> S'), (U + D' -> E), etc.
+     */
+    function consolidateMoves(rawMoves, options = {}) {
+        if (!rawMoves || !rawMoves.length) return [];
+        const timeWindowMs = options.timeWindowMs !== undefined ? options.timeWindowMs : 140;
+
+        function getMoveStr(item) {
+            return typeof item === 'string' ? item.trim() : (item && item.move ? item.move.trim() : '');
+        }
+        function getTime(item) {
+            return typeof item === 'object' && item && typeof item.time === 'number' ? item.time : null;
+        }
+
+        const OPPOSITE_SLICE_MAP = {
+            // M-slice: L / R opposite turns
+            "R' L": "M'", "L R'": "M'",
+            "R L'": "M",  "L' R": "M",
+            "R2 L2": "M2", "L2 R2": "M2",
+
+            // E-slice: U / D opposite turns
+            "U D'": "E",  "D' U": "E",
+            "U' D": "E'", "D U'": "E'",
+            "U2 D2": "E2", "D2 U2": "E2",
+
+            // S-slice: F / B opposite turns
+            "F B'": "S",  "B' F": "S",
+            "F' B": "S'", "B F'": "S'",
+            "F2 B2": "S2", "B2 F2": "S2",
+
+            // Wide + Outer layer cancellations (M-slice)
+            "Rw R'": "M'", "r R'": "M'", "R' Rw": "M'", "R' r": "M'",
+            "Rw' R": "M",  "r' R": "M",  "R Rw'": "M",  "R r'": "M",
+            "Lw L'": "M",  "l L'": "M",  "L' Lw": "M",  "L' l": "M",
+            "Lw' L": "M'", "l' L": "M'", "L Lw'": "M'", "L l'": "M'",
+            "Rw2 R2": "M2", "r2 R2": "M2", "R2 Rw2": "M2", "R2 r2": "M2",
+            "Lw2 L2": "M2", "l2 L2": "M2", "L2 Lw2": "M2", "L2 l2": "M2",
+
+            // Wide + Outer layer cancellations (E-slice)
+            "Uw U'": "E'", "u U'": "E'", "U' Uw": "E'", "U' u": "E'",
+            "Uw' U": "E",  "u' U": "E",  "U Uw'": "E",  "U u'": "E",
+            "Dw D'": "E",  "d D'": "E",  "D' Dw": "E",  "D' d": "E",
+            "Dw' D": "E'", "d' D": "E'", "D Dw'": "E'", "D d'": "E'",
+            "Uw2 U2": "E2", "u2 U2": "E2", "U2 Uw2": "E2", "U2 u2": "E2",
+            "Dw2 D2": "E2", "d2 D2": "E2", "D2 Dw2": "E2", "D2 d2": "E2",
+
+            // Wide + Outer layer cancellations (S-slice)
+            "Fw F'": "S",  "f F'": "S",  "F' Fw": "S",  "F' f": "S",
+            "Fw' F": "S'", "f' F": "S'", "F Fw'": "S'", "F f'": "S'",
+            "Bw B'": "S'", "b B'": "S'", "B' Bw": "S'", "B' b": "S'",
+            "Bw' B": "S",  "b' B": "S",  "B Bw'": "S",  "B b'": "S",
+            "Fw2 F2": "S2", "f2 F2": "S2", "F2 Fw2": "S2", "F2 f2": "S2",
+            "Bw2 B2": "S2", "b2 B2": "S2", "B2 Bw2": "S2", "B2 b2": "S2"
+        };
+
+        const result = [];
+        let i = 0;
+        while (i < rawMoves.length) {
+            const curr = rawMoves[i];
+            const next = i + 1 < rawMoves.length ? rawMoves[i + 1] : null;
+
+            if (next) {
+                const m1 = getMoveStr(curr);
+                const m2 = getMoveStr(next);
+                const key = `${m1} ${m2}`;
+                const sliceMove = OPPOSITE_SLICE_MAP[key];
+
+                const t1 = getTime(curr);
+                const t2 = getTime(next);
+                const isSimultaneous = (t1 !== null && t2 !== null) ? Math.abs(t2 - t1) <= timeWindowMs : true;
+
+                if (sliceMove && isSimultaneous) {
+                    if (typeof curr === 'object') {
+                        result.push({
+                            ...curr,
+                            move: sliceMove,
+                            origMoves: [m1, m2],
+                            time: t2 !== null ? t2 : t1
+                        });
+                    } else {
+                        result.push(sliceMove);
+                    }
+                    i += 2;
+                    continue;
+                }
+            }
+
+            result.push(curr);
+            i += 1;
+        }
+
+        return result;
     }
 
     /**
      * Count moves based on speedcubing metric:
-     * - 'OBTM' / 'HTM': Outer Block Turn Metric / Half Turn Metric (U2 = 1 move) [Default WCA]
-     * - 'QTM': Quarter Turn Metric (U, U' = 1 move, U2 = 2 moves)
+     * - 'OBTM' / 'STM' / 'HTM': Outer Block / Slice Turn Metric (U2 = 1 move, M = 1 move, M2 = 1 move) [Default Speedcubing]
+     * - 'QTM': Quarter Turn Metric (U, U' = 1 move, U2 = 2 moves, M = 2 moves, M2 = 4 moves)
      * - 'ETM': Execution Turn Metric (every turn token and physical rotation = 1 move)
      */
     function countMoves(moves, metric = 'OBTM') {
         if (!moves || moves.length === 0) return 0;
         const normMetric = (metric || 'OBTM').toUpperCase();
+        const consolidated = consolidateMoves(moves);
         let total = 0;
 
-        for (const item of moves) {
+        for (const item of consolidated) {
             const moveStr = typeof item === 'string' ? item.trim() : (item && item.move ? item.move.trim() : '');
             if (!moveStr) continue;
 
             const isDouble = moveStr.endsWith('2');
             const isRotation = ['x', 'y', 'z'].includes(moveStr.charAt(0).toLowerCase());
+            const isSlice = ['m', 'e', 's'].includes(moveStr.charAt(0).toLowerCase());
 
             if (normMetric === 'QTM') {
                 if (isRotation) continue;
-                total += isDouble ? 2 : 1;
+                if (isSlice) {
+                    total += isDouble ? 4 : 2;
+                } else {
+                    total += isDouble ? 2 : 1;
+                }
             } else if (normMetric === 'ETM') {
                 total += 1;
             } else {
-                // OBTM / HTM (Default WCA)
+                // OBTM / STM / HTM (Default Speedcubing)
                 if (isRotation) continue;
                 total += 1;
             }
@@ -205,12 +302,12 @@
         }
 
         clone() {
-            const cube = new RubiksCube();
-            cube.cp = this.cp.slice();
-            cube.co = this.co.slice();
-            cube.ep = this.ep.slice();
-            cube.eo = this.eo.slice();
-            return cube;
+            const c = new RubiksCube();
+            c.cp = this.cp.slice();
+            c.co = this.co.slice();
+            c.ep = this.ep.slice();
+            c.eo = this.eo.slice();
+            return c;
         }
 
         setState(cp, co, ep, eo) {
@@ -222,31 +319,65 @@
         }
 
         isSolved() {
-            // Fast check: Standard Permutation & Orientation
-            let isPermSolved = true;
             for (let i = 0; i < 8; i++) {
-                if (this.cp[i] !== i || this.co[i] !== 0) { isPermSolved = false; break; }
+                if (this.cp[i] !== i || this.co[i] !== 0) return false;
             }
-            if (isPermSolved) {
-                for (let i = 0; i < 12; i++) {
-                    if (this.ep[i] !== i || this.eo[i] !== 0) { isPermSolved = false; break; }
-                }
+            for (let i = 0; i < 12; i++) {
+                if (this.ep[i] !== i || this.eo[i] !== 0) return false;
             }
-            if (isPermSolved) return true;
+            return true;
+        }
 
-            // Full check: 6-Face Monochromatic Check (handles all 24 rotated orientations)
-            const f = this.getFacelets();
-            if (f && f.length === 54) {
-                for (let faceIdx = 0; faceIdx < 6; faceIdx++) {
-                    const start = faceIdx * 9;
-                    const c0 = f[start];
-                    for (let j = 1; j < 9; j++) {
-                        if (f[start + j] !== c0) return false;
-                    }
-                }
-                return true;
+        isCrossSolved() {
+            const crossEdges = [4, 5, 6, 7]; // DR, DF, DL, DB
+            for (const e of crossEdges) {
+                if (this.ep[e] !== e || this.eo[e] !== 0) return false;
             }
+            return true;
+        }
 
+        isOLLSolved() {
+            for (let i = 0; i < 4; i++) {
+                if (this.co[i] !== 0 || this.eo[i] !== 0) return false;
+            }
+            return true;
+        }
+
+        isF2LSolved() {
+            if (!this.isCrossSolved()) return false;
+            const f2lEdges = [8, 9, 10, 11]; // FR, FL, BL, BR
+            for (const e of f2lEdges) {
+                if (this.ep[e] !== e || this.eo[e] !== 0) return false;
+            }
+            const f2lCorners = [4, 5, 6, 7]; // DFR, DLF, DBL, DRB
+            for (const c of f2lCorners) {
+                if (this.cp[c] !== c || this.co[c] !== 0) return false;
+            }
+            return true;
+        }
+
+        isSlotSolved(slotName) {
+            const s = (slotName || '').toUpperCase();
+            const slotMap = {
+                'FR': { c: 4, e: 8 },
+                'FL': { c: 5, e: 9 },
+                'BL': { c: 6, e: 10 },
+                'BR': { c: 7, e: 11 }
+            };
+            const slot = slotMap[s];
+            if (!slot) return false;
+            return this.cp[slot.c] === slot.c && this.co[slot.c] === 0 &&
+                   this.ep[slot.e] === slot.e && this.eo[slot.e] === 0;
+        }
+
+        isLastLayerOnly() {
+            return this.isF2LSolved();
+        }
+
+        hasBlock(type, location) {
+            if (type === 'cross') return this.isCrossSolved();
+            if (type === 'f2l') return this.isF2LSolved();
+            if (type === 'slot') return this.isSlotSolved(location);
             return false;
         }
 
@@ -279,28 +410,99 @@
                 return this;
             }
 
-            // Wide & slice moves & rotations expansions
+            // Native Slice moves on CubieCube representation
+            // Edges: 0:UR, 1:UF, 2:UL, 3:UB, 4:DR, 5:DF, 6:DL, 7:DB, 8:FR, 9:FL, 10:BL, 11:BR
+            if (norm === 'M') {
+                const ep = this.ep.slice(), eo = this.eo.slice();
+                this.ep[1] = ep[3]; this.eo[1] = eo[3] ^ 1;
+                this.ep[5] = ep[1]; this.eo[5] = eo[1] ^ 1;
+                this.ep[7] = ep[5]; this.eo[7] = eo[5] ^ 1;
+                this.ep[3] = ep[7]; this.eo[3] = eo[7] ^ 1;
+                return this;
+            }
+            if (norm === "M'" || norm === "M’") {
+                const ep = this.ep.slice(), eo = this.eo.slice();
+                this.ep[3] = ep[1]; this.eo[3] = eo[1] ^ 1;
+                this.ep[7] = ep[3]; this.eo[7] = eo[3] ^ 1;
+                this.ep[5] = ep[7]; this.eo[5] = eo[7] ^ 1;
+                this.ep[1] = ep[5]; this.eo[1] = eo[5] ^ 1;
+                return this;
+            }
+            if (norm === 'M2') {
+                const ep = this.ep.slice(), eo = this.eo.slice();
+                this.ep[1] = ep[7]; this.eo[1] = eo[7];
+                this.ep[7] = ep[1]; this.eo[7] = eo[1];
+                this.ep[3] = ep[5]; this.eo[3] = eo[5];
+                this.ep[5] = ep[3]; this.eo[5] = eo[3];
+                return this;
+            }
+            if (norm === 'E') {
+                const ep = this.ep.slice(), eo = this.eo.slice();
+                this.ep[8] = ep[9]; this.eo[8] = eo[9] ^ 1;
+                this.ep[11] = ep[8]; this.eo[11] = eo[8] ^ 1;
+                this.ep[10] = ep[11]; this.eo[10] = eo[11] ^ 1;
+                this.ep[9] = ep[10]; this.eo[9] = eo[10] ^ 1;
+                return this;
+            }
+            if (norm === "E'" || norm === "E’") {
+                const ep = this.ep.slice(), eo = this.eo.slice();
+                this.ep[9] = ep[8]; this.eo[9] = eo[8] ^ 1;
+                this.ep[10] = ep[9]; this.eo[10] = eo[9] ^ 1;
+                this.ep[11] = ep[10]; this.eo[11] = eo[10] ^ 1;
+                this.ep[8] = ep[11]; this.eo[8] = eo[11] ^ 1;
+                return this;
+            }
+            if (norm === 'E2') {
+                const ep = this.ep.slice(), eo = this.eo.slice();
+                this.ep[8] = ep[10]; this.eo[8] = eo[10];
+                this.ep[10] = ep[8]; this.eo[10] = eo[8];
+                this.ep[9] = ep[11]; this.eo[9] = eo[11];
+                this.ep[11] = ep[9]; this.eo[11] = eo[9];
+                return this;
+            }
+            if (norm === 'S') {
+                const ep = this.ep.slice(), eo = this.eo.slice();
+                this.ep[0] = ep[2]; this.eo[0] = eo[2] ^ 1;
+                this.ep[4] = ep[0]; this.eo[4] = eo[0] ^ 1;
+                this.ep[6] = ep[4]; this.eo[6] = eo[4] ^ 1;
+                this.ep[2] = ep[6]; this.eo[2] = eo[6] ^ 1;
+                return this;
+            }
+            if (norm === "S'" || norm === "S’") {
+                const ep = this.ep.slice(), eo = this.eo.slice();
+                this.ep[2] = ep[0]; this.eo[2] = eo[2] ^ 1;
+                this.ep[6] = ep[2]; this.eo[6] = eo[2] ^ 1;
+                this.ep[4] = ep[6]; this.eo[4] = eo[4] ^ 1;
+                this.ep[0] = ep[4]; this.eo[0] = eo[4] ^ 1;
+                return this;
+            }
+            if (norm === 'S2') {
+                const ep = this.ep.slice(), eo = this.eo.slice();
+                this.ep[0] = ep[6]; this.eo[0] = eo[6];
+                this.ep[6] = ep[0]; this.eo[6] = eo[6];
+                this.ep[2] = ep[4]; this.eo[2] = eo[4];
+                this.ep[4] = ep[2]; this.eo[4] = eo[2];
+                return this;
+            }
+
+            // Wide moves & full cube rotations expansions
             const expansions = {
-                "M": ["L", "R'"], "M'": ["L'", "R"], "M2": ["L2", "R2"],
-                "E": ["D", "U'"], "E'": ["D'", "U"], "E2": ["D2", "U2"],
-                "S": ["F", "B'"], "S'": ["F'", "B"], "S2": ["F2", "B2"],
+                "r": ["R", "M'"], "r'": ["R'", "M"], "r2": ["R2", "M2"],
+                "Rw": ["R", "M'"], "Rw'": ["R'", "M"], "Rw2": ["R2", "M2"],
+                "l": ["L", "M"], "l'": ["L'", "M'"], "l2": ["L2", "M2"],
+                "Lw": ["L", "M"], "Lw'": ["L'", "M'"], "Lw2": ["L2", "M2"],
+                "u": ["U", "E'"], "u'": ["U'", "E"], "u2": ["U2", "E2"],
+                "Uw": ["U", "E'"], "Uw'": ["U'", "E"], "Uw2": ["U2", "E2"],
+                "d": ["D", "E"], "d'": ["D'", "E'"], "d2": ["D2", "E2"],
+                "Dw": ["D", "E"], "Dw'": ["D'", "E'"], "Dw2": ["D2", "E2"],
+                "f": ["F", "S"], "f'": ["F'", "S'"], "f2": ["F2", "S2"],
+                "Fw": ["F", "S"], "Fw'": ["F'", "S'"], "Fw2": ["F2", "S2"],
+                "b": ["B", "S'"], "b'": ["B'", "S"], "b2": ["B2", "S2"],
+                "Bw": ["B", "S'"], "Bw'": ["B'", "S"], "Bw2": ["B2", "S2"],
 
-                "r": ["R", "L'"], "r'": ["R'", "L"], "r2": ["R2", "L2"],
-                "Rw": ["R", "L'"], "Rw'": ["R'", "L"], "Rw2": ["R2", "L2"],
-                "l": ["L", "R'"], "l'": ["L'", "R"], "l2": ["L2", "R2"],
-                "Lw": ["L", "R'"], "Lw'": ["L'", "R"], "Lw2": ["L2", "R2"],
-                "u": ["U", "D'"], "u'": ["U'", "D"], "u2": ["U2", "D2"],
-                "Uw": ["U", "D'"], "Uw'": ["U'", "D"], "Uw2": ["U2", "D2"],
-                "d": ["D", "U'"], "d'": ["D'", "U"], "d2": ["D2", "U2"],
-                "Dw": ["D", "U'"], "Dw'": ["D'", "U"], "Dw2": ["D2", "U2"],
-                "f": ["F", "B'"], "f'": ["F'", "B"], "f2": ["F2", "B2"],
-                "Fw": ["F", "B'"], "Fw'": ["F'", "B"], "Fw2": ["F2", "B2"],
-                "b": ["B", "F'"], "b'": ["B'", "F"], "b2": ["B2", "F2"],
-                "Bw": ["B", "F'"], "Bw'": ["B'", "F"], "Bw2": ["B2", "F2"],
-
-                "x": ["R", "L'"], "x'": ["R'", "L"], "x2": ["R2", "L2"],
-                "y": ["U", "D'"], "y'": ["U'", "D"], "y2": ["U2", "D2"],
-                "z": ["F", "B'"], "z'": ["F'", "B"], "z2": ["F2", "B2"]
+                "x": ["R", "M'", "L'"], "x'": ["R'", "M", "L"], "x2": ["R2", "M2", "L2"],
+                "y": ["U", "E'", "D'"], "y'": ["U'", "E", "D"], "y2": ["U2", "E2", "D2"],
+                "z": ["F", "S", "B'"], "z'": ["F'", "S'", "B"], "z2": ["F2", "S2", "B2"]
             };
 
             if (expansions[norm]) {
@@ -570,6 +772,31 @@
     }
 
     /**
+     * Helper to get face and quarter turns from a move string
+     */
+    function getMoveQuarterTurns(move) {
+        if (!move) return { face: '', q: 0 };
+        const m = normalizeMove(move);
+        const face = m.charAt(0).toUpperCase();
+        if (m.endsWith('2')) return { face, q: 2 };
+        if (m.endsWith("'")) return { face, q: 3 };
+        return { face, q: 1 };
+    }
+
+    /**
+     * Helper to convert face and net quarter turns into standard correction move notation
+     */
+    function quarterTurnsToCorrectionMove(face, q) {
+        const net = ((q % 4) + 4) % 4;
+        const inv = (4 - net) % 4;
+        if (inv === 0) return null;
+        if (inv === 1) return face;
+        if (inv === 2) return face + '2';
+        if (inv === 3) return face + "'";
+        return null;
+    }
+
+    /**
      * ScrambleProgressTracker
      * Manages scramble target, real-time user progress, wrong move detection, and dynamic correction
      */
@@ -583,9 +810,15 @@
             this.moveHistory = [];
             this.isComplete = false;
             this.isDeviated = false;
+            this.deviationStack = []; // array of { face: string, netQ: number }
             this.correctionMoves = [];
             this.currentStep = 0;
             this.lastMovedFace = null;
+            this.isHalfTurn = false;
+            this.halfFace = null;
+            this.remainingOnFace = null;
+            this.halfTurnDirection = null;
+            this.wasReverseCancelled = false;
         }
 
         setScramble(scrambleStr) {
@@ -629,19 +862,52 @@
             this.moveHistory = [];
             this.isComplete = false;
             this.isDeviated = false;
+            this.deviationStack = [];
+            this.correctionMoves = [];
+            this.currentStep = 0;
+            this.lastMovedFace = null;
             this.isHalfTurn = false;
             this.halfFace = null;
             this.remainingOnFace = null;
             this.halfTurnDirection = null;
             this.wasReverseCancelled = false;
-            this.correctionMoves = [];
-            this.currentStep = 0;
-            this.lastMovedFace = null;
         }
 
         setCurrentCubeState(cp, co, ep, eo) {
             this.currentCube.setState(cp, co, ep, eo);
             return this.evaluateState();
+        }
+
+        _applyDeviationTurn(moveStr) {
+            const { face, q } = getMoveQuarterTurns(moveStr);
+            if (!face || q === 0) return;
+
+            if (this.deviationStack.length > 0) {
+                const top = this.deviationStack[this.deviationStack.length - 1];
+                if (top.face === face) {
+                    top.netQ = ((top.netQ + q) % 4 + 4) % 4;
+                    if (top.netQ === 0) {
+                        this.deviationStack.pop();
+                    }
+                } else {
+                    this.deviationStack.push({ face, netQ: q });
+                }
+            } else {
+                this.deviationStack.push({ face, netQ: q });
+            }
+
+            this._recomputeCorrectionMoves();
+        }
+
+        _recomputeCorrectionMoves() {
+            const moves = [];
+            for (let i = this.deviationStack.length - 1; i >= 0; i--) {
+                const item = this.deviationStack[i];
+                const corr = quarterTurnsToCorrectionMove(item.face, item.netQ);
+                if (corr) moves.push(corr);
+            }
+            this.correctionMoves = moves;
+            this.isDeviated = this.deviationStack.length > 0 && this.correctionMoves.length > 0;
         }
 
         onCubeMove(moveStr) {
@@ -651,28 +917,125 @@
             this.moveHistory.push(move);
             this.currentCube.applyMove(move);
 
-            // 1. Direct Move-Stream & Deviation Stack Tracking
-            if (this.isDeviated && this.correctionMoves.length > 0) {
-                const expectedCorrection = this.correctionMoves[0];
-                if (move === expectedCorrection) {
-                    // User successfully executed the active correction move
-                    this.correctionMoves.shift();
-                    if (this.correctionMoves.length === 0) {
+            // Fast-path 1: Physical cube reached target cube -> scramble complete!
+            if (this.currentCube.equals(this.targetCube)) {
+                this.isComplete = true;
+                this.isDeviated = false;
+                this.deviationStack = [];
+                this.correctionMoves = [];
+                this.isHalfTurn = false;
+                this.halfFace = null;
+                this.remainingOnFace = null;
+                this.halfTurnDirection = null;
+                this.currentStep = this.scrambleMoves.length;
+                return {
+                    isComplete: true,
+                    isDeviated: false,
+                    isHalfTurn: false,
+                    currentStep: this.scrambleMoves.length,
+                    totalSteps: this.scrambleMoves.length,
+                    correctionMoves: [],
+                    remainingMoves: [],
+                    wrongMove: null
+                };
+            }
+
+            // Fast-path 2: Physical cube is on the exact expected state for current step!
+            if (this.currentCube.equals(this.expectedStates[this.currentStep])) {
+                this.isDeviated = false;
+                this.deviationStack = [];
+                this.correctionMoves = [];
+                this.isHalfTurn = false;
+                this.halfFace = null;
+                this.remainingOnFace = null;
+                this.halfTurnDirection = null;
+                return {
+                    isComplete: false,
+                    isDeviated: false,
+                    isHalfTurn: false,
+                    halfFace: null,
+                    remainingOnFace: null,
+                    currentStep: this.currentStep,
+                    totalSteps: this.scrambleMoves.length,
+                    correctionMoves: [],
+                    remainingMoves: this.scrambleMoves.slice(this.currentStep),
+                    wrongMove: null
+                };
+            }
+
+            // 1. If currently in deviated mode: apply move to modulo 4 deviation stack
+            if (this.isDeviated) {
+                this._applyDeviationTurn(move);
+
+                // Check if physical cube returned to currentStep state
+                if (this.currentCube.equals(this.expectedStates[this.currentStep])) {
+                    this.isDeviated = false;
+                    this.deviationStack = [];
+                    this.correctionMoves = [];
+                    this.isHalfTurn = false;
+                    this.halfFace = null;
+                    this.remainingOnFace = null;
+                    return {
+                        isComplete: false,
+                        isDeviated: false,
+                        isHalfTurn: false,
+                        currentStep: this.currentStep,
+                        totalSteps: this.scrambleMoves.length,
+                        correctionMoves: [],
+                        remainingMoves: this.scrambleMoves.slice(this.currentStep),
+                        wrongMove: null
+                    };
+                }
+
+                // Check if physical cube advanced to currentStep + 1 state
+                if (this.currentStep + 1 <= this.scrambleMoves.length && this.currentCube.equals(this.expectedStates[this.currentStep + 1])) {
+                    this.currentStep++;
+                    this.isDeviated = false;
+                    this.deviationStack = [];
+                    this.correctionMoves = [];
+                    this.isHalfTurn = false;
+                    this.halfFace = null;
+                    this.remainingOnFace = null;
+                    return {
+                        isComplete: (this.currentStep >= this.scrambleMoves.length),
+                        isDeviated: false,
+                        isHalfTurn: false,
+                        currentStep: this.currentStep,
+                        totalSteps: this.scrambleMoves.length,
+                        correctionMoves: [],
+                        remainingMoves: this.scrambleMoves.slice(this.currentStep),
+                        wrongMove: null
+                    };
+                }
+
+                // Check if physical cube matches ANY expected state in the scramble
+                for (let k = this.expectedStates.length - 1; k >= 0; k--) {
+                    if (this.currentCube.equals(this.expectedStates[k])) {
+                        this.currentStep = k;
                         this.isDeviated = false;
+                        this.deviationStack = [];
+                        this.correctionMoves = [];
+                        this.isHalfTurn = false;
+                        this.halfFace = null;
+                        this.remainingOnFace = null;
+                        return {
+                            isComplete: (k === this.scrambleMoves.length),
+                            isDeviated: false,
+                            isHalfTurn: false,
+                            currentStep: k,
+                            totalSteps: this.scrambleMoves.length,
+                            correctionMoves: [],
+                            remainingMoves: this.scrambleMoves.slice(k),
+                            wrongMove: null
+                        };
                     }
-                } else {
-                    // User made another wrong turn while in correction: push inverse to front of stack
-                    const newInv = invertMove(move);
-                    this.correctionMoves.unshift(newInv);
                 }
 
                 if (!this.isDeviated) {
                     return {
                         isComplete: false,
                         isDeviated: false,
-                        isHalfTurn: this.isHalfTurn,
-                        halfFace: this.halfFace,
-                        remainingOnFace: this.remainingOnFace,
+                        isHalfTurn: false,
                         currentStep: this.currentStep,
                         totalSteps: this.scrambleMoves.length,
                         correctionMoves: [],
@@ -693,6 +1056,7 @@
                 }
             }
 
+            // 2. Normal On-Track Scramble Progression
             if (this.currentStep < this.scrambleMoves.length) {
                 const targetMove = this.scrambleMoves[this.currentStep];
                 const targetFace = targetMove.charAt(0);
@@ -743,14 +1107,12 @@
                             this.halfTurnDirection = null;
                         } else if (this.isHalfTurn && this.halfFace === targetFace) {
                             if (move === this.remainingOnFace) {
-                                // Move completed the expected target state!
                                 this.currentStep++;
                                 this.isHalfTurn = false;
                                 this.halfFace = null;
                                 this.remainingOnFace = null;
                                 this.halfTurnDirection = null;
                             } else {
-                                // Wrong turn undone back to 0
                                 this.isHalfTurn = false;
                                 this.halfFace = null;
                                 this.remainingOnFace = null;
@@ -759,8 +1121,7 @@
                             }
                         } else {
                             // Wrong direction on target 90-degree face
-                            this.isDeviated = true;
-                            this.correctionMoves = [invertMove(move)];
+                            this._applyDeviationTurn(move);
                             return {
                                 isComplete: false,
                                 isDeviated: true,
@@ -802,9 +1163,17 @@
                         remainingMoves: this.scrambleMoves.slice(this.currentStep)
                     };
                 } else {
-                    // Wrong face turned: insert inverse correction into stack without solver repathing
-                    this.isDeviated = true;
-                    this.correctionMoves = [invertMove(move)];
+                    // Wrong face turned
+                    if (this.isHalfTurn && this.halfFace) {
+                        // User made a partial half-turn on halfFace before turning a wrong face
+                        const halfQ = getMoveQuarterTurns(this.halfTurnDirection || this.halfFace).q;
+                        this._applyDeviationTurn(this.halfTurnDirection || this.halfFace);
+                        this.isHalfTurn = false;
+                        this.halfFace = null;
+                        this.remainingOnFace = null;
+                        this.halfTurnDirection = null;
+                    }
+                    this._applyDeviationTurn(move);
                     return {
                         isComplete: false,
                         isDeviated: true,
@@ -818,22 +1187,6 @@
                 }
             }
 
-            // Fallback if cube already reached target
-            if (this.currentCube.equals(this.targetCube)) {
-                this.isComplete = true;
-                this.isDeviated = false;
-                this.isHalfTurn = false;
-                return {
-                    isComplete: true,
-                    isDeviated: false,
-                    isHalfTurn: false,
-                    currentStep: this.scrambleMoves.length,
-                    totalSteps: this.scrambleMoves.length,
-                    correctionMoves: [],
-                    remainingMoves: []
-                };
-            }
-
             return this.evaluateState();
         }
 
@@ -843,6 +1196,7 @@
                 this.isComplete = true;
                 this.isDeviated = false;
                 this.isHalfTurn = false;
+                this.deviationStack = [];
                 this.correctionMoves = [];
                 this.currentStep = this.scrambleMoves.length;
                 return {
@@ -856,7 +1210,46 @@
                 };
             }
 
-            this.isComplete = false;
+            // Check if currentCube matches current expected step
+            if (this.currentCube.equals(this.expectedStates[this.currentStep])) {
+                this.isDeviated = false;
+                this.isHalfTurn = false;
+                this.halfFace = null;
+                this.remainingOnFace = null;
+                this.deviationStack = [];
+                this.correctionMoves = [];
+                return {
+                    isComplete: false,
+                    isDeviated: false,
+                    isHalfTurn: false,
+                    currentStep: this.currentStep,
+                    totalSteps: this.scrambleMoves.length,
+                    correctionMoves: [],
+                    remainingMoves: this.scrambleMoves.slice(this.currentStep)
+                };
+            }
+
+            // Check if currentCube matches any full-step state
+            for (let i = this.expectedStates.length - 1; i >= 0; i--) {
+                if (this.currentCube.equals(this.expectedStates[i])) {
+                    this.isDeviated = false;
+                    this.isHalfTurn = false;
+                    this.halfFace = null;
+                    this.remainingOnFace = null;
+                    this.currentStep = i;
+                    this.deviationStack = [];
+                    this.correctionMoves = [];
+                    return {
+                        isComplete: (i === this.scrambleMoves.length),
+                        isDeviated: false,
+                        isHalfTurn: false,
+                        currentStep: i,
+                        totalSteps: this.scrambleMoves.length,
+                        correctionMoves: [],
+                        remainingMoves: this.scrambleMoves.slice(i)
+                    };
+                }
+            }
 
             if (this.isDeviated && this.correctionMoves.length > 0) {
                 return {
@@ -867,34 +1260,6 @@
                     fullScrambleString: this.scrambleString,
                     correctionMoves: [...this.correctionMoves],
                     remainingMoves: [...this.correctionMoves, ...this.scrambleMoves.slice(this.currentStep)]
-                };
-            }
-
-            // Check if currentCube matches any full-step state
-            let matchedStep = -1;
-            for (let i = this.expectedStates.length - 1; i >= 0; i--) {
-                if (this.currentCube.equals(this.expectedStates[i])) {
-                    matchedStep = i;
-                    break;
-                }
-            }
-
-            if (matchedStep >= 0) {
-                this.isDeviated = false;
-                this.isHalfTurn = false;
-                this.halfFace = null;
-                this.remainingOnFace = null;
-                this.currentStep = matchedStep;
-                this.correctionMoves = [];
-                const remainingMoves = this.scrambleMoves.slice(matchedStep);
-                return {
-                    isComplete: false,
-                    isDeviated: false,
-                    isHalfTurn: false,
-                    currentStep: matchedStep,
-                    totalSteps: this.scrambleMoves.length,
-                    correctionMoves: [],
-                    remainingMoves: remainingMoves
                 };
             }
 
@@ -923,6 +1288,7 @@
         invertMoves,
         getScrambleStepClasses,
         RubiksCube,
+        consolidateMoves,
         countMoves,
         generateWcaScramble,
         generateWcaScrambleWithFirstMove,

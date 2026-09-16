@@ -322,7 +322,18 @@
             this.overallBoxEl.innerHTML = chipsHtml;
         }
 
+        clearDeviations() {
+            this.isDeviated = false;
+            if (this.items.some(it => !it.isOriginal)) {
+                this.items = this.items.filter(it => it.isOriginal);
+                if (this.track && typeof document !== 'undefined') {
+                    this._renderAllItems();
+                }
+            }
+        }
+
         stepTo(targetOriginalStep) {
+            this.clearDeviations();
             let targetIdx = this.items.findIndex(it => it.isOriginal && it.origIdx === targetOriginalStep);
             if (targetIdx === -1) {
                 if (targetOriginalStep >= this.originalMoves.length) {
@@ -341,7 +352,7 @@
                     item.status = 'pending';
                 }
             });
-            this.isDeviated = this.items.slice(this.activeIdx).some(it => it.isCorrection);
+            this.isDeviated = false;
             this._refreshDOMStates();
             this.align(this.activeIdx, true);
             this._updateFooter();
@@ -370,20 +381,37 @@
                 const targetCorr = (correctionMoves && correctionMoves.length > 0) ? correctionMoves[0] : null;
                 if (!targetCorr) return;
 
-                // Check if active item is already this correction
-                if (this.isDeviated && this.items[this.activeIdx] && this.items[this.activeIdx].isCorrection && this.items[this.activeIdx].move === targetCorr) {
+                // 1. If active item is already a correction card
+                if (this.isDeviated && this.items[this.activeIdx] && this.items[this.activeIdx].isCorrection) {
+                    if (this.items[this.activeIdx].move !== targetCorr) {
+                        this.items[this.activeIdx].move = targetCorr;
+                        this._refreshDOMStates();
+                        this.align(this.activeIdx, true);
+                        this._updateFooter();
+                        this._updateOverallChips();
+                    }
+                    if (isHalfTurn) {
+                        this.onHalfTurnProgress(halfFace, remainingOnFace);
+                    }
                     return;
                 }
 
-                // Check if user satisfied active correction and next pending is targetCorr:
-                if (this.isDeviated && this.items[this.activeIdx + 1] && this.items[this.activeIdx + 1].isCorrection && this.items[this.activeIdx + 1].move === targetCorr) {
-                    this.onCorrectMove();
-                    return;
-                }
-
-                // Otherwise, new wrong move occurred:
+                // 2. Otherwise insert correction item
                 const wMove = wrongMove || '?';
                 this.onWrongMove(wMove, targetCorr);
+                if (isHalfTurn) {
+                    this.onHalfTurnProgress(halfFace, remainingOnFace);
+                }
+                return;
+            }
+
+            // Not deviated
+            if (this.isDeviated) {
+                // Deviation was resolved (e.g. via X4 or return moves) -> smoothly restore original track
+                this.stepTo(stepIdx);
+                if (isHalfTurn) {
+                    this.onHalfTurnProgress(halfFace, remainingOnFace);
+                }
                 return;
             }
 
@@ -392,21 +420,15 @@
                 return;
             }
 
-            // Not deviated and not half turn
-            if (this.isDeviated) {
-                // Finished all corrections!
+            const currItem = this.items[this.activeIdx];
+            const currOrig = (currItem && currItem.isOriginal) ? currItem.origIdx : -1;
+            if (currOrig >= 0 && stepIdx === currOrig + 1) {
                 this.onCorrectMove();
+            } else if (currOrig >= 0 && stepIdx === currOrig) {
+                this._refreshDOMStates();
+                this.align(this.activeIdx, false);
             } else {
-                const currItem = this.items[this.activeIdx];
-                const currOrig = (currItem && currItem.isOriginal) ? currItem.origIdx : -1;
-                if (currOrig >= 0 && stepIdx === currOrig + 1) {
-                    this.onCorrectMove();
-                } else if (currOrig >= 0 && stepIdx === currOrig) {
-                    this._refreshDOMStates();
-                    this.align(this.activeIdx, false);
-                } else {
-                    this.stepTo(stepIdx);
-                }
+                this.stepTo(stepIdx);
             }
         }
 

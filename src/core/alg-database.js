@@ -1,7 +1,8 @@
 /**
  * alg-database.js
  * Comprehensive Speedcubing Algorithm Library & Practice Matching Engine
- * Bundles OLL 1-57, PLL 21 cases, Speedcubing Triggers, Roux CMLL, and custom user sets.
+ * Bundles full CFOP (F2L, OLL, PLL, Adv F2L), complete ZBLL (T, U, L, H, Pi, S, AS),
+ * Chi-Chu Blindfolded (角块三循环, 棱块三循环, 翻角翻棱, 奇偶校验), Roux CMLL, Triggers, and custom sets.
  */
 
 (function(root, factory) {
@@ -15,77 +16,15 @@
 }(typeof self !== 'undefined' ? self : this, function() {
     'use strict';
 
-    // 1. Standard PLL (21 Cases)
-    const PLL_CASES = [
-        { id: "pll_ua", name: "Ua Perm", group: "PLL - Edges Only", alg: "R U' R U R U R U' R' U' R2", moves: 11, desc: "Clockwise 3-edge cycle" },
-        { id: "pll_ub", name: "Ub Perm", group: "PLL - Edges Only", alg: "R2 U R U R' U' R' U' R' U R'", moves: 11, desc: "Counter-clockwise 3-edge cycle" },
-        { id: "pll_h",  name: "H Perm", group: "PLL - Edges Only", alg: "M2 U M2 U2 M2 U M2", moves: 7, desc: "Opposite edge pairs swap" },
-        { id: "pll_z",  name: "Z Perm", group: "PLL - Edges Only", alg: "M' U M2 U M2 U M' U2 M2", moves: 9, desc: "Adjacent edge pairs swap" },
-        
-        { id: "pll_aa", name: "Aa Perm", group: "PLL - Adjacent Corners", alg: "x R' U R' D2 R U' R' D2 R2 x'", moves: 9, desc: "Clockwise 3-corner cycle" },
-        { id: "pll_ab", name: "Ab Perm", group: "PLL - Adjacent Corners", alg: "x R2 D2 R U R' D2 R U' R x'", moves: 9, desc: "Counter-clockwise 3-corner cycle" },
-        { id: "pll_t",  name: "T Perm", group: "PLL - Adjacent Corners", alg: "R U R' U' R' F R2 U' R' U' R U R' F'", moves: 14, desc: "Swap 2 corners and 2 edges" },
-        { id: "pll_ja", name: "Ja Perm", group: "PLL - Adjacent Corners", alg: "x R2 F R F' R U2 r' U r U2 x'", moves: 10, desc: "Left side bar corner-edge swap" },
-        { id: "pll_jb", name: "Jb Perm", group: "PLL - Adjacent Corners", alg: "R U R' F' R U R' U' R' F R2 U' R'", moves: 13, desc: "Right side bar corner-edge swap" },
-        { id: "pll_ra", name: "Ra Perm", group: "PLL - Adjacent Corners", alg: "R U R' F' R U2 R' U2 R' F R U R U2 R'", moves: 15, desc: "Adjacent corner swap with front bar" },
-        { id: "pll_rb", name: "Rb Perm", group: "PLL - Adjacent Corners", alg: "R' U2 R U2 R' F R U R' U' R' F' R2", moves: 13, desc: "Adjacent corner swap with left bar" },
-        { id: "pll_f",  name: "F Perm", group: "PLL - Adjacent Corners", alg: "R' U' F' R U R' U' R' F R2 U' R' U' R U R' U R", moves: 18, desc: "Front headlights with T-perm variation" },
-        
-        { id: "pll_v",  name: "V Perm", group: "PLL - Diagonal Corners", alg: "R' U R' U' y R' F' R2 U' R' U R' F R F", moves: 14, desc: "Diagonal corner swap with block" },
-        { id: "pll_y",  name: "Y Perm", group: "PLL - Diagonal Corners", alg: "F R U' R' U' R U R' F' R U R' U' R' F R F'", moves: 17, desc: "Diagonal corner swap with 2 adjacent edges" },
-        { id: "pll_na", name: "Na Perm", group: "PLL - Diagonal Corners", alg: "R U R' U R U R' F' R U R' U' R' F R2 U' R' U2 R U' R'", moves: 21, desc: "Double opposite block swap (Right)" },
-        { id: "pll_nb", name: "Nb Perm", group: "PLL - Diagonal Corners", alg: "R' U R U' R' F' U' F R U R' F R' F' R U' R", moves: 17, desc: "Double opposite block swap (Left)" },
-        { id: "pll_e",  name: "E Perm", group: "PLL - Diagonal Corners", alg: "x' R U' R' D R U R' D' R U R' D R U' R' D' x", moves: 16, desc: "Swap diagonal corners without edge swap" },
-        
-        { id: "pll_ga", name: "Ga Perm", group: "PLL - G Permutations", alg: "R2 U R' U R' U' R U' R2 D U' R' U R D'", moves: 15, desc: "G-perm front headlights" },
-        { id: "pll_gb", name: "Gb Perm", group: "PLL - G Permutations", alg: "R' U' R U D' R2 U R' U R U' R U' R2 D", moves: 15, desc: "G-perm right headlights" },
-        { id: "pll_gc", name: "Gc Perm", group: "PLL - G Permutations", alg: "R2 U' R U' R U R' U R2 D' U R U' R' D", moves: 15, desc: "G-perm back headlights" },
-        { id: "pll_gd", name: "Gd Perm", group: "PLL - G Permutations", alg: "R U R' U' D R2 U' R U' R' U R' U R2 D'", moves: 15, desc: "G-perm left headlights" }
-    ];
-
-    // 2. Essential Triggers & Micro-Sequences
-    const TRIGGER_CASES = [
-        { id: "trig_sexy",      name: "Sexy Move", group: "Triggers", alg: "R U R' U'", moves: 4, desc: "Core fundamental speedcubing trigger" },
-        { id: "trig_rev_sexy",  name: "Reverse Sexy", group: "Triggers", alg: "U R U' R'", moves: 4, desc: "Inverse sequence of Sexy Move" },
-        { id: "trig_inv_sexy",  name: "Inverse Sexy", group: "Triggers", alg: "U' R U R'", moves: 4, desc: "Setup variation for F2L inserts" },
-        { id: "trig_sledge",    name: "Sledgehammer", group: "Triggers", alg: "R' F R F'", moves: 4, desc: "Corner insertion & edge orientation trigger" },
-        { id: "trig_hedge",     name: "Hedgeslammer", group: "Triggers", alg: "F R' F' R", moves: 4, desc: "Inverse of Sledgehammer" },
-        { id: "trig_triple_s",  name: "Triple Sexy", group: "Triggers", alg: "R U R' U' R U R' U' R U R' U'", moves: 12, desc: "3x Sexy Move cycle (OLL 33 / CP preservation)" },
-        { id: "trig_fat_sune",  name: "Fat Sune", group: "Triggers", alg: "r U R' U' r' F R F'", moves: 8, desc: "Wide Sune variation" },
-        { id: "trig_suicide",   name: "Suicide Move", group: "Triggers", alg: "R U2 R' U' R U' R'", moves: 7, desc: "Anti-Sune trigger" }
-    ];
-
-    // 3. Representative OLL Cases (Full 57 OLL database)
-    const OLL_CASES = [
-        { id: "oll_21", name: "OLL 21 (Cross H)", group: "OLL - All Corners", alg: "R U2 R' U' R U R' U' R U' R'", moves: 11, desc: "Double Sune Cross" },
-        { id: "oll_22", name: "OLL 22 (Cross Pi)", group: "OLL - All Corners", alg: "R U2 R2 U' R2 U' R2 U2 R", moves: 9, desc: "Pi shape" },
-        { id: "oll_23", name: "OLL 23 (Headlights)", group: "OLL - All Corners", alg: "R2 D R' U2 R D' R' U2 R'", moves: 9, desc: "Headlights U shape" },
-        { id: "oll_24", name: "OLL 24 (Chameleon)", group: "OLL - All Corners", alg: "r U R' U' r' F R F'", moves: 8, desc: "T shape" },
-        { id: "oll_25", name: "OLL 25 (Bowtie)", group: "OLL - All Corners", alg: "F' r U R' U' r' F R", moves: 8, desc: "Bowtie shape" },
-        { id: "oll_26", name: "OLL 26 (Anti-Sune)", group: "OLL - All Corners", alg: "R' U' R U' R' U2 R", moves: 7, desc: "Anti-Sune" },
-        { id: "oll_27", name: "OLL 27 (Sune)", group: "OLL - All Corners", alg: "R U R' U R U2 R'", moves: 7, desc: "Classic Sune" },
-        { id: "oll_33", name: "OLL 33 (T Shape)", group: "OLL - T Shapes", alg: "R U R' U' R' F R F'", moves: 8, desc: "Sexy Move into Sledgehammer" },
-        { id: "oll_37", name: "OLL 37 (Mounted Fish)", group: "OLL - Fish Shapes", alg: "F R U' R' U' R U R' F'", moves: 9, desc: "Fish shape orientation" },
-        { id: "oll_45", name: "OLL 45 (T Shape 2)", group: "OLL - T Shapes", alg: "F R U R' U' F'", moves: 6, desc: "F Sexy F'" },
-        { id: "oll_48", name: "OLL 48 (Picture Frame)", group: "OLL - Small L", alg: "F R U R' U' R U R' U' F'", moves: 10, desc: "Double Sexy with F envelope" },
-        { id: "oll_57", name: "OLL 57 (H Shape)", group: "OLL - Edges", alg: "R U R' U' M' U R U' r'", moves: 9, desc: "Opposite edges oriented" }
-    ];
-
-    // 4. Roux CMLL Cases
-    const CMLL_CASES = [
-        { id: "cmll_sune", name: "CMLL Sune", group: "Roux CMLL", alg: "R U R' U R U2 R'", moves: 7, desc: "Standard Sune with preserved blocks" },
-        { id: "cmll_antisune", name: "CMLL Anti-Sune", group: "Roux CMLL", alg: "R' U' R U' R' U2 R", moves: 7, desc: "Anti-Sune with preserved blocks" },
-        { id: "cmll_u_forward", name: "CMLL U Forward", group: "Roux CMLL", alg: "R2 D R' U2 R D' R' U2 R'", moves: 9, desc: "Headlights case" },
-        { id: "cmll_pi_diag", name: "CMLL Pi Diagonal", group: "Roux CMLL", alg: "r U' r2 U r2 U r2 U' r", moves: 9, desc: "Diagonal corners swap Pi" }
-    ];
-
     class AlgorithmLibrary {
         constructor() {
             this.customCases = this.loadCustomCases();
+            this.activeAlgOverrides = this.loadActiveAlgOverrides();
         }
 
         loadCustomCases() {
             try {
+                if (typeof localStorage === 'undefined') return [];
                 const stored = localStorage.getItem('cube_custom_algorithms');
                 return stored ? JSON.parse(stored) : [];
             } catch (e) {
@@ -96,29 +35,130 @@
 
         saveCustomCases() {
             try {
+                if (typeof localStorage === 'undefined') return;
                 localStorage.setItem('cube_custom_algorithms', JSON.stringify(this.customCases));
             } catch (e) {
                 console.warn("Could not save custom algorithms:", e);
             }
         }
 
+        loadActiveAlgOverrides() {
+            try {
+                if (typeof localStorage === 'undefined') return {};
+                const stored = localStorage.getItem('cube_active_alg_overrides');
+                return stored ? JSON.parse(stored) : {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        saveActiveAlgOverrides() {
+            try {
+                if (typeof localStorage === 'undefined') return;
+                localStorage.setItem('cube_active_alg_overrides', JSON.stringify(this.activeAlgOverrides));
+            } catch (e) {}
+        }
+
+        getBuiltinDataset() {
+            if (typeof self !== 'undefined' && self.RUBIKS_ALGORITHM_DATASET) {
+                return self.RUBIKS_ALGORITHM_DATASET;
+            }
+            if (typeof window !== 'undefined' && window.RUBIKS_ALGORITHM_DATASET) {
+                return window.RUBIKS_ALGORITHM_DATASET;
+            }
+            return [];
+        }
+
         getAllCases() {
-            return [
-                ...TRIGGER_CASES,
-                ...PLL_CASES,
-                ...OLL_CASES,
-                ...CMLL_CASES,
-                ...this.customCases
-            ];
+            const dataset = this.getBuiltinDataset();
+            const cases = [...dataset, ...this.customCases].map(c => {
+                const overrideIdx = this.activeAlgOverrides[c.id];
+                const allAlgs = (c.algs && c.algs.length > 0) ? c.algs : [c.alg];
+                if (overrideIdx !== undefined && allAlgs[overrideIdx]) {
+                    const chosenAlg = allAlgs[overrideIdx];
+                    return {
+                        ...c,
+                        activeAlgIdx: overrideIdx,
+                        alg: chosenAlg,
+                        algs: allAlgs,
+                        moves: chosenAlg ? chosenAlg.split(' ').length : c.moves
+                    };
+                }
+                return {
+                    ...c,
+                    activeAlgIdx: 0,
+                    alg: allAlgs[0] || c.alg,
+                    algs: allAlgs,
+                    moves: allAlgs[0] ? allAlgs[0].split(' ').length : c.moves
+                };
+            });
+            return cases;
+        }
+
+        setCaseActiveAlg(caseId, algIndex) {
+            this.activeAlgOverrides[caseId] = algIndex;
+            this.saveActiveAlgOverrides();
+            return this.getCaseById(caseId);
         }
 
         getCategories() {
             const categories = new Set();
-            this.getAllCases().forEach(c => categories.add(c.group));
+            this.getAllCases().forEach(c => {
+                if (c.group) categories.add(c.group);
+            });
             return Array.from(categories);
         }
 
+        getMajorCategoryGroups() {
+            const allCases = this.getAllCases();
+            const groups = {
+                'CFOP 全套公式 (SpeedCubeDB)': [],
+                'ZBLL 顶层一步法 (SpeedCubeDB)': [],
+                '彳亍盲拧公式全套 (Chi-Chu BLD)': [],
+                '手法触发器与桥式 (Triggers & Roux)': [],
+                '自定义公式 (Custom)': []
+            };
+
+            allCases.forEach(c => {
+                const g = c.group || '';
+                if (g.startsWith('PLL') || g.startsWith('OLL') || g.startsWith('F2L') || g.startsWith('Advanced F2L')) {
+                    if (!groups['CFOP 全套公式 (SpeedCubeDB)'].includes(g)) groups['CFOP 全套公式 (SpeedCubeDB)'].push(g);
+                } else if (g.startsWith('ZBLL')) {
+                    if (!groups['ZBLL 顶层一步法 (SpeedCubeDB)'].includes(g)) groups['ZBLL 顶层一步法 (SpeedCubeDB)'].push(g);
+                } else if (g.startsWith('彳亍盲拧')) {
+                    if (!groups['彳亍盲拧公式全套 (Chi-Chu BLD)'].includes(g)) groups['彳亍盲拧公式全套 (Chi-Chu BLD)'].push(g);
+                } else if (g === 'Custom Cases' || c.isCustom) {
+                    if (!groups['自定义公式 (Custom)'].includes(g)) groups['自定义公式 (Custom)'].push(g);
+                } else {
+                    if (!groups['手法触发器与桥式 (Triggers & Roux)'].includes(g)) groups['手法触发器与桥式 (Triggers & Roux)'].push(g);
+                }
+            });
+
+            return groups;
+        }
+
         getCasesByCategory(category) {
+            if (!category || category === 'ALL') return this.getAllCases();
+            if (category === 'CFOP_ALL') {
+                return this.getAllCases().filter(c => 
+                    c.group.startsWith('PLL') || c.group.startsWith('OLL') || c.group.startsWith('F2L') || c.group.startsWith('Advanced F2L')
+                );
+            }
+            if (category === 'PLL_ALL') {
+                return this.getAllCases().filter(c => c.group.startsWith('PLL'));
+            }
+            if (category === 'OLL_ALL') {
+                return this.getAllCases().filter(c => c.group.startsWith('OLL'));
+            }
+            if (category === 'F2L_ALL') {
+                return this.getAllCases().filter(c => c.group.startsWith('F2L') || c.group.startsWith('Advanced F2L'));
+            }
+            if (category === 'ZBLL_ALL') {
+                return this.getAllCases().filter(c => c.group.startsWith('ZBLL'));
+            }
+            if (category === 'CHICHU_ALL') {
+                return this.getAllCases().filter(c => c.group.startsWith('彳亍盲拧'));
+            }
             return this.getAllCases().filter(c => c.group === category);
         }
 
@@ -127,13 +167,14 @@
         }
 
         addCustomCase(name, alg, group = "Custom Cases", desc = "") {
-            const cleanAlg = alg.trim().replace(/\s+/g, ' ');
+            const cleanAlg = cleanAlgString(alg);
             const moves = cleanAlg ? cleanAlg.split(' ').length : 0;
             const newCase = {
                 id: 'custom_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
                 name: name.trim(),
                 group: group.trim() || "Custom Cases",
                 alg: cleanAlg,
+                algs: [cleanAlg],
                 moves: moves,
                 desc: desc.trim(),
                 isCustom: true
@@ -153,23 +194,10 @@
             return false;
         }
 
-        /**
-         * Compiles an algorithm containing wide moves (r, Rw, etc.), slice moves (M),
-         * and whole-cube rotations (x, y, z) into hardware-detectable single-layer moves
-         * while tracking physical cube reorientation.
-         * Returns an array of compiled step objects:
-         * { displayMove: string, physicalMoves: string[] }
-         */
         compileAlgorithm(algStr) {
             return compileAlgorithmWithRotations(algStr);
         }
 
-        /**
-         * Match an ongoing stream of user moves against a target algorithm string.
-         * Sequence matching: completely orientation-less and stateless across all 24 orientations!
-         * Wide-moves & rotations are pre-compiled to single-layer physical moves,
-         * while returning original WCA displayMove tokens for the UI Reel.
-         */
         matchSequence(userMoves, targetAlg) {
             if (!targetAlg) return { isComplete: false, progress: 0, nextExpected: null, isMatch: false };
             
@@ -306,31 +334,37 @@
         return newMap;
     }
 
+    function cleanAlgString(algStr) {
+        return (algStr || '')
+            .replace(/[\(\)\[\]\{\}]/g, '')
+            .replace(/[’‘ʼ‘]/g, "'")
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
     function compileAlgorithmWithRotations(algStr) {
         let currentMap = { U: 'U', D: 'D', L: 'L', R: 'R', F: 'F', B: 'B' };
-        const rawTokens = (algStr || '').trim().split(/\s+/).filter(Boolean);
+        const cleaned = cleanAlgString(algStr);
+        const rawTokens = cleaned.split(/\s+/).filter(Boolean);
         const steps = [];
 
         rawTokens.forEach(tok => {
             let base = tok.charAt(0);
             let lower = tok.toLowerCase();
 
-            // M slice moves: M = r' R (or Rw' R), M' = r R', M2 = r2 R2
-            if (base === 'M' || base === 'm') {
-                let sfx = tok.slice(1);
-                let rMove = sfx === "'" ? "r" : (sfx === '2' ? "r2" : "r'");
-                let RMove = sfx === "'" ? "R'" : (sfx === '2' ? "R2" : "R");
-                let sub = compileAlgorithmWithRotations(rMove + ' ' + RMove);
-                steps.push({ displayMove: tok, physicalMoves: sub.map(s => s.physicalMoves[0]) });
-                return;
-            }
-
             let isWide = (base >= 'a' && base <= 'z') || lower.startsWith('rw') || lower.startsWith('lw') ||
                          lower.startsWith('uw') || lower.startsWith('dw') ||
                          lower.startsWith('fw') || lower.startsWith('bw');
             
             let suffix = tok.slice(isWide && tok.length > 1 && tok.charAt(1).toLowerCase() === 'w' ? 2 : 1);
-            if (suffix === '’') suffix = "'";
+            if (suffix === '’' || suffix === '‘') suffix = "'";
+
+            // Slices: M, S, E (passed as native slice moves to engine)
+            if (base === 'M' || base === 'm' || base === 'S' || base === 's' || base === 'E' || base === 'e') {
+                const normTok = base.toUpperCase() + (suffix || '');
+                steps.push({ displayMove: tok, physicalMoves: [normTok] });
+                return;
+            }
 
             // Pure rotation: x, y, z
             if (['x', 'y', 'z'].includes(lower.charAt(0)) && !lower.includes('w')) {
@@ -430,7 +464,7 @@
         let m = move.trim();
         if (m.length === 1) return m;
         if (m.charAt(1) === '2') return m.charAt(0) + '2';
-        if (m.charAt(1) === "'" || m.charAt(1) === '’') return m.charAt(0) + "'";
+        if (m.charAt(1) === "'" || m.charAt(1) === '’' || m.charAt(1) === '‘') return m.charAt(0) + "'";
         return m;
     }
 

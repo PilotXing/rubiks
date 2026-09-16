@@ -4158,12 +4158,14 @@ body.theme-light .nav-tab-btn.active {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.5rem 0.75rem;
+    padding: 0 0.75rem 0 0;
     border-radius: var(--radius-sm);
     background-color: var(--bg-surface-elevated);
     border: 1px solid transparent;
     cursor: pointer;
     transition: all 0.15s ease;
+    overflow: hidden;
+    min-height: 52px;
 }
 
 .case-item:hover {
@@ -4229,6 +4231,102 @@ body.theme-light .nav-tab-btn.active {
     background-color: rgba(245, 158, 11, 0.2);
     color: var(--warning-primary);
     border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.practice-variants-bar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.75rem;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    box-sizing: border-box;
+}
+
+.practice-variants-list {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    overflow-x: auto;
+}
+
+.variant-chip {
+    padding: 0.2rem 0.55rem;
+    font-size: 0.76rem;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    border-radius: var(--radius-sm);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.variant-chip:hover {
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
+    background: var(--bg-surface-hover);
+}
+
+.variant-chip.active {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.practice-hero-diagram-wrap {
+    width: 64px;
+    height: 64px;
+    min-width: 64px;
+    min-height: 64px;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-sizing: border-box;
+    box-shadow: none;
+}
+
+.practice-visual-hero-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.case-thumb-wrap {
+    align-self: stretch;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    min-width: 52px;
+    max-width: 60px;
+    flex-shrink: 0;
+    border-radius: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    margin: 0;
+    margin-right: 0.65rem;
+    box-sizing: border-box;
+}
+
+.case-thumbnail {
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
 /* ==========================================================================

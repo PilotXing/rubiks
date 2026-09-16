@@ -513,13 +513,22 @@
             const now = getNowMs();
             this.elapsedMs = now - this.startTimeMs;
 
-            const tps = this.currentMoves.length > 0 && this.elapsedMs > 500
-                ? ((this.currentMoves.length / (this.elapsedMs / 1000))).toFixed(2)
+            const CubeEngine = (typeof window !== 'undefined' && window.CubeEngine)
+                || (typeof global !== 'undefined' && global.CubeEngine)
+                || (typeof root !== 'undefined' && root.CubeEngine)
+                || null;
+
+            const currentCount = (CubeEngine && typeof CubeEngine.countMoves === 'function')
+                ? CubeEngine.countMoves(this.currentMoves, 'OBTM')
+                : this.currentMoves.length;
+
+            const tps = currentCount > 0 && this.elapsedMs > 500
+                ? ((currentCount / (this.elapsedMs / 1000))).toFixed(2)
                 : 0.00;
 
             this.emit('tick', {
                 elapsedMs: this.elapsedMs,
-                moveCount: this.currentMoves.length,
+                moveCount: currentCount,
                 tps: tps
             });
 
@@ -616,7 +625,19 @@
                 formatted = 'DNF';
             }
 
-            const totalMoves = this.currentMoves.length;
+            const CubeEngine = (typeof window !== 'undefined' && window.CubeEngine)
+                || (typeof global !== 'undefined' && global.CubeEngine)
+                || (typeof root !== 'undefined' && root.CubeEngine)
+                || null;
+
+            const consolidatedMoves = (CubeEngine && typeof CubeEngine.consolidateMoves === 'function')
+                ? CubeEngine.consolidateMoves(this.currentMoves)
+                : this.currentMoves;
+
+            const totalMoves = (CubeEngine && typeof CubeEngine.countMoves === 'function')
+                ? CubeEngine.countMoves(this.currentMoves, 'OBTM')
+                : this.currentMoves.length;
+
             const timeForTps = baseTimeMs > 0 ? baseTimeMs : rawDurationMs;
             const overallTps = timeForTps > 0
                 ? ((totalMoves / (timeForTps / 1000))).toFixed(2)
@@ -633,7 +654,8 @@
                 scramble: this.currentScramble,
                 moveCount: totalMoves,
                 tps: parseFloat(overallTps),
-                moves: this.currentMoves.slice(),
+                moves: consolidatedMoves.slice(),
+                rawMoves: this.currentMoves.slice(),
                 penalty: penalty
             };
 
@@ -651,6 +673,19 @@
             }
             this.setState('FINISHED');
 
+            const CubeEngine = (typeof window !== 'undefined' && window.CubeEngine)
+                || (typeof global !== 'undefined' && global.CubeEngine)
+                || (typeof root !== 'undefined' && root.CubeEngine)
+                || null;
+
+            const consolidatedMoves = (CubeEngine && typeof CubeEngine.consolidateMoves === 'function')
+                ? CubeEngine.consolidateMoves(this.currentMoves)
+                : this.currentMoves;
+
+            const totalMoves = (CubeEngine && typeof CubeEngine.countMoves === 'function')
+                ? CubeEngine.countMoves(this.currentMoves, 'OBTM')
+                : this.currentMoves.length;
+
             const solveRecord = {
                 id: 'solve_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
                 timestamp: Date.now(),
@@ -660,9 +695,10 @@
                 finalTimeMs: Penalty.DNF,
                 formattedTime: 'DNF',
                 scramble: this.currentScramble,
-                moveCount: this.currentMoves.length,
+                moveCount: totalMoves,
                 tps: 0,
-                moves: this.currentMoves.slice(),
+                moves: consolidatedMoves.slice(),
+                rawMoves: this.currentMoves.slice(),
                 penalty: Penalty.DNF
             };
             this.session.addSolve(solveRecord);

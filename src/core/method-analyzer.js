@@ -15,7 +15,9 @@
 }(typeof self !== 'undefined' ? self : this, function(CubeEngine) {
     'use strict';
 
-    const RubiksCube = (CubeEngine && CubeEngine.RubiksCube) || (window.CubeEngine && window.CubeEngine.RubiksCube);
+    const RubiksCube = (CubeEngine && CubeEngine.RubiksCube) || (typeof window !== 'undefined' && window.CubeEngine && window.CubeEngine.RubiksCube);
+    const consolidateMoves = (CubeEngine && CubeEngine.consolidateMoves) || (typeof window !== 'undefined' && window.CubeEngine && window.CubeEngine.consolidateMoves) || ((m) => m);
+    const countMoves = (CubeEngine && CubeEngine.countMoves) || (typeof window !== 'undefined' && window.CubeEngine && window.CubeEngine.countMoves) || ((m) => Array.isArray(m) ? m.length : 0);
 
     // Kociemba Facelet positions:
     // U: 0-8 (center 4), R: 9-17 (center 13), F: 18-26 (center 22)
@@ -268,6 +270,11 @@
                 };
             }
 
+            // Consolidate simultaneous/opposite turns into slice moves (M, E, S)
+            if (typeof consolidateMoves === 'function') {
+                moves = consolidateMoves(moves);
+            }
+
             const startCube = new RubiksCube();
             if (scramble) {
                 // 1. When a valid scramble exists, apply it to get the true initial cube state
@@ -516,15 +523,18 @@
                 stages.push(this.createStage("PLL", ollEnd + 1, total - 1, moves, "#EC4899"));
             }
 
-            const totalDuration = solveRecord.finalTimeMs || solveRecord.rawTimeMs || (moves[total - 1].elapsedMs || 0);
+            const lastMove = moves[moves.length - 1];
+            const totalDuration = solveRecord.finalTimeMs || solveRecord.rawTimeMs || (lastMove && (lastMove.calibratedElapsedMs || lastMove.elapsedMs)) || 0;
+            const totalMoves = typeof countMoves === 'function' ? countMoves(moves, 'OBTM') : moves.length;
+            const overallTps = totalDuration > 0 ? (totalMoves / (totalDuration / 1000)).toFixed(2) : (solveRecord.tps || '0.00');
 
             return {
                 method: isDetailedPairs ? "CFOP (Detailed)" : "CFOP",
                 baseFace: best.cfg.name,
                 stages: stages.filter(s => s.moveCount > 0),
-                totalMoves: total,
+                totalMoves: totalMoves,
                 totalDurationMs: totalDuration,
-                overallTps: solveRecord.tps || (total / (totalDuration / 1000)).toFixed(2)
+                overallTps: parseFloat(overallTps)
             };
         }
 
@@ -545,14 +555,17 @@
                 this.createStage("LSE (Last 6 Edges)", cmllEnd + 1, lseEnd, moves, "#8B5CF6")
             ];
 
-            const totalDuration = solveRecord.finalTimeMs || solveRecord.rawTimeMs || (moves[total - 1].elapsedMs || 0);
+            const lastMove = moves[moves.length - 1];
+            const totalDuration = solveRecord.finalTimeMs || solveRecord.rawTimeMs || (lastMove && (lastMove.calibratedElapsedMs || lastMove.elapsedMs)) || 0;
+            const totalMoves = typeof countMoves === 'function' ? countMoves(moves, 'OBTM') : moves.length;
+            const overallTps = totalDuration > 0 ? (totalMoves / (totalDuration / 1000)).toFixed(2) : (solveRecord.tps || '0.00');
 
             return {
                 method: "Roux",
                 stages: stages.filter(s => s.moveCount > 0),
-                totalMoves: total,
+                totalMoves: totalMoves,
                 totalDurationMs: totalDuration,
-                overallTps: solveRecord.tps || (total / (totalDuration / 1000)).toFixed(2)
+                overallTps: parseFloat(overallTps)
             };
         }
 
@@ -571,14 +584,17 @@
                 this.createStage("Layer 3 (Last Layer)", l2End + 1, l3End, moves, "#EC4899")
             ];
 
-            const totalDuration = solveRecord.finalTimeMs || solveRecord.rawTimeMs || (moves[total - 1].elapsedMs || 0);
+            const lastMove = moves[moves.length - 1];
+            const totalDuration = solveRecord.finalTimeMs || solveRecord.rawTimeMs || (lastMove && (lastMove.calibratedElapsedMs || lastMove.elapsedMs)) || 0;
+            const totalMoves = typeof countMoves === 'function' ? countMoves(moves, 'OBTM') : moves.length;
+            const overallTps = totalDuration > 0 ? (totalMoves / (totalDuration / 1000)).toFixed(2) : (solveRecord.tps || '0.00');
 
             return {
                 method: "LBL",
                 stages: stages.filter(s => s.moveCount > 0),
-                totalMoves: total,
+                totalMoves: totalMoves,
                 totalDurationMs: totalDuration,
-                overallTps: solveRecord.tps || (total / (totalDuration / 1000)).toFixed(2)
+                overallTps: parseFloat(overallTps)
             };
         }
 
@@ -596,7 +612,7 @@
                 : 0;
             const endMs = moves[endIdx].calibratedElapsedMs || moves[endIdx].elapsedMs || 0;
             const durationMs = Math.max(10, endMs - prevMs);
-            const moveCount = stageMoves.length;
+            const moveCount = typeof countMoves === 'function' ? countMoves(stageMoves, 'OBTM') : stageMoves.length;
             const tps = durationMs > 0 ? (moveCount / (durationMs / 1000)).toFixed(2) : '0.00';
 
             return {

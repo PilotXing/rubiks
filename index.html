@@ -18,7 +18,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="style.css?v=20.32">
+    <link rel="stylesheet" href="style.css?v=20.43">
 </head>
 <body class="style-dark color-emerald theme-dark">
 
@@ -34,7 +34,7 @@
                     </svg>
                 </span>
                 <span class="brand-title">Rubik Vision</span>
-                <span id="app-version-badge" class="badge app-version-badge">v20.32</span>
+                <span id="app-version-badge" class="badge app-version-badge">v20.43</span>
             </div>
 
             <div class="header-actions">
@@ -491,15 +491,26 @@
                 
                 <!-- 1. Hero Practice & Real-Time Match Stage (Top Hero Card) -->
                 <div class="practice-stage-card">
-                    <div style="width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                        <div>
-                            <h3 id="practice-case-name" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Select an algorithm</h3>
-                            <span id="practice-case-group" class="badge badge-idle" style="margin-top: 0.25rem;">Triggers</span>
+                    <div style="width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; gap: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                            <div class="practice-hero-diagram-wrap">
+                                <canvas id="practice-visual-hero-canvas" class="practice-visual-hero-canvas" width="64" height="64"></canvas>
+                            </div>
+                            <div style="min-width: 0;">
+                                <h3 id="practice-case-name" style="margin: 0; font-size: 1.25rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Select an algorithm</h3>
+                                <span id="practice-case-group" class="badge badge-idle" style="margin-top: 0.25rem;">Triggers</span>
+                            </div>
                         </div>
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;">
                             <span id="practice-case-moves" style="font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-muted);">0 moves</span>
                             <button id="btn-reset-practice" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">Reset</button>
                         </div>
+                    </div>
+
+                    <!-- Multiple Alg Variants Pill Bar -->
+                    <div id="practice-variants-container" class="practice-variants-bar" style="display: none; margin-bottom: 0.6rem;">
+                        <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; white-space: nowrap;">解法多选:</span>
+                        <div id="practice-variants-list" class="practice-variants-list"></div>
                     </div>
 
                     <!-- Main Arena: Timer Upper, Alg Scramble Reel Below -->
@@ -1229,27 +1240,28 @@
 
     <!-- Scripts -->
     <!-- Third-Party Libraries -->
-    <script src="lib/aes.js?v=20.32"></script>
-    <script src="lib/min2phase.js?v=20.32"></script>
-    <script src="lib/three.min.js?v=20.32"></script>
-    <script src="lib/echarts.min.js?v=20.32"></script>
+    <script src="lib/aes.js?v=20.33"></script>
+    <script src="lib/min2phase.js?v=20.33"></script>
+    <script src="lib/three.min.js?v=20.33"></script>
+    <script src="lib/echarts.min.js?v=20.33"></script>
 
     <!-- Bluetooth Hardware & Audio -->
-    <script src="src/bluetooth/gan-bluetooth.js?v=20.32"></script>
-    <script src="src/audio/audio-synth.js?v=20.32"></script>
+    <script src="src/bluetooth/gan-bluetooth.js?v=20.33"></script>
+    <script src="src/audio/audio-synth.js?v=20.33"></script>
 
     <!-- Core Engines & Analyzers -->
-    <script src="src/core/cube-engine.js?v=20.32"></script>
-    <script src="src/core/alg-database.js?v=20.32"></script>
-    <script src="src/core/method-analyzer.js?v=20.32"></script>
-    <script src="src/core/timer-engine.js?v=20.32"></script>
+    <script src="src/core/algs-data.js?v=20.43"></script>
+    <script src="src/core/cube-engine.js?v=20.43"></script>
+    <script src="src/core/alg-database.js?v=20.43"></script>
+    <script src="src/core/method-analyzer.js?v=20.43"></script>
+    <script src="src/core/timer-engine.js?v=20.43"></script>
 
-    <!-- Visualizers & UI -->
-    <script src="src/renderers/renderer-3d.js?v=20.32"></script>
-    <script src="src/renderers/renderer-2d.js?v=20.32"></script>
-    <script src="src/ui/chart-engine.js?v=20.32"></script>
-    <script src="src/ui/scramble-tape.js?v=20.32"></script>
-    <script src="src/ui/ui-controller.js?v=20.32"></script>
+    <script src="src/renderers/renderer-3d.js?v=20.43"></script>
+    <script src="src/renderers/renderer-2d.js?v=20.43"></script>
+    <script src="src/renderers/alg-visualizer.js?v=20.43"></script>
+    <script src="src/ui/chart-engine.js?v=20.43"></script>
+    <script src="src/ui/scramble-tape.js?v=20.43"></script>
+    <script src="src/ui/ui-controller.js?v=20.43"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
